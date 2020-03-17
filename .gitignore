@@ -1,0 +1,8 @@
+# Compiled
+*.x
+*.o
+
+# Editor
+*~
+*.swp
+.vscode/
