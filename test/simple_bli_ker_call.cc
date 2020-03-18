@@ -2,7 +2,6 @@
 #include <blis/blis.h>
 #include <boost/numeric/ublas/matrix.hpp>
 #include <boost/numeric/ublas/io.hpp>
-#include <iostream>
 
 int main(const int argc, const char *argv[])
 {
@@ -43,7 +42,7 @@ int main(const int argc, const char *argv[])
     bli_auxinfo_set_is_b(1, &def_data);
     bli_auxinfo_set_ps_a(mr, &def_data); // 2nd idx stride, maybe...
     bli_auxinfo_set_ps_b(nr, &def_data); // 2nd idx stride, maybe...
-    bli_auxinfo_set_next_ab(ptrA, ptrB, &def_data);
+    bli_auxinfo_set_next_ab(nullptr, nullptr, &def_data);
     bli_auxinfo_set_schema_a(BLIS_PACKED_COL_PANELS, &def_data);
     bli_auxinfo_set_schema_b(BLIS_PACKED_COL_PANELS, &def_data);
 

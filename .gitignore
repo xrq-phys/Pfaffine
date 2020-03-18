@@ -1,8 +1,12 @@
 # Compiled
 *.x
 *.o
+*.dSYM
 
 # Editor
 *~
 *.swp
 .vscode/
+
+# Runtime
+*.dat
