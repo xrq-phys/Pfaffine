@@ -35,23 +35,32 @@ inline void *get_l3uker(const std::complex<double> *T, l3ukr_t type, cntx_t *cnt
 { return bli_cntx_get_l3_nat_ukr_dt(BLIS_DCOMPLEX, type, cntx); }
 // }
 
-// call_ugemm (plain pointer) {
-inline void call_ugemm(void *ugemm_, dim_t k, float alpha, float *a, float *b,
+extern "C" { // call_ugemm (plain pointer)
+void call_sugemm(sgemm_ukr_ft ugemm, dim_t k, float *alpha, float *a, float *b,
+                 float *beta, float *c, inc_t rsc, inc_t csc, auxinfo_t *aux, cntx_t *cntx)
+{ ugemm(k, alpha, a, b, beta, c, rsc, csc, aux, cntx); }
+void call_dugemm(dgemm_ukr_ft ugemm, dim_t k, double *alpha, double *a, double *b,
+                 double *beta, double *c, inc_t rsc, inc_t csc, auxinfo_t *aux, cntx_t *cntx)
+{ ugemm(k, alpha, a, b, beta, c, rsc, csc, aux, cntx); }
+void call_cugemm(cgemm_ukr_ft ugemm, dim_t k, scomplex *alpha, scomplex *a, scomplex *b,
+                 scomplex *beta, scomplex *c, inc_t rsc, inc_t csc, auxinfo_t *aux, cntx_t *cntx)
+{ ugemm(k, alpha, a, b, beta, c, rsc, csc, aux, cntx); }
+void call_zugemm(zgemm_ukr_ft ugemm, dim_t k, dcomplex *alpha, dcomplex *a, dcomplex *b,
+                 dcomplex *beta, dcomplex *c, inc_t rsc, inc_t csc, auxinfo_t *aux, cntx_t *cntx)
+{ ugemm(k, alpha, a, b, beta, c, rsc, csc, aux, cntx); }
+} // {
+inline void call_ugemm(void *ugemm, dim_t k, float alpha, float *a, float *b,
                        float beta, float *c, inc_t rsc, inc_t csc, auxinfo_t *aux, cntx_t *cntx)
-{ auto *ugemm = (sgemm_ukr_ft)ugemm_;
-  ugemm(k, &alpha, a, b, &beta, c, rsc, csc, aux, cntx); }
-inline void call_ugemm(void *ugemm_, dim_t k, double alpha, double *a, double *b,
+{ call_sugemm((sgemm_ukr_ft)ugemm, k, &alpha, a, b, &beta, c, rsc, csc, aux, cntx); }
+inline void call_ugemm(void *ugemm, dim_t k, double alpha, double *a, double *b,
                        double beta, double *c, inc_t rsc, inc_t csc, auxinfo_t *aux, cntx_t *cntx)
-{ auto *ugemm = (dgemm_ukr_ft)ugemm_;
-  ugemm(k, &alpha, a, b, &beta, c, rsc, csc, aux, cntx); }
-inline void call_ugemm(void *ugemm_, dim_t k, std::complex<float> alpha, std::complex<float> *a, std::complex<float> *b,
+{ call_dugemm((dgemm_ukr_ft)ugemm, k, &alpha, a, b, &beta, c, rsc, csc, aux, cntx); }
+inline void call_ugemm(void *ugemm, dim_t k, std::complex<float> alpha, std::complex<float> *a, std::complex<float> *b,
                        std::complex<float> beta, std::complex<float> *c, inc_t rsc, inc_t csc, auxinfo_t *aux, cntx_t *cntx)
-{ auto *ugemm = (cgemm_ukr_ft)ugemm_;
-  ugemm(k, (scomplex *)&alpha, (scomplex *)a, (scomplex *)b, (scomplex *)&beta, (scomplex *)c, rsc, csc, aux, cntx); }
-inline void call_ugemm(void *ugemm_, dim_t k, std::complex<double> alpha, std::complex<double> *a, std::complex<double> *b,
+{ call_cugemm((cgemm_ukr_ft)ugemm, k, (scomplex *)&alpha, (scomplex *)a, (scomplex *)b, (scomplex *)&beta, (scomplex *)c, rsc, csc, aux, cntx); }
+inline void call_ugemm(void *ugemm, dim_t k, std::complex<double> alpha, std::complex<double> *a, std::complex<double> *b,
                        std::complex<double> beta, std::complex<double> *c, inc_t rsc, inc_t csc, auxinfo_t *aux, cntx_t *cntx)
-{ auto *ugemm = (zgemm_ukr_ft)ugemm_;
-  ugemm(k, (dcomplex *)&alpha, (dcomplex *)a, (dcomplex *)b, (dcomplex *)&beta, (dcomplex *)c, rsc, csc, aux, cntx); }
+{ call_zugemm((zgemm_ukr_ft)ugemm, k, (dcomplex *)&alpha, (dcomplex *)a, (dcomplex *)b, (dcomplex *)&beta, (dcomplex *)c, rsc, csc, aux, cntx); }
 // }
 
 // set_blis_is {

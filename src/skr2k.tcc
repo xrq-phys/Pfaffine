@@ -70,8 +70,8 @@ void uskr2k(unsigned n, unsigned k, T alpha, T *A, unsigned ldA, T *B, unsigned 
                 unsigned ist = ui*mr;
                 unsigned jst = uj*nr;
                 // Very rough prefetching scheme.
-                bli_auxinfo_set_next_b(pakB, aux);
-                bli_auxinfo_set_next_a(&A((ui+1)*mblk, ul*kblk), aux);
+                // bli_auxinfo_set_next_b(pakB, aux);
+                // bli_auxinfo_set_next_a(&A((ui+1)*mblk, ul*kblk), aux);
                 // Pick microkernel.
                 if (ist + leni < jst)
                     if (ui + 1 != mblk && uj + 1 != nblk)
@@ -131,10 +131,6 @@ void skr2k(char uplo, char trans, unsigned n, unsigned k,
     void *ugemm = get_l3uker(C, BLIS_GEMM_UKR, cntx);
     set_blk_size(C, &mr, &nr, cntx);
     set_blis_is(C, &aux);
-    bli_auxinfo_set_ps_a(mr, &aux); // 2nd idx stride, maybe...
-    bli_auxinfo_set_ps_b(nr, &aux); // TODO: check if it's 2nd idx stride.
-    bli_auxinfo_set_schema_a(BLIS_PACKED_COL_PANELS, &aux);
-    bli_auxinfo_set_schema_b(BLIS_PACKED_COL_PANELS, &aux);
 
     // Scratchpad space.
     // TODO: move it to a higher level.

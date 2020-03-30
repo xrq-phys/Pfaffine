@@ -43,6 +43,7 @@ int main(const int argc, const char *argv[])
         } fprintf(fid_b, "\n");
     }
 
+    printf("Executing plain.\n");
     for (unsigned j = 0; j < N_; ++j)
         for (unsigned i = 0; i < M_; ++i)
             matC(i, j) = 0.0;
@@ -64,6 +65,7 @@ int main(const int argc, const char *argv[])
     for (unsigned j = 0; j < N_; ++j)
         for (unsigned i = 0; i < M_; ++i)
             matC(i, j) = 0.0;
+    printf("Executing accelerated.\n");
     skr2k<double>('U', 'N', N_, K_, 1.0, ptrA, M_, ptrB, N_, 1.0, ptrC, M_);
     for (unsigned i = 0; i < N_; ++i) {
         for (unsigned j = 0; j < M_; ++j)
