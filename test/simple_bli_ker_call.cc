@@ -29,7 +29,7 @@ int main(const int argc, const char *argv[])
     inc_t nr = bli_cntx_get_blksz_def_dt(BLIS_DOUBLE, BLIS_NR, cntx);
     cout << mr << '\t' << nr << '\n';
     // writes address of queried microkernel and the most common haswell 6x8 kernel.
-    cout << (void *)ugemm << '\t' << (void *)&bli_dgemm_haswell_asm_6x8 << endl;
+    // cout << (void *)ugemm << '\t' << (void *)&bli_dgemm_haswell_asm_6x8 << endl;
 
     // prepares input and output container.
     matrix<double, column_major> matA(mr, 8);
@@ -69,7 +69,7 @@ int main(const int argc, const char *argv[])
 
     // Call kernel (in form of c function pointer) from c++:
     // ugemm(8, &alpha, ptrA, ptrB, &beta, ptrC, column_skip=1, mr, def_data, cntx);
-    execute_kernel(ugemm, 8, &alpha, ptrA, ptrB, &beta, ptrC, 1, mr, nullptr, cntx);
+    execute_kernel(ugemm, 8, &alpha, ptrA, ptrB, &beta, ptrC, 1, mr, &def_data, cntx);
     // usually it's calling:
     // bli_dgemm_haswell_asm_6x8(8, &alpha, ptrA, ptrB, &beta, ptrC, 1, mr, &def_data, cntx);
     // equivalent to calling:
