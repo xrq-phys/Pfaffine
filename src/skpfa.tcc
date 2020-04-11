@@ -86,7 +86,7 @@ T skpfa(char uplo, unsigned n,
         printf("After %d changes A=\n", istep+1);
         for (unsigned i = 0; i < n; ++i) {
             for (unsigned j = 0; j < n; ++j)
-                printf("%12f ", A(i, j));
+                printf("%12f ", i < j ? i == j ? 0.0 : A(i, j) : -A(j, i));
             putchar('\n');
         }
 #endif
@@ -190,7 +190,7 @@ T skpfa(char uplo, unsigned n,
         printf("After %d changes A=\n", ist+lpanel);
         for (unsigned i = 0; i < n; ++i) {
             for (unsigned j = 0; j < n; ++j)
-                printf("%12f ", A(i, j));
+                printf("%12f ", i < j ? i == j ? 0.0 : A(i, j) : -A(j, i));
             putchar('\n');
         }
 #endif
