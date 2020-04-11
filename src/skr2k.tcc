@@ -6,8 +6,9 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
-#include "typeswitch.hh"
 #include <iostream>
+#include "kersel.hh"
+#include "blalink.hh"
 
 // Macros for first-index-runs-fastest.
 #define    A(i,j)    A[ (i) + (j)*(ldA) ]
@@ -21,7 +22,7 @@ const unsigned tracblk = 8;
 
 template<typename T>
 void uskr2k(unsigned n, unsigned k, T alpha, T *A, unsigned ldA, T *B, unsigned ldB, T beta, T *C, unsigned ldC,
-            unsigned mr, unsigned nr, void *ugemm, auxinfo_t *aux, cntx_t *cntx, T *buffer)
+            unsigned mr, unsigned nr, T *buffer)
 {
     // Determine microblock size.
     // Sorry for the confusion, but mbkl here shares meaning with nblk, not representing block size.
@@ -47,9 +48,10 @@ void uskr2k(unsigned n, unsigned k, T alpha, T *A, unsigned ldA, T *B, unsigned 
     // Allocate panels.
     T *pakA = buffer;
     T *pakB = buffer + mr * k;
-    T *tmpC = new T[mr * k];
     // Number 1.
     T one = T(1.0);
+    // minus alpha.
+    T malpha = -alpha;
 
     for (unsigned uj = 0; uj < nblk; ++uj) {
         unsigned lenj = (uj+1==nblk) ? nblk_ : nr;
@@ -69,13 +71,11 @@ void uskr2k(unsigned n, unsigned k, T alpha, T *A, unsigned ldA, T *B, unsigned 
                 // Starting indices.
                 unsigned ist = ui*mr;
                 unsigned jst = uj*nr;
-                // Very rough prefetching scheme.
-                // bli_auxinfo_set_next_b(pakB, aux);
-                // bli_auxinfo_set_next_a(&A((ui+1)*mblk, ul*kblk), aux);
+                // TODO: prefetching.
                 // Pick microkernel.
                 if (ist + leni < jst)
-                    if (false) // (ui + 1 != mblk && uj + 1 != nblk)
-                        call_ugemm(ugemm, lenk, alpha, pakA, pakB, beta_, &C(ist, jst), 1, ldC, aux, cntx);
+                    if (mker_available && ui + 1 != mblk && uj + 1 != nblk)
+                        ugemmn(lenk, &alpha, pakA, pakB, &beta_, &C(ist, jst), ldC);
                     else
                         // Vanilla microkernel at off-diagonal.
                         for (unsigned j = 0; j < lenj; ++j)
@@ -86,8 +86,8 @@ void uskr2k(unsigned n, unsigned k, T alpha, T *A, unsigned ldA, T *B, unsigned 
                                         C(ist + i, jst + j) * beta_ + pakA(i, l) * bjl;
                             }
                 else if (ist > jst + lenj)
-                    if (false) // (ui + 1 != mblk && uj + 1 != nblk)
-                        call_ugemm(ugemm, lenk, -alpha, pakA, pakB, one, &C(jst, ist), ldC, 1, aux, cntx);
+                    if (mker_available && ui + 1 != mblk && uj + 1 != nblk)
+                        ugemmt(lenk, &malpha, pakB, pakA, &one, &C(jst, ist), ldC);
                     else
                         for (unsigned i = 0; i < leni; ++i)
                             for (unsigned l = 0; l < lenk; ++l) {
@@ -116,29 +116,21 @@ void uskr2k(unsigned n, unsigned k, T alpha, T *A, unsigned ldA, T *B, unsigned 
             }
         }
     }
-    delete[] tmpC;
 }
 
 template<typename T>
 void skr2k(char uplo, char trans, unsigned n, unsigned k,
            T alpha, T *A, unsigned ldA, T *B, unsigned ldB, T beta, T *C, unsigned ldC)
 {
-    // Set kernel information (except 'next' entries).
-    // TODO: query this information at higher levels could be better.
-    dim_t mr, nr;
-    auxinfo_t aux;
-    cntx_t *cntx = bli_gks_query_cntx();
-    void *ugemm = get_l3uker(C, BLIS_GEMM_UKR, cntx);
-    set_blk_size(C, &mr, &nr, cntx);
-    set_blis_is(C, &aux);
-
     // Scratchpad space.
     // TODO: move it to a higher level.
-    // TODO: support dynamic. Though no >8x8 is present at the moment
-    //       (There will be. After SVE there WILL be.)
+    // TODO: support dynamic, as skx and armsve has a 14*16 gemm size.
     T buffer[128];
     // Size to call directly interface GEMM.
     const unsigned mblk = 32;
+    // Size of microblocks.
+    unsigned mr, nr;
+    set_blk_size(C, &mr, &nr);
 
     // Lo is not implemented. Sorry.
     if (uplo != 'U' && uplo != 'u') {
@@ -172,19 +164,19 @@ void skr2k(char uplo, char trans, unsigned n, unsigned k,
                 uskr2k<T>(lenj, k, alpha,
                           &A(mi*mblk, 0), ldA,
                           &B(mj*mblk, 0), ldB, beta,
-                          &C(mi*mblk, mj*mblk), ldC, mr, nr, ugemm, &aux, cntx, buffer);
+                          &C(mi*mblk, mj*mblk), ldC, mr, nr, buffer);
             else if (mi < mj)
                 // GEMM big-kernel.
-                gemm(BLIS_NO_TRANSPOSE, BLIS_TRANSPOSE, leni, lenj, k, alpha,
-                     &A(mi*mblk, 0), 1, ldA,
-                     &B(mj*mblk, 0), 1, ldB, beta,
-                     &C(mi*mblk, mj*mblk), 1, ldC);
+                gemm('N', 'T', leni, lenj, k, alpha,
+                     &A(mi*mblk, 0), ldA,
+                     &B(mj*mblk, 0), ldB, beta,
+                     &C(mi*mblk, mj*mblk), ldC);
             else
-                // GEMM minus big-kernel.
-                gemm(BLIS_NO_TRANSPOSE, BLIS_TRANSPOSE, lenj, leni, k, -alpha,
-                     &B(mj*mblk, 0), 1, ldB,
-                     &A(mi*mblk, 0), 1, ldA, beta,
-                     &C(mj*mblk, mi*mblk), 1, ldC);
+                // GEMM negative big-kernel.
+                gemm('N', 'T', lenj, leni, k, -alpha,
+                     &B(mj*mblk, 0), ldB,
+                     &A(mi*mblk, 0), ldA, beta,
+                     &C(mj*mblk, mi*mblk), ldC);
         }
     }
 }

@@ -7,7 +7,7 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 #include <iostream>
-#include <blis/blis.h>
+#include "blalink.hh"
 
 // Macros for first-index-runs-fastest.
 #define   A(i,j)   A[ (i) + (j)*(ldA) ]
@@ -94,7 +94,7 @@ T skpfa(char uplo, unsigned n,
         // Update for inverse.
         if (inv) {
             memcpy(vM, &Sp3(0, istep+1), n*sizeof(T));
-            ger(BLIS_NO_CONJUGATE, BLIS_NO_CONJUGATE, n, n, (T)-1.0, vM, 1, vG, 1, Sp3, 1, n);
+            ger(n, n, (T)-1.0, vM, 1, vG, 1, Sp3, n);
         }
     }
 
@@ -164,8 +164,8 @@ T skpfa(char uplo, unsigned n,
 
             // vA from Original A to updated components.
             if (i != 0) {
-                gemv(BLIS_NO_TRANSPOSE, BLIS_NO_CONJUGATE, n, i,-1.0, Sp1, 1, n, &Sp2(icur+1, 0), n, 1.0, vA, 1);
-                gemv(BLIS_NO_TRANSPOSE, BLIS_NO_CONJUGATE, n, i, 1.0, Sp2, 1, n, &Sp1(icur+1, 0), n, 1.0, vA, 1);
+                gemv('N', n, i,-1.0, Sp1, n, &Sp2(icur+1, 0), n, 1.0, vA, 1);
+                gemv('N', n, i, 1.0, Sp2, n, &Sp1(icur+1, 0), n, 1.0, vA, 1);
             }
 
             // M change.
@@ -173,7 +173,7 @@ T skpfa(char uplo, unsigned n,
                 for (unsigned j = 0; j < i; ++j)
                     kM[j] = Sp5(icur+1, j);
                 if (i != 0)
-                    ger(BLIS_NO_CONJUGATE, BLIS_NO_CONJUGATE, n, i, (T)-1.0, vG, 1, kM, 1, Sp5, 1, n);
+                    ger(n, i, (T)-1.0, vG, 1, kM, 1, Sp5, n);
                 // Copy vG to M's change buffer (required).
                 memcpy(&Sp5(0, i), vG, n*sizeof(T));
             }
@@ -199,8 +199,7 @@ T skpfa(char uplo, unsigned n,
         if (inv) {
             // Borrows Sp4.
             memcpy(Sp4, &Sp3(0, ist+1), n*lpanel*sizeof(T));
-            gemm(BLIS_NO_TRANSPOSE, BLIS_TRANSPOSE, 
-                 n, n, lpanel, -1.0, Sp4, 1, n, Sp5, 1, n, 1.0, Sp3, 1, n);
+            gemm('N', 'T', n, n, lpanel, -1.0, Sp4, n, Sp5, n, 1.0, Sp3, n);
         }
     }
 
@@ -214,8 +213,8 @@ T skpfa(char uplo, unsigned n,
 
         // M (A M'), i.e. M' A M in Wimmer's paper.
         // TODO: Write another skmm?
-        gemm(BLIS_NO_TRANSPOSE, BLIS_TRANSPOSE,    n, n, n, (T)1.0, A, 1, ldA, Sp3, 1, n, (T)0.0, Sp4, 1, n);
-        gemm(BLIS_NO_TRANSPOSE, BLIS_NO_TRANSPOSE, n, n, n, (T)1.0, Sp3, 1, n, Sp4, 1, n, (T)0.0, A, 1, ldA);
+        gemm('N', 'T', n, n, n, (T)1.0, A, ldA, Sp3, n, (T)0.0, Sp4, n);
+        gemm('N', 'N', n, n, n, (T)1.0, Sp3, n, Sp4, n, (T)0.0, A, ldA);
     }
 
     return std::abs(PfA); // Return only PfA (+ gauge), inverse is stored in A.
