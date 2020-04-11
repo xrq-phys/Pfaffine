@@ -13,8 +13,8 @@ void findmax(unsigned n, unsigned *i, T *m, T *x)
 {
     using namespace std;
     // (Implicit) register vars.
-    unsigned ireg;
-    T mreg; 
+    unsigned ireg = 0;
+    T mreg = 0.0; 
     for (unsigned j = 0; j < n; ++j)
         if (abs(x[j]) > abs(mreg)) {
             ireg = j;
