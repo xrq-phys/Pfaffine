@@ -25,9 +25,9 @@
  * \param A   Array (reference i.e. address of) A.
  * \param ldA Leading dimension size of A (row-skip).
  * \param inv Whether to compute inverse.
- * \param Sp[1-2] Two n*(npanel+1) scratchpad arrays.
+ * \param Sp[1-2] Two n*npanel scratchpad arrays.
  * \param Sp[3-4] Two n*n scratchpads for computing inverse, used only if inv=true.
- * \param Sp5 n*(npanel+1) scratchpad for computing inverse, untouched if inv=0.
+ * \param Sp5 n*npanel scratchpad for computing inverse, untouched if inv=0.
  */
 template <typename T>
 T skpfa(char uplo, unsigned n, 
@@ -39,18 +39,24 @@ T skpfa(char uplo, unsigned n,
         std::cerr << "Lower triangular storage not implemented. Sorry." << std::endl;
         std::_Exit(EXIT_FAILURE);
     }
-    // Initialize updating-vector's scratchpad.
-    T *vA = Sp1 + n*npanel;
-    T *vG = Sp2 + n*npanel; // alpha_k: Gaussian elimination vector.
+    // Updating-vector's scratchpad.
+    // Default value (1-line buffer) used only when _PR_Simple is enabled.
+    T *vA = Sp1;
+    T *vG = Sp2; // alpha_k: Gaussian elimination vector.
     T *vM, *kM;
-    if (inv) { // Initialize M as identity.
-        vM = Sp5 + n*npanel;
-        kM = Sp4; // Reusable space.
+    if (inv) {
+        // Initialize M as identity.
         for (unsigned j = 0; j < n; ++j) {
             for (unsigned i = 0; i < n; ++i)
                 Sp3(i, j) = 0.0;
             Sp3(j, j) = 1.0;
         }
+        // 1-line buffer.
+        vM = Sp5;
+        // Reusable vector space.
+        // In addition, Sp4 serves as storage for both M-copy and inv(T) * M'.
+        // All 3 usages disposable.
+        kM = Sp4;
     }
 
 #ifdef _PR_Simple
@@ -95,12 +101,16 @@ T skpfa(char uplo, unsigned n,
 #else
     for (unsigned ist = 0; ist < n-2; ist+=npanel) {
         unsigned lpanel = (ist+npanel >= n-2) ? n-2 - ist : npanel;
-        // vA = A[:, ist], A's contribution to u_k.
-        skslc<T>(n, ist, vA, A, ldA);
         for (unsigned i = 0; i < lpanel; ++i) {
             unsigned icur = ist + i;
-            // Updated A[:, icur];
-            memcpy(vG, vA, n*sizeof(T));
+            vG = &Sp2(0, i);
+            if (i == 0)
+                // vA = A[:, ist].
+                skslc<T>(n, ist, vG, A, ldA);
+            else
+                // Updated A[:, icur] is copied from previous itr.
+                memcpy(vG, vA, n*sizeof(T));
+            vA = &Sp1(0, i);
             
             // Pivoting
             if (fabs(icur) < 1e-3) {
@@ -113,8 +123,8 @@ T skpfa(char uplo, unsigned n,
                 if (s < t) {
                     if (i != 0) {
                         // For unmerged updates, swap rows (col maj.).
-                        swap(lpanel, &Sp1(s, 0), n, &Sp1(t, 0), n);
-                        swap(lpanel, &Sp2(s, 0), n, &Sp2(t, 0), n);
+                        swap(i, &Sp1(s, 0), n, &Sp1(t, 0), n);
+                        swap(i, &Sp2(s, 0), n, &Sp2(t, 0), n);
                     }
                     // Swap A.
                     swap(s, &A(0, s), 1, &A(0, t), 1);
@@ -164,13 +174,13 @@ T skpfa(char uplo, unsigned n,
                     kM[j] = Sp5(icur+1, j);
                 if (i != 0)
                     ger(BLIS_NO_CONJUGATE, BLIS_NO_CONJUGATE, n, i, (T)-1.0, vG, 1, kM, 1, Sp5, 1, n);
+                // Copy vG to M's change buffer (required).
                 memcpy(&Sp5(0, i), vG, n*sizeof(T));
             }
 
-            // Write to change buffer.
-            // TODO: I can directly do all the copying/updating to correct position.
-            memcpy(&Sp1(0, i), vA, n*sizeof(T));
-            memcpy(&Sp2(0, i), vG, n*sizeof(T));
+            // Write to change buffer (already done).
+            // memcpy(&Sp1(0, i), vA, n*sizeof(T));
+            // memcpy(&Sp2(0, i), vG, n*sizeof(T));
         }
 
         // Apply transformation.
