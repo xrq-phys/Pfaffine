@@ -74,7 +74,7 @@ void uskr2k(unsigned n, unsigned k, T alpha, T *A, unsigned ldA, T *B, unsigned 
                 // bli_auxinfo_set_next_a(&A((ui+1)*mblk, ul*kblk), aux);
                 // Pick microkernel.
                 if (ist + leni < jst)
-                    if (ui + 1 != mblk && uj + 1 != nblk)
+                    if (false) // (ui + 1 != mblk && uj + 1 != nblk)
                         call_ugemm(ugemm, lenk, alpha, pakA, pakB, beta_, &C(ist, jst), 1, ldC, aux, cntx);
                     else
                         // Vanilla microkernel at off-diagonal.
