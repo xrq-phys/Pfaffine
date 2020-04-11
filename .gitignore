@@ -1,3 +1,6 @@
+# Config
+make.inc
+
 # Compiled
 *.x
 *.o
