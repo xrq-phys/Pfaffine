@@ -30,6 +30,7 @@ int main(const int argc, const char *argv[])
     double *ptrA = &(matA(0, 0));
     double *ptrB = &(matB(0, 0));
     double *ptrC = &(matC(0, 0));
+    double blasp[240];
     for (unsigned l = 0; l < K_; ++l) {
         for (unsigned i = 0; i < M_; ++i) {
             matA(i, l) = randn(rng);
@@ -69,7 +70,7 @@ int main(const int argc, const char *argv[])
     skr2k<double>('U', 'N', N_, K_, 1.0, 
                   ptrA, M_, 
                   ptrB, N_, 1.0, 
-                  ptrC, M_);
+                  ptrC, M_, blasp);
     for (unsigned i = 0; i < N_; ++i) {
         for (unsigned j = 0; j < M_; ++j)
             fprintf(fid_c2, "%16.8e ", matC(i, j));
