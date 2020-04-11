@@ -1,0 +1,7 @@
+AR=ar
+
+CC=clang
+CFLAGS=-O3
+CXX=clang++
+CXXFLAGS=-std=c++11 -O3
+

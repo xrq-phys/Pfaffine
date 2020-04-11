@@ -1,7 +1,9 @@
 # Compiled
 *.x
 *.o
+*.a
 *.dSYM
+dest/
 
 # Editor
 *~
