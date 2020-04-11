@@ -104,3 +104,50 @@ inline void gemm(trans_t transa, trans_t transb, dim_t m, dim_t n, dim_t k, std:
             (dcomplex *)&beta, (dcomplex *)c, rsc, csc); }
 // }
 
+// ger {
+inline void ger(conj_t conjx, conj_t conjy, dim_t m, dim_t n, float alpha, float *x, inc_t incx, float *y, inc_t incy, 
+                float *a, inc_t rsa, inc_t csa)
+{ bli_sger(conjx, conjy, m, n, &alpha, x, incx, y, incy, a, rsa, csa); }
+inline void ger(conj_t conjx, conj_t conjy, dim_t m, dim_t n, double alpha, double *x, inc_t incx, double *y, inc_t incy, 
+                double *a, inc_t rsa, inc_t csa)
+{ bli_dger(conjx, conjy, m, n, &alpha, x, incx, y, incy, a, rsa, csa); }
+inline void ger(conj_t conjx, conj_t conjy, dim_t m, dim_t n, std::complex<float> alpha, 
+                std::complex<float> *x, inc_t incx, std::complex<float> *y, inc_t incy, 
+                std::complex<float> *a, inc_t rsa, inc_t csa)
+{ bli_cger(conjx, conjy, m, n, (scomplex *)&alpha, (scomplex *)x, incx, (scomplex *)y, incy, (scomplex *)a, rsa, csa); }
+inline void ger(conj_t conjx, conj_t conjy, dim_t m, dim_t n, std::complex<double> alpha, 
+                std::complex<double> *x, inc_t incx, std::complex<double> *y, inc_t incy, 
+                std::complex<double> *a, inc_t rsa, inc_t csa)
+{ bli_zger(conjx, conjy, m, n, (dcomplex *)&alpha, (dcomplex *)x, incx, (dcomplex *)y, incy, (dcomplex *)a, rsa, csa); }
+// }
+
+// gemv {
+inline void gemv(trans_t transa, conj_t conjx, dim_t m, dim_t n, float alpha, float *a, inc_t rsa, inc_t csa,
+                 float *x, inc_t incx, float beta, float *y, inc_t incy)
+{ bli_sgemv(transa, conjx, m, n, &alpha, a, rsa, csa, x, incx, &beta, y, incy); }
+inline void gemv(trans_t transa, conj_t conjx, dim_t m, dim_t n, double alpha, double *a, inc_t rsa, inc_t csa,
+                 double *x, inc_t incx, double beta, double *y, inc_t incy)
+{ bli_dgemv(transa, conjx, m, n, &alpha, a, rsa, csa, x, incx, &beta, y, incy); }
+inline void gemv(trans_t transa, conj_t conjx, dim_t m, dim_t n, std::complex<float> alpha, 
+                 std::complex<float> *a, inc_t rsa, inc_t csa,
+                 std::complex<float> *x, inc_t incx, std::complex<float> beta, std::complex<float> *y, inc_t incy)
+{ bli_cgemv(transa, conjx, m, n, (scomplex *)&alpha, (scomplex *)a, rsa, csa, 
+            (scomplex *)x, incx, (scomplex *)&beta, (scomplex *)y, incy); }
+inline void gemv(trans_t transa, conj_t conjx, dim_t m, dim_t n, std::complex<double> alpha, 
+                 std::complex<double> *a, inc_t rsa, inc_t csa,
+                 std::complex<double> *x, inc_t incx, std::complex<double> beta, std::complex<double> *y, inc_t incy)
+{ bli_zgemv(transa, conjx, m, n, (dcomplex *)&alpha, (dcomplex *)a, rsa, csa, 
+            (dcomplex *)x, incx, (dcomplex *)&beta, (dcomplex *)y, incy); }
+// }
+
+// swap {
+inline void swap(dim_t n, float *x, inc_t incx, float *y, inc_t incy)
+{ bli_sswapv(n, x, incx, y, incy); }
+inline void swap(dim_t n, double *x, inc_t incx, double *y, inc_t incy)
+{ bli_dswapv(n, x, incx, y, incy); }
+inline void swap(dim_t n, std::complex<float> *x, inc_t incx, std::complex<float> *y, inc_t incy)
+{ bli_cswapv(n, (scomplex *)x, incx, (scomplex *)y, incy); }
+inline void swap(dim_t n, std::complex<double> *x, inc_t incx, std::complex<double> *y, inc_t incy)
+{ bli_zswapv(n, (dcomplex *)x, incx, (dcomplex *)y, incy); }
+// }
+
