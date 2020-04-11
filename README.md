@@ -26,4 +26,4 @@ Including directly the `.tcc` files is another way and it's more extensive in so
 
 ## Licensing
 
-These source code forms are provided under the [Mozilla Public License](https://www.mozilla.org/en-US/MPL). As long as one keeps modifications of these specific files open, she or he is allowed to use it for whatever she or he likes *at her or his own risk*.
+Except for some [BSD-licensed](https://opensource.org/licenses/BSD-3-Clause) kernels from the [BLIS](https://github.com/flame/blis) project, these source code forms are provided under the [Mozilla Public License](https://www.mozilla.org/en-US/MPL). As long as one keeps modifications of these specific files open, she or he is allowed to use it for whatever she or he likes *at her or his own risk*.
