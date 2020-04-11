@@ -1,5 +1,4 @@
 #include <cstdio>
-#include <blis/blis.h>
 #include <boost/numeric/ublas/matrix.hpp>
 #include <boost/numeric/ublas/io.hpp>
 #include <boost/random/mersenne_twister.hpp>
@@ -47,14 +46,14 @@ int main(const int argc, const char *argv[])
     for (unsigned j = 0; j < N_; ++j)
         for (unsigned i = 0; i < M_; ++i)
             matC(i, j) = 0.0;
-    gemm(BLIS_NO_TRANSPOSE, BLIS_TRANSPOSE, M_, N_, K_, 1.0,
-         ptrA, 1, M_,
-         ptrB, 1, N_, 1.0,
-         ptrC, 1, M_);
-    gemm(BLIS_NO_TRANSPOSE, BLIS_TRANSPOSE, N_, M_, K_, -1.0,
-         ptrB, 1, N_,
-         ptrA, 1, M_, 1.0,
-         ptrC, 1, M_);
+    gemm('N', 'T', M_, N_, K_, 1.0,
+         ptrA, M_,
+         ptrB, N_, 1.0,
+         ptrC, M_);
+    gemm('N', 'T', N_, M_, K_, -1.0,
+         ptrB, N_,
+         ptrA, M_, 1.0,
+         ptrC, M_);
     for (unsigned i = 0; i < N_; ++i) {
         for (unsigned j = 0; j < M_; ++j)
             fprintf(fid_c1, "%16.8e ", matC(i, j));
@@ -66,7 +65,10 @@ int main(const int argc, const char *argv[])
         for (unsigned i = 0; i < M_; ++i)
             matC(i, j) = 0.0;
     printf("Executing accelerated.\n");
-    skr2k<double>('U', 'N', N_, K_, 1.0, ptrA, M_, ptrB, N_, 1.0, ptrC, M_);
+    skr2k<double>('U', 'N', N_, K_, 1.0, 
+                  ptrA, M_, 
+                  ptrB, N_, 1.0, 
+                  ptrC, M_);
     for (unsigned i = 0; i < N_; ++i) {
         for (unsigned j = 0; j < M_; ++j)
             fprintf(fid_c2, "%16.8e ", matC(i, j));
