@@ -3,7 +3,8 @@
 #include <boost/numeric/ublas/io.hpp>
 #include <boost/random/mersenne_twister.hpp>
 #include <boost/random/normal_distribution.hpp>
-#include "../src/skr2k.tcc"
+#include "../src/skr2k.hh"
+#include "../src/blalink.hh"
 
 #define M_ 64
 #define N_ 64

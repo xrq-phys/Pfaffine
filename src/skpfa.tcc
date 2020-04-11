@@ -1,13 +1,19 @@
 /**
- * \file skpfa.cc
+ * \file skpfa.tcc
  * For a Parlett-Reid method for calculation Pfaffian and inverse.
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
+#include "skpfa.hh"
 #include <iostream>
 #include "blalink.hh"
+#include "skr2k.hh"
+
+#include "findmax.tcc"
+#include "skslc.tcc"
+#include "sktdi.tcc"
 
 // Macros for first-index-runs-fastest.
 #define   A(i,j)   A[ (i) + (j)*(ldA) ]

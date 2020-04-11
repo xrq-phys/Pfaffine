@@ -1,11 +1,7 @@
 #include <iostream>
 #include <boost/numeric/ublas/matrix.hpp>
 #include <boost/numeric/ublas/io.hpp>
-#include "../src/findmax.tcc"
-#include "../src/skslc.tcc"
-#include "../src/skr2k.tcc"
-#include "../src/sktdi.tcc"
-#include "../src/skpfa.tcc"
+#include "../src/skpfa.hh"
 
 int main(const int argc, const char *argv[])
 {
