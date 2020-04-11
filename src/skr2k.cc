@@ -7,14 +7,14 @@
 
 template void skr2k<float>
   (char, char, unsigned, unsigned, 
-   float, float *, unsigned, float *, unsigned, float, float *, unsigned);
+   float, float *, unsigned, float *, unsigned, float, float *, unsigned, float *);
 template void skr2k<double>
   (char, char, unsigned, unsigned, 
-   double, double *, unsigned, double *, unsigned, double, double *, unsigned);
+   double, double *, unsigned, double *, unsigned, double, double *, unsigned, double *);
 template void skr2k<scomplex>
   (char, char, unsigned, unsigned, 
-   scomplex, scomplex *, unsigned, scomplex *, unsigned, scomplex, scomplex *, unsigned);
+   scomplex, scomplex *, unsigned, scomplex *, unsigned, scomplex, scomplex *, unsigned, scomplex *);
 template void skr2k<dcomplex>
   (char, char, unsigned, unsigned, 
-   dcomplex, dcomplex *, unsigned, dcomplex *, unsigned, dcomplex, dcomplex *, unsigned);
+   dcomplex, dcomplex *, unsigned, dcomplex *, unsigned, dcomplex, dcomplex *, unsigned, dcomplex *);
 

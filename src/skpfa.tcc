@@ -10,6 +10,7 @@
 #include <iostream>
 #include "blalink.hh"
 #include "skr2k.hh"
+#include "kersel.hh"
 
 #include "findmax.tcc"
 #include "skslc.tcc"
@@ -40,6 +41,13 @@ T skpfa(char uplo, unsigned n,
         T *A, unsigned ldA, unsigned inv,
         T *Sp1, T *Sp2, T *Sp3, T *Sp4, T *Sp5, unsigned npanel)
 {
+    // Allocates packing space.
+    // TODO: Try avoiding in-place allocation.
+    // TODO: Or allowing a global in-place allocation.
+    unsigned mr, nr;
+    set_blk_size<T>(&mr, &nr);
+    T SpBla[tracblk * (mr + nr)];
+
     // Error exit for not implemented.
     if (uplo != 'U' && uplo != 'u') {
         std::cerr << "Lower triangular storage not implemented. Sorry." << std::endl;
@@ -86,7 +94,7 @@ T skpfa(char uplo, unsigned n,
 
         // Here I'm not implementing additional skr2.
         // Directly call special case of skr2k<T>.
-        skr2k<T>(uplo, 'N', n, 1, 1.0, vG, n, vA, n, 1.0, A, ldA);
+        skr2k<T>(uplo, 'N', n, 1, 1.0, vG, n, vA, n, 1.0, A, ldA, SpBla);
 
 #ifdef _Pfaff_Debug
         printf("After %d changes A=\n", istep+1);
@@ -190,7 +198,7 @@ T skpfa(char uplo, unsigned n,
         }
 
         // Apply transformation.
-        skr2k<T>(uplo, 'N', n, lpanel, 1.0, Sp2, n, Sp1, n, 1.0, A, ldA);
+        skr2k<T>(uplo, 'N', n, lpanel, 1.0, Sp2, n, Sp1, n, 1.0, A, ldA, SpBla);
 
 #ifdef _Pfaff_Debug
         printf("After %d changes A=\n", ist+lpanel);

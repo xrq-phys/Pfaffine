@@ -12,12 +12,17 @@ typedef std::complex<float>  scomplex;
 typedef std::complex<double> dcomplex;
 
 // no optimized microkernel available.
-static const bool mker_available = 0;
+template <typename T> inline unsigned mker_available(void);
+template <> inline unsigned mker_available<float>   (void) { return 0; }
+template <> inline unsigned mker_available<double>  (void) { return 0; }
+template <> inline unsigned mker_available<scomplex>(void) { return 0; }
+template <> inline unsigned mker_available<dcomplex>(void) { return 0; }
 // block size
-inline void set_blk_size(float    *dum, unsigned *mr, unsigned *nr) { *mr = 6; *nr = 8; }
-inline void set_blk_size(double   *dum, unsigned *mr, unsigned *nr) { *mr = 6; *nr = 8; }
-inline void set_blk_size(scomplex *dum, unsigned *mr, unsigned *nr) { *mr = 4; *nr = 4; }
-inline void set_blk_size(dcomplex *dum, unsigned *mr, unsigned *nr) { *mr = 4; *nr = 4; }
+template <typename T> inline void set_blk_size(unsigned *mr, unsigned *nr);
+template <> inline void set_blk_size<float>   (unsigned *mr, unsigned *nr) { *mr = 6; *nr = 8; }
+template <> inline void set_blk_size<double>  (unsigned *mr, unsigned *nr) { *mr = 6; *nr = 8; }
+template <> inline void set_blk_size<scomplex>(unsigned *mr, unsigned *nr) { *mr = 4; *nr = 4; }
+template <> inline void set_blk_size<dcomplex>(unsigned *mr, unsigned *nr) { *mr = 4; *nr = 4; }
 // gemm kernels
 // mr * nr kernels.
 inline void ugemmn(unsigned k, float *alpha, float *pakA, float *pakB, float *beta, float *C, unsigned ldC)

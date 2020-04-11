@@ -75,7 +75,7 @@ void uskr2k(unsigned n, unsigned k, T alpha, T *A, unsigned ldA, T *B, unsigned 
                 // TODO: prefetching.
                 // Pick microkernel.
                 if (ist + leni < jst)
-                    if (mker_available && ui + 1 != mblk && uj + 1 != nblk)
+                    if (mker_available<T>() && ui + 1 != mblk && uj + 1 != nblk)
                         ugemmn(lenk, &alpha, pakA, pakB, &beta_, &C(ist, jst), ldC);
                     else
                         // Vanilla microkernel at off-diagonal.
@@ -87,7 +87,7 @@ void uskr2k(unsigned n, unsigned k, T alpha, T *A, unsigned ldA, T *B, unsigned 
                                         C(ist + i, jst + j) * beta_ + pakA(i, l) * bjl;
                             }
                 else if (ist > jst + lenj)
-                    if (mker_available && ui + 1 != mblk && uj + 1 != nblk)
+                    if (mker_available<T>() && ui + 1 != mblk && uj + 1 != nblk)
                         ugemmt(lenk, &malpha, pakB, pakA, &one, &C(jst, ist), ldC);
                     else
                         for (unsigned i = 0; i < leni; ++i)
@@ -121,17 +121,13 @@ void uskr2k(unsigned n, unsigned k, T alpha, T *A, unsigned ldA, T *B, unsigned 
 
 template<typename T>
 void skr2k(char uplo, char trans, unsigned n, unsigned k,
-           T alpha, T *A, unsigned ldA, T *B, unsigned ldB, T beta, T *C, unsigned ldC)
+           T alpha, T *A, unsigned ldA, T *B, unsigned ldB, T beta, T *C, unsigned ldC, T *buffer)
 {
-    // Scratchpad space.
-    // TODO: move it to a higher level.
-    // TODO: support dynamic, as skx and armsve has a 14*16 gemm size.
-    T buffer[128];
     // Size to call directly interface GEMM.
     const unsigned mblk = 32;
     // Size of microblocks.
     unsigned mr, nr;
-    set_blk_size(C, &mr, &nr);
+    set_blk_size<T>(&mr, &nr);
 
     // Lo is not implemented. Sorry.
     if (uplo != 'U' && uplo != 'u') {

@@ -5,7 +5,10 @@
  */
 #pragma once
 
+// Block size.
+extern const unsigned tracblk;
+
 template<typename T>
 void skr2k(char uplo, char trans, unsigned n, unsigned k,
-           T alpha, T *A, unsigned ldA, T *B, unsigned ldB, T beta, T *C, unsigned ldC);
+           T alpha, T *A, unsigned ldA, T *B, unsigned ldB, T beta, T *C, unsigned ldC, T *buffer);
 
