@@ -31,10 +31,10 @@ inline void gemm(char transa, char transb, unsigned m, unsigned n, unsigned k, d
 { dgemm_(&transa, &transb, &m, &n, &k, &alpha, a, &lda, b, &ldb, &beta, c, &ldc); }
 inline void gemm(char transa, char transb, unsigned m, unsigned n, unsigned k, scomplex alpha,
                  scomplex *a, unsigned lda, scomplex *b, unsigned ldb, scomplex beta, scomplex *c, unsigned ldc)
-{ cgemm_(&transa, &transb, &m, &n, &k, (void *)&alpha, (void *)a, &lda, (void *)b, &ldb, (void *)&beta, (void *)c, &ldc); }
+{ cgemm_(&transa, &transb, &m, &n, &k, &alpha, a, &lda, b, &ldb, &beta, c, &ldc); }
 inline void gemm(char transa, char transb, unsigned m, unsigned n, unsigned k, dcomplex alpha,
                  dcomplex *a, unsigned lda, dcomplex *b, unsigned ldb, dcomplex beta, dcomplex *c, unsigned ldc)
-{ zgemm_(&transa, &transb, &m, &n, &k, (void *)&alpha, (void *)a, &lda, (void *)b, &ldb, (void *)&beta, (void *)c, &ldc); }
+{ zgemm_(&transa, &transb, &m, &n, &k, &alpha, a, &lda, b, &ldb, &beta, c, &ldc); }
 
 
 // ger
@@ -43,10 +43,10 @@ void sger_(unsigned *m, unsigned *n, float *alpha,
            float *x, unsigned *incx, float *y, unsigned *incy, float *a, unsigned *lda);
 void dger_(unsigned *m, unsigned *n, double *alpha, 
            double *x, unsigned *incx, double *y, unsigned *incy, double *a, unsigned *lda);
-void cger_(unsigned *m, unsigned *n, void *alpha, 
-           void *x, unsigned *incx, void *y, unsigned *incy, void *a, unsigned *lda);
-void zger_(unsigned *m, unsigned *n, void *alpha, 
-           void *x, unsigned *incx, void *y, unsigned *incy, void *a, unsigned *lda);
+void cgeru_(unsigned *m, unsigned *n, void *alpha, 
+            void *x, unsigned *incx, void *y, unsigned *incy, void *a, unsigned *lda);
+void zgeru_(unsigned *m, unsigned *n, void *alpha, 
+            void *x, unsigned *incx, void *y, unsigned *incy, void *a, unsigned *lda);
 }
 inline void ger(unsigned m, unsigned n, float alpha, 
                 float *x, unsigned incx, float *y, unsigned incy, float *a, unsigned lda)
@@ -56,10 +56,10 @@ inline void ger(unsigned m, unsigned n, double alpha,
 { dger_(&m, &n, &alpha, x, &incx, y, &incy, a, &lda); }
 inline void ger(unsigned m, unsigned n, scomplex alpha, 
                 scomplex *x, unsigned incx, scomplex *y, unsigned incy, scomplex *a, unsigned lda)
-{ cger_(&m, &n, &alpha, x, &incx, y, &incy, a, &lda); }
+{ cgeru_(&m, &n, &alpha, x, &incx, y, &incy, a, &lda); }
 inline void ger(unsigned m, unsigned n, dcomplex alpha, 
                 dcomplex *x, unsigned incx, dcomplex *y, unsigned incy, dcomplex *a, unsigned lda)
-{ zger_(&m, &n, &alpha, x, &incx, y, &incy, a, &lda); }
+{ zgeru_(&m, &n, &alpha, x, &incx, y, &incy, a, &lda); }
 
 
 // gemv
