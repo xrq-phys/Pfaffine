@@ -25,7 +25,12 @@ template <> inline unsigned mker_available<dcomplex>(void) { return 0; }
 // block size
 template <typename T> inline void set_blk_size(unsigned *mr, unsigned *nr);
 template <> inline void set_blk_size<float>   (unsigned *mr, unsigned *nr) { *mr = 6; *nr = 8; }
-template <> inline void set_blk_size<double>  (unsigned *mr, unsigned *nr) { *mr = 6; *nr = 8; }
+template <> inline void set_blk_size<double>  (unsigned *mr, unsigned *nr)
+#if defined(_Sandy)
+{ *mr = 4; *nr = 4; }
+#else
+{ *mr = 6; *nr = 8; }
+#endif
 template <> inline void set_blk_size<scomplex>(unsigned *mr, unsigned *nr) { *mr = 4; *nr = 4; }
 template <> inline void set_blk_size<dcomplex>(unsigned *mr, unsigned *nr) { *mr = 4; *nr = 4; }
 
