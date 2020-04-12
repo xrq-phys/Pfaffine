@@ -8,6 +8,7 @@
  */
 #include "skr2k.hh"
 #include <iostream>
+#include <cstring>
 #include "kersel.hh"
 #include "blalink.hh"
 
