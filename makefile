@@ -5,9 +5,6 @@ help:
 lib: make.inc
 	cd src; make -f makefile
 
-sandy: make.inc
-	cd src; make -f makefile sandy
-
 install: make.inc
 	cd src; make -f makefile install
 

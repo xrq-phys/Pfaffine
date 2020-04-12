@@ -2,6 +2,8 @@ include ../make.inc
 
 OBJECTS= skpfa.o skr2k.o
 
+include ../config/$(ARCH).mk
+
 all: $(OBJECTS) libpfaffine.a
 
 libpfaffine.a: $(OBJECTS)
@@ -18,19 +20,8 @@ install: libpfaffine.a
 	cp skr2k.hh ../dest/include
 	cp libpfaffine.a ../dest/lib
 
-sandy: libpfaffine.a kernel/mgemm_sandy.o
-	# Relink
-	rm libpfaffine.a
-	$(AR) rvu libpfaffine.a $(OBJECTS) kernel/mgemm_sandy.o
-
 .SUFFIXES: .o .cc
 
 .cc.o:
 	$(CXX) $(CXXFLAGS) -c $< -o $@
-
-.SUFFIXES: .o .c
-
-.c.o:
-	$(CC) $(CFLAGS) -c $< -o $@
-
 

@@ -1,7 +1,18 @@
+# AR executable.
 AR=ar
 
+# Compilers. 
+# GCC with G++ is the general choice on linux.
+# Intel compilers recommended on Intel processors.
 CC=clang
 CFLAGS=-O3
 CXX=clang++
 CXXFLAGS=-std=c++11 -O3
+
+# Architecture specification.
+# A list available under config/ directory.
+# Use generic if one finds nothing suitable.
+# One can create her or his own under config/ as well.
+# A mac processor usually has at least SSE.
+ARCH=sandy
 
