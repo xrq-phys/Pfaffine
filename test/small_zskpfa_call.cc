@@ -33,7 +33,7 @@ int main(const int argc, const char *argv[])
                                &mat1(0, 0), &mat2(0, 0),
                                &matC(0, 0), &matD(0, 0), &mat3(0, 0), 3);
 
-    printf("Pfa = %16.8e\n", real(Pfa));
+    printf("Pfa = (%16.8e, %16.8e)\n", real(Pfa), imag(Pfa));
     // row-col formatted output of C.
     for (unsigned i = 0; i < 8; i++) {
         for (unsigned j = 0; j < 8; j++)
