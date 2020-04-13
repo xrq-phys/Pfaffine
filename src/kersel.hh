@@ -37,6 +37,13 @@ template <> inline unsigned mker_available<dcomplex>(void)
 #else
 { return 0; }
 #endif
+// if a complex type has corresponding real kernel.
+// roadmap: utillize real kernels to compute complex.
+template <typename T> inline unsigned elemker_available(void);
+template <> inline unsigned elemker_available<scomplex>(void) { return mker_available<float> (); }
+template <> inline unsigned elemker_available<dcomplex>(void) { return mker_available<double>(); }
+template <> inline unsigned elemker_available<float >(void) { return 0; }
+template <> inline unsigned elemker_available<double>(void) { return 0; }
 // block size
 template <typename T> inline void set_blk_size(unsigned *mr, unsigned *nr);
 template <> inline void set_blk_size<float>   (unsigned *mr, unsigned *nr)
