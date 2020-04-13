@@ -9,6 +9,7 @@
 #include "skpfa.hh"
 #include <iostream>
 #include <cstring>
+#include <complex>
 #include "blalink.hh"
 #include "skr2k.hh"
 #include "kersel.hh"
@@ -252,6 +253,7 @@ T skpfa(char uplo, unsigned n,
         gemm('N', 'N', n, n, n, (T)1.0, Sp3, n, Sp4, n, (T)0.0, A, ldA);
     }
 
-    return std::abs(PfA); // Return only PfA (+ gauge), inverse is stored in A.
+    // Return only PfA (+ gauge), inverse is stored in A.
+    return std::real(PfA) > 0 ? PfA : -PfA;
 }
 
