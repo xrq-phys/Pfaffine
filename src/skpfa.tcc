@@ -121,10 +121,18 @@ T skpfa(char uplo, unsigned n,
             vG = &Sp2(0, i);
             if (i == 0)
                 // vA = A[:, ist].
-                skslc<T>(n, ist, vG, A, ldA);
+                // skslc<T>(n, ist, vG, A, ldA);
+                // Copy lower-trangular non-zero components.
+                for (unsigned j = icur+1; j < n; ++j)
+                    vG[j] = -A(ist, j);
             else
                 // Updated A[:, icur] is copied from previous itr.
-                memcpy(vG, vA, n*sizeof(T));
+                // memcpy(vG, vA, n*sizeof(T));
+                // Infact full copying is not necessary. Only for lower-trangular parts.
+                memcpy(vG+icur, vA+icur, (n-icur)*sizeof(T));
+            // Additional zeroizing required after simplification above.
+            for (unsigned j = 0; j < icur+1; ++j)
+                vG[j] = 0.0;
             vA = &Sp1(0, i);
             
             // Pivoting
@@ -168,19 +176,29 @@ T skpfa(char uplo, unsigned n,
             }
 
             // vA = A[:, icur+1]
-            skslc<T>(n, icur+1, vA, A, ldA);
+            // skslc<T>(n, icur+1, vA, A, ldA);
+            // Only upper-triagular is icur, icur+1
+            for (unsigned j = 0; j < icur; ++j)
+                vA[j] = 0.0;
+            vA[icur] = A(icur, icur+1);
+            vA[icur+1] = 0.0;
+            for (unsigned j = icur+2; j < n; ++j)
+                vA[j] = -A(icur+1, j);
 
             // Divide by alpha_k
             T alpha_k = vG[icur+1];
-            for (unsigned j = 0; j < n; ++j)
+            for (unsigned j = icur+1 /*0*/; j < n; ++j)
                 vG[j] /= alpha_k;
-            for (unsigned j = 0; j <= icur+1; ++j)
-                vG[j] = 0.0;
+            // for (unsigned j = 0; j <= icur+1; ++j)
+            //     vG[j] = 0.0;
+            // Only lower triangular is copied, zeroizing also reduced.
+            // NB: if vG is fully copied at step-1, should do also vG[icur-1]=0.0;
+            vG[icur+1] = 0.0;
 
-            // vA from Original A to updated components.
+            // vA from Original A to updated components, skipping zeros.
             if (i != 0) {
-                gemv('N', n, i,-1.0, Sp1, n, &Sp2(icur+1, 0), n, 1.0, vA, 1);
-                gemv('N', n, i, 1.0, Sp2, n, &Sp1(icur+1, 0), n, 1.0, vA, 1);
+                gemv('N', n-icur, i,-1.0, &Sp1(icur, 0), n, &Sp2(icur+1, 0), n, 1.0, vA+icur, 1);
+                gemv('N', n-icur, i, 1.0, &Sp2(icur, 0), n, &Sp1(icur+1, 0), n, 1.0, vA+icur, 1);
             }
 
             // M change.
@@ -199,7 +217,9 @@ T skpfa(char uplo, unsigned n,
         }
 
         // Apply transformation.
-        skr2k<T>(uplo, 'N', n, lpanel, 1.0, Sp2, n, Sp1, n, 1.0, A, ldA, SpBla);
+        // skr2k<T>(uplo, 'N', n, lpanel, 1.0, Sp2, n, Sp1, n, 1.0, A, ldA, SpBla);
+        skr2k<T>(uplo, 'N', n-ist, lpanel, 1.0, 
+                 &Sp2(ist, 0), n, &Sp1(ist, 0), n, 1.0, &A(ist, ist), ldA, SpBla);
 
 #ifdef _Pfaff_Debug
         printf("After %d changes A=\n", ist+lpanel);
