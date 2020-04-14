@@ -11,6 +11,7 @@ libpfaffine.a: $(OBJECTS)
 
 clean:
 	rm -f *.o
+	rm -f kernel/*.o
 	rm -f libpfaffine.a
 
 install: libpfaffine.a
