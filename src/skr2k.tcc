@@ -125,7 +125,7 @@ void skr2k(char uplo, char trans, unsigned n, unsigned k,
            T alpha, T *A, unsigned ldA, T *B, unsigned ldB, T beta, T *C, unsigned ldC, T *buffer)
 {
     // Size to call directly interface GEMM.
-    const unsigned mblk = 32;
+    const unsigned mblk = 96;
     // Size of microblocks.
     unsigned mr, nr;
     set_blk_size<T>(&mr, &nr);
