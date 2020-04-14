@@ -49,7 +49,7 @@ void uskr2k(unsigned n, unsigned k, T alpha, T *A, unsigned ldA, T *B, unsigned 
 
     // Allocate panels.
     T *pakA = buffer;
-    T *pakB = buffer + mr * k;
+    T *pakB = buffer + mr * tracblk;
     // Number 1.
     T one = T(1.0);
     // minus alpha.
@@ -146,6 +146,7 @@ void skr2k(char uplo, char trans, unsigned n, unsigned k,
     // Big-blocking scheme, only for n.
     unsigned nblk = n / mblk;
     unsigned nblk_= n % mblk;
+    nblk  =!nblk_ ? nblk  : nblk + 1;
     nblk_ = nblk_ ? nblk_ : mblk;
     // Exception
     if (nblk == 0) {
