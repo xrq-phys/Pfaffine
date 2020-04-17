@@ -1,6 +1,6 @@
 include ../make.inc
 
-OBJECTS= skpfa.o skr2k.o
+OBJECTS= ../interface/pfaffine.o skpfa.o skr2k.o
 
 include ../config/$(ARCH).mk
 
@@ -12,6 +12,7 @@ libpfaffine.a: $(OBJECTS)
 clean:
 	rm -f *.o
 	rm -f kernel/*.o
+	rm -f ../interface/*.o
 	rm -f libpfaffine.a
 
 install: libpfaffine.a
@@ -24,5 +25,5 @@ install: libpfaffine.a
 .SUFFIXES: .o .cc
 
 .cc.o:
-	$(CXX) $(CXXFLAGS) -c $< -o $@
+	$(CXX) -I. $(CXXFLAGS) -c $< -o $@
 

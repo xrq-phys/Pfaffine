@@ -22,10 +22,11 @@ Including directly the `.tcc` files is another way and it's more extensive in so
 
 - ~~Migrate `gemm` kernels from Pfapack and BLIS;~~
 - SVE kernel for Fugaku (Please use `neon` kernels at the moment);
-- Default memory allocation;
+- `done but needs improvement` Default memory allocation;
 - Adjustable `k`-blocking;
 - Automatically determine panel size `npanel`;
-- Add a low-level **C99**/Fortran interface;
+- ~~Add a low-level **C99**/Fortran interface~~;
+- Provide document here for all interfaces;
 - Support CMake.
 
 ## Licensing
