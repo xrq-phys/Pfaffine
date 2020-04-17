@@ -18,10 +18,14 @@ Including directly the `.tcc` files is another way and it's more extensive in so
 
 `skpfa<T>` (where `T` can be `float`, `double`, `complex<float>` or `complex<double>`) is available for doing a blocked-update based calculation of Pfaffian. One can find detailed explanation in docstring in `src/skpfa.tcc`.
 
-## WIP List
+## Roadmaps (WIP List)
 
-- Migrate `gemm` kernels from Pfapack and BLIS;
-- Add a low-level C/Fortran interface;
+- ~~Migrate `gemm` kernels from Pfapack and BLIS;~~
+- SVE kernel for Fugaku (Please use `neon` kernels at the moment);
+- Default memory allocation;
+- Adjustable `k`-blocking;
+- Automatically determine panel size `npanel`;
+- Add a low-level **C99**/Fortran interface;
 - Support CMake.
 
 ## Licensing
