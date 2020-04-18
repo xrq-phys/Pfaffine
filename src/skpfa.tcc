@@ -102,7 +102,7 @@ T skpfa(char uplo, unsigned n,
         printf("After %d changes A=\n", istep+1);
         for (unsigned i = 0; i < n; ++i) {
             for (unsigned j = 0; j < n; ++j)
-                printf("%12f ", i < j ? i == j ? 0.0 : A(i, j) : -A(j, i));
+                printf("%12f ", std::real(i < j ? i == j ? 0.0 : A(i, j) : -A(j, i)));
             putchar('\n');
         }
 #endif
@@ -137,7 +137,7 @@ T skpfa(char uplo, unsigned n,
             vA = &Sp1(0, i);
             
             // Pivoting
-            if (fabs(icur) < 1e-3) {
+            if (std::abs(vG[icur+1]) < 1e-3) {
                 unsigned s = icur+1;
                 unsigned t;
                 T Gmax;
@@ -226,7 +226,7 @@ T skpfa(char uplo, unsigned n,
         printf("After %d changes A=\n", ist+lpanel);
         for (unsigned i = 0; i < n; ++i) {
             for (unsigned j = 0; j < n; ++j)
-                printf("%12f ", i < j ? i == j ? 0.0 : A(i, j) : -A(j, i));
+                printf("%12f ", std::real(i < j ? i == j ? 0.0 : A(i, j) : -A(j, i)));
             putchar('\n');
         }
 #endif
