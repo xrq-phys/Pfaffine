@@ -58,7 +58,7 @@ In all cases above, `A` will be replaced by its full inverse if `inv=1`, otherwi
 - Automatically determine panel size `npanel`;
 - ~~Add a low-level **C99**/Fortran interface~~;
 - ~~Add a compatibility interface consistent to~~ [Pfapack](https://michaelwimmer.org/downloads.html);
-- Provide document here for all interfaces;
+- ~~Provide document here for all Pfaffine-defined interfaces;~~
 - Support CMake.
 
 ## Licensing
