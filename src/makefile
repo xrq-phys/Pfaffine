@@ -1,6 +1,10 @@
 include ../make.inc
 
-OBJECTS= ../interface/pfaffine.o skpfa.o skr2k.o
+OBJECTS= skpfa.o skr2k.o \
+		 ../interface/pfaffine.o \
+		 ../interface/pfapack.o
+HEADERS= blalink.hh kersel.hh skpfa.hh skr2k.hh
+CXXFLAGS += -I.
 
 include ../config/$(ARCH).mk
 
@@ -22,8 +26,8 @@ install: libpfaffine.a
 	cp skr2k.hh ../dest/include
 	cp libpfaffine.a ../dest/lib
 
-.SUFFIXES: .o .cc
+.SUFFIXES: .o .cc .tcc
 
-.cc.o:
-	$(CXX) -I. $(CXXFLAGS) -c $< -o $@
+%.o : %.cc %.tcc $(HEADERS)
+	$(CXX) $(CXXFLAGS) -c $< -o $@
 
