@@ -89,7 +89,7 @@ void uskr2k(unsigned n, unsigned k, T alpha, T *A, unsigned ldA, T *B, unsigned 
                 // TODO: prefetching.
                 // Pick microkernel.
                 if (ist + leni < jst)
-                    if (mker_available<T>() && ui + 1 != mblk && uj + 1 != nblk)
+                    if (mker_available<T>() && leni == mr && lenj == nr)
                         ugemmn(lenk, &alpha, pakA, pakB, &beta_, &C(ist, jst), ldC);
                     else
                         // Vanilla microkernel at off-diagonal.
@@ -101,7 +101,7 @@ void uskr2k(unsigned n, unsigned k, T alpha, T *A, unsigned ldA, T *B, unsigned 
                                         C(ist + i, jst + j) * beta_ + pakA(i, l) * bjl;
                             }
                 else if (ist > jst + lenj)
-                    if (mker_available<T>() && ui + 1 != mblk && uj + 1 != nblk)
+                    if (mker_available<T>() && leni == mr && lenj == nr)
                         ugemmt(lenk, &malpha, pakB, pakA, &one, &C(jst, ist), ldC);
                     else
                         for (unsigned i = 0; i < leni; ++i)
