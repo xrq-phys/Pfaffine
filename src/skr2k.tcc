@@ -8,6 +8,7 @@
  */
 #include "skr2k.hh"
 #include <iostream>
+#include <memory>
 #include <cstring>
 #include "kersel.hh"
 #include "blalink.hh"
@@ -47,9 +48,15 @@ void uskr2k(unsigned n, unsigned k, T alpha, T *A, unsigned ldA, T *B, unsigned 
     else
         kblk_ = tracblk;
 
+    // Panel sizes
+    std::size_t spaceAsz = mr * tracblk * sizeof(T) + 32;
+    std::size_t spaceBsz = nr * tracblk * sizeof(T) + 32;
     // Allocate panels.
-    T *pakA = buffer;
-    T *pakB = buffer + mr * tracblk;
+    void *spaceA = (void *)buffer;
+    void *spaceB = (void *)((unsigned long)buffer + spaceAsz);
+    T *pakA = (T *)std::align(32, mr * tracblk * sizeof(T), spaceA, spaceAsz);
+    T *pakB = (T *)std::align(32, nr * tracblk * sizeof(T), spaceB, spaceBsz);
+
     // Number 1.
     T one = T(1.0);
     // minus alpha.
