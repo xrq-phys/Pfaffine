@@ -121,21 +121,42 @@ void uskr2k(unsigned n, unsigned k, T alpha, T *A, unsigned ldA, T *B, unsigned 
                             }
                 else
                     // Special microkernel at the diagonal.
-                    for (unsigned j = 0; j < lenj; ++j)
-                        for (unsigned l = 0; l < lenk; ++l) {
-                            T bjl = pakB(j, l) * alpha;
-                            for (unsigned i = 0; i < leni; ++i) {
-                                // Indices in the 'big' block.
-                                unsigned i_ = i + ist;
-                                unsigned j_ = j + jst;
-                                if (i_ < j_)
-                                    C(i_, j_) = C(i_, j_) * beta_ + pakA(i, l) * bjl;
-                                else if (i_ > j_)
-                                    C(j_, i_) = C(j_, i_) * one - pakA(i, l) * bjl;
-                                else
-                                    C(i_, j_) = 0.0;
-                            }
-                        }
+                    if (mker_available<T>() && leni == mr && lenj == nr) {
+                        // Update both contributions at diagonal.
+                        // NOTE: This will cause some of lower triangular part overriden.
+                        //       Still, no effect on result.
+                        ugemmn(lenk, &alpha, pakA, pakB, &beta_, &C(ist, jst), ldC);
+                        ugemmt(lenk, &malpha, pakB, pakA, &one, &C(jst, ist), ldC);
+                    } else
+                        if (leni == lenj && ist == jst)
+                            // Symmetric diagonal case.
+                            for (unsigned j = 0; j < lenj; ++j)
+                                for (unsigned l = 0; l < lenk; ++l) {
+                                    T bjl = pakB(j, l) * alpha;
+                                    T ajl = pakA(j, l) * alpha;
+                                    for (unsigned i = 0; i < j; ++i) {
+                                        unsigned i_ = i + ist;
+                                        unsigned j_ = j + jst;
+                                        C(i_, j_) = C(i_, j_) * beta_ +
+                                            pakA(i, l) * bjl - pakB(i, l) * ajl;
+                                    }
+                                }
+                        else
+                            for (unsigned j = 0; j < lenj; ++j)
+                                for (unsigned l = 0; l < lenk; ++l) {
+                                    T bjl = pakB(j, l) * alpha;
+                                    for (unsigned i = 0; i < leni; ++i) {
+                                        // Indices in the 'big' block.
+                                        unsigned i_ = i + ist;
+                                        unsigned j_ = j + jst;
+                                        if (i_ < j_)
+                                            C(i_, j_) = C(i_, j_) * beta_ + pakA(i, l) * bjl;
+                                        else if (i_ > j_)
+                                            C(j_, i_) = C(j_, i_) * one - pakA(i, l) * bjl;
+                                        else
+                                            C(i_, j_) = 0.0;
+                                    }
+                                }
             }
         }
     }
