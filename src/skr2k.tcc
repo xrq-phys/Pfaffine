@@ -22,6 +22,9 @@
 // Block size of k.
 const unsigned tracblk = 8;
 
+// Block size for GEMM.
+const unsigned extblk = 64;
+
 template<typename T>
 void uskr2k(unsigned n, unsigned k, T alpha, T *A, unsigned ldA, T *B, unsigned ldB, T beta, T *C, unsigned ldC,
             unsigned mr, unsigned nr, T *buffer)
@@ -47,13 +50,23 @@ void uskr2k(unsigned n, unsigned k, T alpha, T *A, unsigned ldA, T *B, unsigned 
     else
         kblk_ = tracblk;
 
-    // Allocate panels.
-    T *pakA = buffer;
-    T *pakB = buffer + mr * tracblk;
     // Number 1.
     T one = T(1.0);
     // minus alpha.
     T malpha = -alpha;
+
+    // Allocate panels.
+    T *pakB = buffer;
+    T *pakAbase = buffer + nr * tracblk;
+    // Pack the whole A.
+    unsigned pakAsz = mr * k;
+    unsigned pakApn = mr * tracblk;
+    for (unsigned ui = 0; ui < mblk; ++ui) {
+        unsigned leni = (ui+1==mblk) ? mblk_ : mr;
+        T *pakA = pakAbase + pakAsz * ui;
+        for (unsigned l = 0; l < k; ++l)
+            memcpy(&pakA(0, l), &A(ui*mr, l), sizeof(T) * leni);
+    }
 
     for (unsigned uj = 0; uj < nblk; ++uj) {
         unsigned lenj = (uj+1==nblk) ? nblk_ : nr;
@@ -67,9 +80,9 @@ void uskr2k(unsigned n, unsigned k, T alpha, T *A, unsigned ldA, T *B, unsigned 
                 memcpy(&pakB(0, l), &B(uj*nr, l + ul*tracblk), sizeof(T) * lenj);
             for (unsigned ui = 0; ui < mblk; ++ui) {
                 unsigned leni = (ui+1==mblk) ? mblk_ : mr;
-                // Pack A into panels.
-                for (unsigned l = 0; l < lenk; ++l)
-                    memcpy(&pakA(0, l), &A(ui*mr, l + ul*tracblk), sizeof(T) * leni);
+                // Selected packed A panels.
+                T *pakA = pakAbase + pakAsz * ui  // <packed 1st indices.
+                                   + pakApn * ul; // <packed 2nd indices.
                 // Starting indices.
                 unsigned ist = ui*mr;
                 unsigned jst = uj*nr;
@@ -125,7 +138,7 @@ void skr2k(char uplo, char trans, unsigned n, unsigned k,
            T alpha, T *A, unsigned ldA, T *B, unsigned ldB, T beta, T *C, unsigned ldC, T *buffer)
 {
     // Size to call directly interface GEMM.
-    const unsigned mblk = 96;
+    const unsigned mblk = extblk;
     // Size of microblocks.
     unsigned mr, nr;
     set_blk_size<T>(&mr, &nr);
