@@ -61,8 +61,8 @@ void uskr2k(unsigned n, unsigned k, T alpha, T *A, unsigned ldA, T *B, unsigned 
     std::size_t spaceAsz = 32 + mr * mblk * k * sizeof(T);
 
     // Allocate panels.
-    void *spaceB = (void *) buffer;
-    void *spaceA = (void *)(buffer + nr * tracblk);
+    void *spaceB = (void *)buffer;
+    void *spaceA = (void *)((unsigned long)buffer + spaceBsz);
     T *pakB     = (T *)std::align(32, nr * tracblk,  spaceB, spaceBsz);
     T *pakAbase = (T *)std::align(32, mr * mblk * k, spaceA, spaceAsz);
 
