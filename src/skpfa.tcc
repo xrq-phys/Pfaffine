@@ -48,7 +48,20 @@ T skpfa(char uplo, unsigned n,
     // TODO: Or allowing a global in-place allocation.
     unsigned mr, nr;
     set_blk_size<T>(&mr, &nr);
-    T SpBla[tracblk * (mr + nr)];
+    unsigned alloc_trial = 0;
+    unsigned alloc_trial_max = 4;
+    T *SpBla = nullptr;
+    // Use new[] operator as VLAs are somehow bad as the allocation is hard to check.
+    while (SpBla == nullptr) {
+        if (alloc_trial >= alloc_trial_max) {
+            std::cerr << "Unable to allocate memory-packing scratchpads." << std::endl;
+            std::_Exit(EXIT_FAILURE);
+        }
+        // deleting nullptr is safe.
+        delete[] SpBla;
+        SpBla = new T[tracblk * (mr + nr)];
+        ++alloc_trial;
+    }
 
     // Error exit for not implemented.
     if (uplo != 'U' && uplo != 'u') {
@@ -240,6 +253,9 @@ T skpfa(char uplo, unsigned n,
     }
 
 #endif
+    // Release memory packing space.
+    delete[] SpBla;
+
     // Pfaffian
     T PfA = 1.0;
     for (unsigned i = 0; i < n-1; i+=2)
