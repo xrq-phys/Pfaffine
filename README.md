@@ -14,6 +14,10 @@ Simple `makefile` is provided. One can copy the example `make.darwin` to `make.i
 
 Including directly the `.tcc` files is another way and it's more extensive in some sense.
 
+### Comments on the Haswell Kernel
+
+According to tests on @xrq-phys' MacBook i5, Haswell kernels sometimes breaks down calculation for unknown reason. If you encounter this situation also in your application, please try changing optimization flag to `-O1` or `-O0`.
+
 ## Usage
 
 One can select between templated C++ and conventinoal C99 interfaces, which are stored `pfaffine.hh` and `pfaffine.h` correspondingly.
