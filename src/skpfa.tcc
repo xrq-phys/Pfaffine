@@ -9,6 +9,7 @@
 #include "skpfa.hh"
 #include <iostream>
 #include <cstring>
+#include <cstdlib>
 #include <complex>
 #include "blalink.hh"
 #include "skr2k.hh"
@@ -51,19 +52,14 @@ T skpfa(char uplo, unsigned n,
     unsigned pakAsz = npanel * mr;
     unsigned pakBsz = tracblk * nr;
     // A-packing needs full size for maximum performance.
-    unsigned alloc_trial = 0;
-    unsigned alloc_trial_max = 4;
     T *SpBla = nullptr;
-    // Use new[] operator as VLAs are somehow bad as the allocation is hard to check.
-    while (SpBla == nullptr) {
-        if (alloc_trial >= alloc_trial_max) {
-            std::cerr << "Unable to allocate memory-packing scratchpads." << std::endl;
-            std::_Exit(EXIT_FAILURE);
-        }
-        // deleting nullptr is safe.
-        delete[] SpBla;
-        SpBla = new T[pakBsz + (extblk / mr + 1) * pakAsz];
-        ++alloc_trial;
+    // Use malloc() as VLAs are somehow bad as the allocation is hard to check.
+    // Final 32 * 2 is for alignment padding.
+    unsigned nmicroblk = extblk / mr + ((extblk % mr) ? 1 : 0);
+    SpBla = (T *)malloc(sizeof(T) * (pakBsz + nmicroblk * pakAsz) + 32*2);
+    if (SpBla == nullptr) {
+        std::cerr << "Unable to allocate memory-packing scratchpads." << std::endl;
+        std::_Exit(EXIT_FAILURE);
     }
 
     // Error exit for not implemented.
@@ -257,7 +253,7 @@ T skpfa(char uplo, unsigned n,
 
 #endif
     // Free memory-packing scratchpad.
-    delete[] SpBla;
+    free(SpBla);
 
     // Pfaffian
     T PfA = 1.0;
