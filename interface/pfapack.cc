@@ -17,15 +17,16 @@
 
 const static unsigned npanel = 8;
 
-void set_sp_size(unsigned n, int *lWork, int *info)
+template <typename T>
+void set_sp_size(unsigned n, int *lWork, T *lWorkOut, int *info)
 {
-    if (*info) {
+    if (*info)
         // Pfaffian only.
         *lWork = npanel * n * 2;
-    } else {
+    else
         // With inverse.
         *lWork = npanel * n * 3 + n * n * 2;
-    }
+    *lWorkOut = *lWork; // Should lie in exact precision reange.
     *info = 0;
 }
 
@@ -47,7 +48,7 @@ void la_skpfa(char *uplo, char *mthd, unsigned *n, T *A, unsigned *ldA, T *Pfa,
     using namespace std;
     // Spm query.
     if (*lWork < 0)
-        return set_sp_size(*n, lWork, info);
+        return set_sp_size<T>(*n, lWork, work, info);
     else
         check_sp_size(*n, *lWork, *info);
 
