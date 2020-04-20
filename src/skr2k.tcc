@@ -82,7 +82,7 @@ void uskr2k(unsigned n, unsigned k, T alpha, T *A, unsigned ldA, T *B, unsigned 
                 unsigned jst = uj*nr;
                 // TODO: prefetching.
                 // Pick microkernel.
-                if (ist + leni < jst)
+                if (ist + leni <= jst)
                     if (mker_available<T>() && leni == mr && lenj == nr)
                         ugemmn(lenk, &alpha, pakA, pakB, &beta_, &C(ist, jst), ldC);
                     else
@@ -94,7 +94,7 @@ void uskr2k(unsigned n, unsigned k, T alpha, T *A, unsigned ldA, T *B, unsigned 
                                     C(ist + i, jst + j) =
                                         C(ist + i, jst + j) * beta_ + pakA(i, l) * bjl;
                             }
-                else if (ist > jst + lenj)
+                else if (ist >= jst + lenj)
                     if (mker_available<T>() && leni == mr && lenj == nr)
                         ugemmt(lenk, &malpha, pakB, pakA, &one, &C(jst, ist), ldC);
                     else
