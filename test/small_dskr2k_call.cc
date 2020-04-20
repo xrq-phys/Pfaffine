@@ -30,7 +30,7 @@ int main(const int argc, const char *argv[])
     double *ptrA = &(matA(0, 0));
     double *ptrB = &(matB(0, 0));
     double *ptrC = &(matC(0, 0));
-    double blasp[240];
+    double blasp[700];
     for (unsigned l = 0; l < K_; ++l) {
         for (unsigned i = 0; i < M_; ++i) {
             matA(i, l) = randn(rng);
