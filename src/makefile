@@ -31,3 +31,13 @@ install: libpfaffine.a
 %.o : %.cc %.tcc $(HEADERS)
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
+.SUFFIXES: .o .c
+
+%.o : %.c
+	$(CC) $(CFLAGS) -c $< -o $@
+
+.SUFFIXES: .o .s
+
+%.o : %.s
+	$(CC) $(CFLAGS) -c $< -o $@
+

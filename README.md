@@ -52,14 +52,20 @@ In all cases above, `A` will be replaced by its full inverse if `inv=1`, otherwi
 ## Roadmaps (WIP List)
 
 - ~~Migrate `gemm` kernels from Pfapack and BLIS;~~
-- SVE kernel for Fugaku (Please use `neon` kernels at the moment);
-- `done but needs improvement` Default memory allocation;
+- `needs improvement` ~~SVE kernel for Fugaku~~;
+- `needs improvement` ~~Default memory allocation~~;
 - Adjustable `k`-blocking;
 - Automatically determine panel size `npanel`;
 - ~~Add a low-level **C99**/Fortran interface~~;
-- ~~Add a compatibility interface consistent to~~ [Pfapack](https://michaelwimmer.org/downloads.html);
+- ~~Add a compatibility interface consistent to [Pfapack](https://michaelwimmer.org/downloads.html)~~;
 - ~~Provide document here for all Pfaffine-defined interfaces;~~
 - Support CMake.
+
+### WIPs on Fugaku's SVE Kernel
+
+- Complex kernels;
+- 14x16 (T-shaped) kernels in order that 16x14 can be fully utilized (currently 14x14 used).
+- Frame driver should provide support for boundary kernels.
 
 ## Licensing
 

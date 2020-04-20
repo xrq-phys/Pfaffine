@@ -11,6 +11,12 @@
 typedef std::complex<float>  scomplex;
 typedef std::complex<double> dcomplex;
 
+#if defined(_SVE)
+// Vector length query for SVE.
+extern "C" unsigned dvecln_iso(void);
+extern "C" unsigned svecln_iso(void);
+#endif
+
 // if has optimized microkernel available.
 template <typename T> inline unsigned mker_available(void);
 template <> inline unsigned mker_available<float>   (void)
@@ -20,7 +26,7 @@ template <> inline unsigned mker_available<float>   (void)
 { return 0; }
 #endif
 template <> inline unsigned mker_available<double>  (void)
-#if defined(_Sandy) || defined(_Neon) || defined(_Haswell)
+#if defined(_Sandy) || defined(_Neon) || defined(_Haswell) || defined(_SVE)
 { return 1; }
 #else
 { return 0; }
@@ -55,6 +61,8 @@ template <> inline void set_blk_size<float>   (unsigned *mr, unsigned *nr)
 template <> inline void set_blk_size<double>  (unsigned *mr, unsigned *nr)
 #if defined(_Sandy)
 { *mr = 4; *nr = 4; }
+#elif defined(_SVE)
+{ *mr = dvecln_iso(); *nr = dvecln_iso(); }
 #else
 { *mr = 6; *nr = 8; }
 #endif
@@ -67,7 +75,7 @@ extern "C" {
 void usgemmn(unsigned k, float *alpha, float *pakA, float *pakB, float *beta, float *C, unsigned ldC);
 void usgemmt(unsigned k, float *alpha, float *pakA, float *pakB, float *beta, float *C, unsigned ldC);
 #endif
-#if defined(_Haswell) || defined(_Sandy) || defined(_Neon)
+#if defined(_Haswell) || defined(_Sandy) || defined(_Neon) || defined(_SVE)
 void udgemmn(unsigned k, double *alpha, double *pakA, double *pakB, double *beta, double *C, unsigned ldC);
 void udgemmt(unsigned k, double *alpha, double *pakA, double *pakB, double *beta, double *C, unsigned ldC);
 #endif
@@ -88,7 +96,7 @@ inline void ugemmn(unsigned k, float *alpha, float *pakA, float *pakB, float *be
 { std::_Exit(EXIT_FAILURE); }
 #endif
 inline void ugemmn(unsigned k, double *alpha, double *pakA, double *pakB, double *beta, double *C, unsigned ldC)
-#if defined(_Haswell) || defined(_Sandy) || defined(_Neon)
+#if defined(_Haswell) || defined(_Sandy) || defined(_Neon) || defined(_SVE)
 { udgemmn(k, alpha, pakA, pakB, beta, C, ldC); }
 #else
 { std::_Exit(EXIT_FAILURE); }
@@ -113,7 +121,7 @@ inline void ugemmt(unsigned k, float *alpha, float *pakA, float *pakB, float *be
 { std::_Exit(EXIT_FAILURE); }
 #endif
 inline void ugemmt(unsigned k, double *alpha, double *pakA, double *pakB, double *beta, double *C, unsigned ldC)
-#if defined(_Haswell) || defined(_Sandy) || defined(_Neon)
+#if defined(_Haswell) || defined(_Sandy) || defined(_Neon) || defined(_SVE)
 { udgemmt(k, alpha, pakA, pakB, beta, C, ldC); }
 #else
 { std::_Exit(EXIT_FAILURE); }
