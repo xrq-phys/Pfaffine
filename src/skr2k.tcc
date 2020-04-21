@@ -11,6 +11,7 @@
 #include <cstring>
 #include <memory>
 #include "kersel.hh"
+#include "kersel_ext.hh"
 #include "blalink.hh"
 
 // Macros for first-index-runs-fastest.
@@ -99,6 +100,8 @@ void uskr2k(unsigned n, unsigned k, T alpha, T *A, unsigned ldA, T *B, unsigned 
                 if (ist + leni <= jst)
                     if (mker_available<T>() && leni == mr && lenj == nr)
                         ugemmn(lenk, &alpha, pakA, pakB, &beta_, &C(ist, jst), ldC);
+                    else if (extker_available<T>())
+                        ugemmext(leni, lenj, lenk, &alpha, pakA, mr, pakB, nr, &beta_, &C(ist, jst), ldC);
                     else
                         // Vanilla microkernel at off-diagonal.
                         for (unsigned j = 0; j < lenj; ++j)
@@ -111,6 +114,8 @@ void uskr2k(unsigned n, unsigned k, T alpha, T *A, unsigned ldA, T *B, unsigned 
                 else if (ist >= jst + lenj)
                     if (mker_available<T>() && leni == mr && lenj == nr)
                         ugemmt(lenk, &malpha, pakB, pakA, &one, &C(jst, ist), ldC);
+                    else if (extker_available<T>())
+                        ugemmext(lenj, leni, lenk, &malpha, pakB, nr, pakA, mr, &one, &C(jst, ist), ldC);
                     else
                         for (unsigned i = 0; i < leni; ++i)
                             for (unsigned l = 0; l < lenk; ++l) {
@@ -127,6 +132,9 @@ void uskr2k(unsigned n, unsigned k, T alpha, T *A, unsigned ldA, T *B, unsigned 
                         //       Still, no effect on result.
                         ugemmn(lenk, &alpha, pakA, pakB, &beta_, &C(ist, jst), ldC);
                         ugemmt(lenk, &malpha, pakB, pakA, &one, &C(jst, ist), ldC);
+                    } else if (extker_available<T>()) {
+                        ugemmext(leni, lenj, lenk, &alpha, pakA, mr, pakB, nr, &beta_, &C(ist, jst), ldC);
+                        ugemmext(lenj, leni, lenk, &malpha, pakB, nr, pakA, mr, &one, &C(jst, ist), ldC);
                     } else
                         if (leni == lenj && ist == jst)
                             // Symmetric diagonal case.
