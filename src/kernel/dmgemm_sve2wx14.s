@@ -32,7 +32,7 @@ dmgemm_2wx14:
 // Register configuration:
 // Z[30-31]: A columns
 // Z29: B elements broadcasted
-// Z28: multiplication buffer
+// Z28: not used
 // Z[0-27]: C change buffer
 	dup	z0.d, #0
 	dup	z1.d, #0
@@ -69,102 +69,74 @@ K_LOOP:
 	madd	x2, x3, x12, x2	// move forward
 // Apply B columns.
 	mov	x13, x10	// counter
-	ld1rd	z29.d, p0/z, [x4]	// row L column 0
-	fmul	z28.d, z30.d, z29.d
-	fadd	z0.d, z0.d, z28.d
-	fmul	z28.d, z31.d, z29.d
-	fadd	z1.d, z1.d, z28.d
+	ld1rd	z29.d, p0/z, [x4, #0]	// row L column 0
+	fmla	z0.d, p0/m, z30.d, z29.d
+	fmla	z1.d, p1/m, z31.d, z29.d
 	subs	x13, x13, #1
 	b.eq	NEXT_ROW
 	ld1rd	z29.d, p0/z, [x4, #8]	// row L column 1
-	fmul	z28.d, z30.d, z29.d
-	fadd	z2.d, z2.d, z28.d
-	fmul	z28.d, z31.d, z29.d
-	fadd	z3.d, z3.d, z28.d
+	fmla	z2.d, p0/m, z30.d, z29.d
+	fmla	z3.d, p1/m, z31.d, z29.d
 	subs	x13, x13, #1
 	b.eq	NEXT_ROW
 	ld1rd	z29.d, p0/z, [x4, #16]	// row L column 2
-	fmul	z28.d, z30.d, z29.d
-	fadd	z4.d, z4.d, z28.d
-	fmul	z28.d, z31.d, z29.d
-	fadd	z5.d, z5.d, z28.d
+	fmla	z4.d, p0/m, z30.d, z29.d
+	fmla	z5.d, p1/m, z31.d, z29.d
 	subs	x13, x13, #1
 	b.eq	NEXT_ROW
 	ld1rd	z29.d, p0/z, [x4, #24]	// row L column 3
-	fmul	z28.d, z30.d, z29.d
-	fadd	z6.d, z6.d, z28.d
-	fmul	z28.d, z31.d, z29.d
-	fadd	z7.d, z7.d, z28.d
+	fmla	z6.d, p0/m, z30.d, z29.d
+	fmla	z7.d, p1/m, z31.d, z29.d
 	subs	x13, x13, #1
 	b.eq	NEXT_ROW
 	ld1rd	z29.d, p0/z, [x4, #32]	// row L column 4
-	fmul	z28.d, z30.d, z29.d
-	fadd	z8.d, z8.d, z28.d
-	fmul	z28.d, z31.d, z29.d
-	fadd	z9.d, z9.d, z28.d
+	fmla	z8.d, p0/m, z30.d, z29.d
+	fmla	z9.d, p1/m, z31.d, z29.d
 	subs	x13, x13, #1
 	b.eq	NEXT_ROW
 	ld1rd	z29.d, p0/z, [x4, #40]	// row L column 5
-	fmul	z28.d, z30.d, z29.d
-	fadd	z10.d, z10.d, z28.d
-	fmul	z28.d, z31.d, z29.d
-	fadd	z11.d, z11.d, z28.d
+	fmla	z10.d, p0/m, z30.d, z29.d
+	fmla	z11.d, p1/m, z31.d, z29.d
 	subs	x13, x13, #1
 	b.eq	NEXT_ROW
 	ld1rd	z29.d, p0/z, [x4, #48]	// row L column 6
-	fmul	z28.d, z30.d, z29.d
-	fadd	z12.d, z12.d, z28.d
-	fmul	z28.d, z31.d, z29.d
-	fadd	z13.d, z13.d, z28.d
+	fmla	z12.d, p0/m, z30.d, z29.d
+	fmla	z13.d, p1/m, z31.d, z29.d
 	subs	x13, x13, #1
 	b.eq	NEXT_ROW
 	ld1rd	z29.d, p0/z, [x4, #56]	// row L column 7
-	fmul	z28.d, z30.d, z29.d
-	fadd	z14.d, z14.d, z28.d
-	fmul	z28.d, z31.d, z29.d
-	fadd	z15.d, z15.d, z28.d
+	fmla	z14.d, p0/m, z30.d, z29.d
+	fmla	z15.d, p1/m, z31.d, z29.d
 	subs	x13, x13, #1
 	b.eq	NEXT_ROW
 	ld1rd	z29.d, p0/z, [x4, #64]	// row L column 8
-	fmul	z28.d, z30.d, z29.d
-	fadd	z16.d, z16.d, z28.d
-	fmul	z28.d, z31.d, z29.d
-	fadd	z17.d, z17.d, z28.d
+	fmla	z16.d, p0/m, z30.d, z29.d
+	fmla	z17.d, p1/m, z31.d, z29.d
 	subs	x13, x13, #1
 	b.eq	NEXT_ROW
 	ld1rd	z29.d, p0/z, [x4, #72]	// row L column 9
-	fmul	z28.d, z30.d, z29.d
-	fadd	z18.d, z18.d, z28.d
-	fmul	z28.d, z31.d, z29.d
-	fadd	z19.d, z19.d, z28.d
+	fmla	z18.d, p0/m, z30.d, z29.d
+	fmla	z19.d, p1/m, z31.d, z29.d
 	subs	x13, x13, #1
 	b.eq	NEXT_ROW
 	ld1rd	z29.d, p0/z, [x4, #80]	// row L column 10
-	fmul	z28.d, z30.d, z29.d
-	fadd	z20.d, z20.d, z28.d
-	fmul	z28.d, z31.d, z29.d
-	fadd	z21.d, z21.d, z28.d
+	fmla	z20.d, p0/m, z30.d, z29.d
+	fmla	z21.d, p1/m, z31.d, z29.d
 	subs	x13, x13, #1
 	b.eq	NEXT_ROW
 	ld1rd	z29.d, p0/z, [x4, #88]	// row L column 11
-	fmul	z28.d, z30.d, z29.d
-	fadd	z22.d, z22.d, z28.d
-	fmul	z28.d, z31.d, z29.d
-	fadd	z23.d, z23.d, z28.d
+	fmla	z22.d, p0/m, z30.d, z29.d
+	fmla	z23.d, p1/m, z31.d, z29.d
 	subs	x13, x13, #1
 	b.eq	NEXT_ROW
 	ld1rd	z29.d, p0/z, [x4, #96]	// row L column 12
-	fmul	z28.d, z30.d, z29.d
-	fadd	z24.d, z24.d, z28.d
-	fmul	z28.d, z31.d, z29.d
-	fadd	z25.d, z25.d, z28.d
+	fmla	z24.d, p0/m, z30.d, z29.d
+	fmla	z25.d, p1/m, z31.d, z29.d
 	subs	x13, x13, #1
 	b.eq	NEXT_ROW
 	ld1rd	z29.d, p0/z, [x4, #104]	// row L column 13
-	fmul	z28.d, z30.d, z29.d
-	fadd	z26.d, z26.d, z28.d
-	fmul	z28.d, z31.d, z29.d
-	fadd	z27.d, z27.d, z28.d
+	fmla	z26.d, p0/m, z30.d, z29.d
+	fmla	z27.d, p1/m, z31.d, z29.d
 //	subs	x13, x13, #1
 //	b	NEXT_ROW
 NEXT_ROW:
