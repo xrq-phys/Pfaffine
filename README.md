@@ -65,7 +65,7 @@ In all cases above, `A` will be replaced by its full inverse if `inv=1`, otherwi
 
 - Complex kernels;
 - 14x16 (T-shaped) kernels in order that 16x14 can be fully utilized (currently 14x14 used).
-- Frame driver should provide support for boundary kernels.
+- ~~Frame driver should provide support for boundary kernels.~~
 
 ## Licensing
 
