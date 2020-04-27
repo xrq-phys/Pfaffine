@@ -34,34 +34,34 @@ dmgemm_2wx14:
 // Z0: B elements broadcasted
 // Z29: not used
 // Z[1-28]: C change buffer
-	dup	z1.d, #0
-	dup	z2.d, #0
-	dup	z3.d, #0
-	dup	z4.d, #0
-	dup	z5.d, #0
-	dup	z6.d, #0
-	dup	z7.d, #0
-	dup	z8.d, #0
-	dup	z9.d, #0
-	dup	z10.d, #0
-	dup	z11.d, #0
-	dup	z12.d, #0
-	dup	z13.d, #0
-	dup	z14.d, #0
-	dup	z15.d, #0
-	dup	z16.d, #0
-	dup	z17.d, #0
-	dup	z18.d, #0
-	dup	z19.d, #0
-	dup	z20.d, #0
-	dup	z21.d, #0
-	dup	z22.d, #0
-	dup	z23.d, #0
-	dup	z24.d, #0
-	dup	z25.d, #0
-	dup	z26.d, #0
-	dup	z27.d, #0
-	dup	z28.d, #0
+	fmov	z1.d, p0/m, #0.0
+	fmov	z2.d, p0/m, #0.0
+	fmov	z3.d, p0/m, #0.0
+	fmov	z4.d, p0/m, #0.0
+	fmov	z5.d, p0/m, #0.0
+	fmov	z6.d, p0/m, #0.0
+	fmov	z7.d, p0/m, #0.0
+	fmov	z8.d, p0/m, #0.0
+	fmov	z9.d, p0/m, #0.0
+	fmov	z10.d, p0/m, #0.0
+	fmov	z11.d, p0/m, #0.0
+	fmov	z12.d, p0/m, #0.0
+	fmov	z13.d, p0/m, #0.0
+	fmov	z14.d, p0/m, #0.0
+	fmov	z15.d, p0/m, #0.0
+	fmov	z16.d, p0/m, #0.0
+	fmov	z17.d, p0/m, #0.0
+	fmov	z18.d, p0/m, #0.0
+	fmov	z19.d, p0/m, #0.0
+	fmov	z20.d, p0/m, #0.0
+	fmov	z21.d, p0/m, #0.0
+	fmov	z22.d, p0/m, #0.0
+	fmov	z23.d, p0/m, #0.0
+	fmov	z24.d, p0/m, #0.0
+	fmov	z25.d, p0/m, #0.0
+	fmov	z26.d, p0/m, #0.0
+	fmov	z27.d, p0/m, #0.0
+	fmov	z28.d, p0/m, #0.0
 K_LOOP:
 // Load columns from A.
 	ld1d	z30.d, p0/z, [x2]
