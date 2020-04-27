@@ -27,6 +27,9 @@ const unsigned tracblk = 8;
 // Block size for GEMM.
 const unsigned extblk = 64;
 
+// Supplimentary GEMM procedure.
+#include "ogemm.tcc"
+
 template<typename T>
 void uskr2k(unsigned n, unsigned k, T alpha, T *A, unsigned ldA, T *B, unsigned ldB, T beta, T *C, unsigned ldC,
             unsigned mr, unsigned nr, T *buffer)
