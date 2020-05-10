@@ -27,8 +27,8 @@ unsigned dvecln(void)
 }
 
 unsigned cvecln(void)
-{ svecln() / 2; }
+{ return svecln() / 2; }
 
 unsigned zvecln(void)
-{ dvecln() / 2; }
+{ return dvecln() / 2; }
 
