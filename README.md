@@ -51,6 +51,7 @@ In all cases above, `A` will be replaced by its full inverse if `inv=1`, otherwi
 
 ## Roadmaps (WIP List)
 
+- Implement a Pfaffian-inverse object that supports in-place *n*-term fast update;
 - ~~Migrate `gemm` kernels from Pfapack and BLIS;~~
 - `needs improvement` ~~SVE kernel for Fugaku~~;
 - `needs improvement` ~~Default memory allocation~~;
