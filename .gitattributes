@@ -1,0 +1,3 @@
+src/kernel/*_neon.c linguist-vendored
+src/kernel/*_haswell.c linguist-vendored
+src/kernel/*_skx.c linguist-vendored
