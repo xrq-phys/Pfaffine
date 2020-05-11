@@ -24,13 +24,20 @@ template <> inline unsigned extker_available<double>  (void)
 template <> inline unsigned extker_available<scomplex>(void)
 { return 0; }
 template <> inline unsigned extker_available<dcomplex>(void)
+#if defined(_SVE)
+{ return 1; }
+#else
 { return 0; }
+#endif
 
 extern "C" {
 #if defined(_SVE)
 unsigned udgemmext(unsigned m, unsigned n, unsigned k,
                    double *Alpha_, double *A, unsigned ldA, double *B, unsigned ldB,
                    double *Beta_, double *C, unsigned ldC);
+unsigned uzgemmext(unsigned m, unsigned n, unsigned k,
+                   dcomplex *Alpha_, dcomplex *A, unsigned ldA, dcomplex *B, unsigned ldB,
+                   dcomplex *Beta_, dcomplex *C, unsigned ldC);
 #endif
 }
 
@@ -65,5 +72,9 @@ unsigned ugemmext(unsigned m, unsigned n, unsigned k,
                   dcomplex *B, unsigned ldB,
                   dcomplex *Beta_, 
                   dcomplex *C, unsigned ldC)
+#if defined(_SVE)
+{ return uzgemmext(m, n, k, Alpha_, A, ldA, B, ldB, Beta_, C, ldC); }
+#else
 { const static unsigned info_err = 1; return info_err; }
+#endif
 

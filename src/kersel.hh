@@ -14,7 +14,8 @@ typedef std::complex<double> dcomplex;
 #if defined(_SVE)
 // Vector length query for SVE.
 extern "C" unsigned dvecln_iso(void);
-extern "C" unsigned svecln_iso(void);
+extern "C" unsigned zgemm_sve_mr(void);
+extern "C" unsigned zgemm_sve_nr(void);
 #endif
 
 // if has optimized microkernel available.
@@ -38,7 +39,7 @@ template <> inline unsigned mker_available<scomplex>(void)
 { return 0; }
 #endif
 template <> inline unsigned mker_available<dcomplex>(void)
-#if defined(_Haswell)
+#if defined(_Haswell) || defined(_SVE)
 { return 1; }
 #else
 { return 0; }
@@ -67,7 +68,12 @@ template <> inline void set_blk_size<double>  (unsigned *mr, unsigned *nr)
 { *mr = 6; *nr = 8; }
 #endif
 template <> inline void set_blk_size<scomplex>(unsigned *mr, unsigned *nr) { *mr = 3; *nr = 8; }
-template <> inline void set_blk_size<dcomplex>(unsigned *mr, unsigned *nr) { *mr = 3; *nr = 4; }
+template <> inline void set_blk_size<dcomplex>(unsigned *mr, unsigned *nr)
+#if defined(_SVE)
+{ *mr = zgemm_sve_mr(); *nr = zgemm_sve_nr(); }
+#else
+{ *mr = 3; *nr = 4; }
+#endif
 
 // defined kernels.
 extern "C" {
@@ -82,6 +88,8 @@ void udgemmt(unsigned k, double *alpha, double *pakA, double *pakB, double *beta
 #if defined(_Haswell)
 void ucgemmn(unsigned k, scomplex *alpha, scomplex *pakA, scomplex *pakB, scomplex *beta, scomplex *C, unsigned ldC);
 void ucgemmt(unsigned k, scomplex *alpha, scomplex *pakA, scomplex *pakB, scomplex *beta, scomplex *C, unsigned ldC);
+#endif
+#if defined(_Haswell) || defined(_SVE)
 void uzgemmn(unsigned k, dcomplex *alpha, dcomplex *pakA, dcomplex *pakB, dcomplex *beta, dcomplex *C, unsigned ldC);
 void uzgemmt(unsigned k, dcomplex *alpha, dcomplex *pakA, dcomplex *pakB, dcomplex *beta, dcomplex *C, unsigned ldC);
 #endif
@@ -108,7 +116,7 @@ inline void ugemmn(unsigned k, scomplex *alpha, scomplex *pakA, scomplex *pakB, 
 { std::_Exit(EXIT_FAILURE); }
 #endif
 inline void ugemmn(unsigned k, dcomplex *alpha, dcomplex *pakA, dcomplex *pakB, dcomplex *beta, dcomplex *C, unsigned ldC)
-#if defined(_Haswell)
+#if defined(_Haswell) || defined(_SVE)
 { uzgemmn(k, alpha, pakA, pakB, beta, C, ldC); }
 #else
 { std::_Exit(EXIT_FAILURE); }
@@ -133,7 +141,7 @@ inline void ugemmt(unsigned k, scomplex *alpha, scomplex *pakA, scomplex *pakB, 
 { std::_Exit(EXIT_FAILURE); }
 #endif
 inline void ugemmt(unsigned k, dcomplex *alpha, dcomplex *pakA, dcomplex *pakB, dcomplex *beta, dcomplex *C, unsigned ldC)
-#if defined(_Haswell)
+#if defined(_Haswell) || defined(_SVE)
 { uzgemmt(k, alpha, pakA, pakB, beta, C, ldC); }
 #else
 { std::_Exit(EXIT_FAILURE); }
