@@ -11,6 +11,9 @@ CXXFLAGS += -D_SVE
 OBJECTS += kernel/mgemm_sve_ext.o \
            kernel/dmgemm_sve2wx14.o \
            kernel/dmgemm_sve1wx28.o \
+           kernel/zmgemm_sve3wx9.o \
+           kernel/zmgemm_sve2wx14.o \
+           kernel/zmgemm_sve1wx28.o \
            kernel/vecln_sve.o \
            kernel/dvecln_sve.o \
            kernel/svecln_sve.o
