@@ -56,8 +56,8 @@ int main(const int argc, const char *argv[])
          ptrB, N_,
          ptrA, M_, 1.0,
          ptrC, M_);
-    for (unsigned i = 0; i < N_; ++i) {
-        for (unsigned j = 0; j < M_; ++j)
+    for (unsigned i = 0; i < M_; ++i) {
+        for (unsigned j = 0; j < N_; ++j)
             fprintf(fid_c1, "%16.8e ", matC(i, j));
         fprintf(fid_c1, "\n");
     }
@@ -71,8 +71,8 @@ int main(const int argc, const char *argv[])
                   ptrA, M_, 
                   ptrB, N_, 1.0, 
                   ptrC, M_, blasp);
-    for (unsigned i = 0; i < N_; ++i) {
-        for (unsigned j = 0; j < M_; ++j)
+    for (unsigned i = 0; i < M_; ++i) {
+        for (unsigned j = 0; j < N_; ++j)
             fprintf(fid_c2, "%16.8e ", matC(i, j));
         fprintf(fid_c2, "\n");
     }
