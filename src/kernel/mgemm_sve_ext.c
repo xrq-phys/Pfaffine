@@ -74,7 +74,6 @@ unsigned udgemmext(unsigned m, unsigned n, unsigned k,
     coeffs[0] = *Alpha_;
     coeffs[1] = *Beta_;
     if (m <= dvecln())
-        // TODO: Implement narrow kernels.
         info = dmgemm_1wx28(shape, coeffs, A, ldA, B, ldB, C, ldC);
     else if (m <= dvecln() * 2)
         info = dmgemm_2wx14(shape, coeffs, A, ldA, B, ldB, C, ldC);
