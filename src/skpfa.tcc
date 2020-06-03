@@ -71,7 +71,7 @@ T skpfa(char uplo, unsigned n,
     // Default value (1-line buffer) used only when _PR_Simple is enabled.
     T *vA = Sp1;
     T *vG = Sp2; // alpha_k: Gaussian elimination vector.
-    T *vM, *kM;
+    T *vM, *kM = nullptr;
     if (inv) {
         // Initialize M as identity.
         for (unsigned j = 0; j < n; ++j) {
