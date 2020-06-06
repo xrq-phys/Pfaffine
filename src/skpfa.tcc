@@ -53,6 +53,8 @@ T skpfa(char uplo, unsigned n,
     unsigned pakBsz = tracblk * nr;
     // A-packing needs full size for maximum performance.
     T *SpBla = nullptr;
+    // For sign of Pfaffian.
+    unsigned cflp = 0;
     // Use malloc() as VLAs are somehow bad as the allocation is hard to check.
     // Final 32 * 2 is for alignment padding.
     unsigned nmicroblk = extblk / mr + ((extblk % mr) ? 1 : 0);
@@ -71,7 +73,7 @@ T skpfa(char uplo, unsigned n,
     // Default value (1-line buffer) used only when _PR_Simple is enabled.
     T *vA = Sp1;
     T *vG = Sp2; // alpha_k: Gaussian elimination vector.
-    T *vM, *kM = nullptr;
+    T *vM = nullptr, *kM = nullptr;
     if (inv) {
         // Initialize M as identity.
         for (unsigned j = 0; j < n; ++j) {
@@ -157,6 +159,9 @@ T skpfa(char uplo, unsigned n,
 
                 // Do swapping
                 if (s < t) {
+                    // Sign-flip corresponding to the swap.
+                    cflp++;
+
                     if (i != 0) {
                         // For unmerged updates, swap rows (col maj.).
                         swap(i, &Sp1(s, 0), n, &Sp1(t, 0), n);
@@ -268,7 +273,7 @@ T skpfa(char uplo, unsigned n,
         gemm('N', 'N', n, n, n, (T)1.0, Sp3, n, Sp4, n, (T)0.0, A, ldA);
     }
 
-    // Return only PfA (+ gauge), inverse is stored in A.
-    return std::real(PfA) > 0 ? PfA : -PfA;
+    // Return only PfA, inverse is stored in A.
+    return (cflp % 2) ? -PfA : PfA;
 }
 
