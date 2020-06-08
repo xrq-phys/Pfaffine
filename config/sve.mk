@@ -3,17 +3,13 @@
 # Please use this kernel for the Post-K (Fugaku) supercomputer.
 
 # CC +=
-CFLAGS += -march=armv8-a+sve
+CFLAGS += -D_Asm_Allow_Convension -march=armv8-a+sve
 
 # CXX +=
 CXXFLAGS += -D_SVE
 
 OBJECTS += kernel/mgemm_sve_ext.o \
-           kernel/dmgemm_sve2wx14.o \
-           kernel/dmgemm_sve1wx28.o \
-           kernel/zmgemm_sve3wx9.o \
-           kernel/zmgemm_sve2wx14.o \
-           kernel/zmgemm_sve1wx28.o \
+           kernel/mgemm_sve_asm.o \
            kernel/vecln_sve.o \
            kernel/dvecln_sve.o \
            kernel/svecln_sve.o
