@@ -14,12 +14,15 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 //
-	.arch	armv8.2-a+sve
-	.text
-	.global	dmgemm_2wx14
-	.type	dmgemm_2wx14, %function
-dmgemm_2wx14:
-	.cfi_startproc
+// NOTE:
+//  This assembly file is intended to be loaded inline.
+//  All dot-directives are thus commented out.
+//	.arch	armv8.2-a+sve
+//	.text
+//	.global	dmgemm_2wx14
+//	.type	dmgemm_2wx14, %function
+dmgemm_2wx14__:
+//	.cfi_startproc
 	ldp	x9, x10, [x0], #16	// shape M and N.
 	ldr	x8, [x0]	// loop parameter K.
 	mov	x11, xzr
@@ -62,7 +65,7 @@ dmgemm_2wx14:
 	fmov	z26.d, p0/m, #0.0
 	fmov	z27.d, p0/m, #0.0
 	fmov	z28.d, p0/m, #0.0
-K_LOOP:
+K_LOOP_d2wx14:
 // Load columns from A.
 	ld1d	z30.d, p0/z, [x2]
 	ld1d	z31.d, p1/z, [x2, x11, lsl 3]	// second vector
@@ -77,70 +80,70 @@ K_LOOP:
 	fmla	z1.d, z30.d, z0.d[0]
 	fmla	z2.d, z31.d, z0.d[0]
 	subs	x13, x13, #1
-	b.eq	NEXT_ROW
+	b.eq	NEXT_ROW_d2wx14
 	fmla	z3.d, z30.d, z0.d[1]
 	fmla	z4.d, z31.d, z0.d[1]
 	subs	x13, x13, #1
-	b.eq	NEXT_ROW
+	b.eq	NEXT_ROW_d2wx14
 	ld1rqd	z0.d, p0/z, [x4, #16]	// row L column 2 and 3
 	fmla	z5.d, z30.d, z0.d[0]
 	fmla	z6.d, z31.d, z0.d[0]
 	subs	x13, x13, #1
-	b.eq	NEXT_ROW
+	b.eq	NEXT_ROW_d2wx14
 	fmla	z7.d, z30.d, z0.d[1]
 	fmla	z8.d, z31.d, z0.d[1]
 	subs	x13, x13, #1
-	b.eq	NEXT_ROW
+	b.eq	NEXT_ROW_d2wx14
 	ld1rqd	z0.d, p0/z, [x4, #32]	// row L column 4 and 5
 	fmla	z9.d, z30.d, z0.d[0]
 	fmla	z10.d, z31.d, z0.d[0]
 	subs	x13, x13, #1
-	b.eq	NEXT_ROW
+	b.eq	NEXT_ROW_d2wx14
 	fmla	z11.d, z30.d, z0.d[1]
 	fmla	z12.d, z31.d, z0.d[1]
 	subs	x13, x13, #1
-	b.eq	NEXT_ROW
+	b.eq	NEXT_ROW_d2wx14
 	ld1rqd	z0.d, p0/z, [x4, #48]	// row L column 6 and 7
 	fmla	z13.d, z30.d, z0.d[0]
 	fmla	z14.d, z31.d, z0.d[0]
 	subs	x13, x13, #1
-	b.eq	NEXT_ROW
+	b.eq	NEXT_ROW_d2wx14
 	fmla	z15.d, z30.d, z0.d[1]
 	fmla	z16.d, z31.d, z0.d[1]
 	subs	x13, x13, #1
-	b.eq	NEXT_ROW
+	b.eq	NEXT_ROW_d2wx14
 	ld1rqd	z0.d, p0/z, [x4, #64]	// row L column 8 and 9
 	fmla	z17.d, z30.d, z0.d[0]
 	fmla	z18.d, z31.d, z0.d[0]
 	subs	x13, x13, #1
-	b.eq	NEXT_ROW
+	b.eq	NEXT_ROW_d2wx14
 	fmla	z19.d, z30.d, z0.d[1]
 	fmla	z20.d, z31.d, z0.d[1]
 	subs	x13, x13, #1
-	b.eq	NEXT_ROW
+	b.eq	NEXT_ROW_d2wx14
 	ld1rqd	z0.d, p0/z, [x4, #80]	// row L column 10 and 11
 	fmla	z21.d, z30.d, z0.d[0]
 	fmla	z22.d, z31.d, z0.d[0]
 	subs	x13, x13, #1
-	b.eq	NEXT_ROW
+	b.eq	NEXT_ROW_d2wx14
 	fmla	z23.d, z30.d, z0.d[1]
 	fmla	z24.d, z31.d, z0.d[1]
 	subs	x13, x13, #1
-	b.eq	NEXT_ROW
+	b.eq	NEXT_ROW_d2wx14
 	ld1rqd	z0.d, p0/z, [x4, #96]	// row L column 12 and 13
 	fmla	z25.d, z30.d, z0.d[0]
 	fmla	z26.d, z31.d, z0.d[0]
 	subs	x13, x13, #1
-	b.eq	NEXT_ROW
+	b.eq	NEXT_ROW_d2wx14
 	fmla	z27.d, z30.d, z0.d[1]
 	fmla	z28.d, z31.d, z0.d[1]
 //	subs	x13, x13, #1
-//	b	NEXT_ROW
-NEXT_ROW:
+//	b	NEXT_ROW_d2wx14
+NEXT_ROW_d2wx14:
 	madd	x4, x5, x12, x4	// move forward
 	subs	x8, x8, #1
-	b.ne	K_LOOP	// next column / row.
-WRITE_MEM:
+	b.ne	K_LOOP_d2wx14	// next column / row.
+WRITE_MEM_d2wx14:
 // Override A and B buffers:
 // z[30-31]: extended alpha and beta.
 // z0: C memory buffer.
@@ -149,7 +152,7 @@ WRITE_MEM:
 	ld1rd	z31.d, p0/z, [x1, #8]	// beta.
 // (R&)Write data back to C memory.
 	cmp	x14, x15
-	b.eq	UNIT_ALPHA
+	b.eq	UNIT_ALPHA_d2wx14
 // Non-unit alpha case.
 // Scale all C change buffers.
 	fmul	z1.d, z1.d, z30.d
@@ -181,7 +184,7 @@ WRITE_MEM:
 	fmul	z27.d, z27.d, z30.d
 	fmul	z28.d, z28.d, z30.d
 // Unit alpha case.
-UNIT_ALPHA:
+UNIT_ALPHA_d2wx14:
 //	mov	x10, x10	// x10 itself acts as counter.
 	ld1d	z0.d, p0/z, [x6]	// column vector 0
 	fmad	z0.d, p0/m, z31.d, z1.d
@@ -191,7 +194,7 @@ UNIT_ALPHA:
 	st1d	z0.d, p1, [x6, x11, lsl #3]
 	subs	x10, x10, #1
 	madd	x6, x7, x12, x6
-	b.eq	END_WRITE_MEM
+	b.eq	END_WRITE_MEM_d2wx14
 	ld1d	z0.d, p0/z, [x6]	// column vector 1
 	fmad	z0.d, p0/m, z31.d, z3.d
 	st1d	z0.d, p0, [x6]
@@ -200,7 +203,7 @@ UNIT_ALPHA:
 	st1d	z0.d, p1, [x6, x11, lsl #3]
 	subs	x10, x10, #1
 	madd	x6, x7, x12, x6
-	b.eq	END_WRITE_MEM
+	b.eq	END_WRITE_MEM_d2wx14
 	ld1d	z0.d, p0/z, [x6]	// column vector 2
 	fmad	z0.d, p0/m, z31.d, z5.d
 	st1d	z0.d, p0, [x6]
@@ -209,7 +212,7 @@ UNIT_ALPHA:
 	st1d	z0.d, p1, [x6, x11, lsl #3]
 	subs	x10, x10, #1
 	madd	x6, x7, x12, x6
-	b.eq	END_WRITE_MEM
+	b.eq	END_WRITE_MEM_d2wx14
 	ld1d	z0.d, p0/z, [x6]	// column vector 3
 	fmad	z0.d, p0/m, z31.d, z7.d
 	st1d	z0.d, p0, [x6]
@@ -218,7 +221,7 @@ UNIT_ALPHA:
 	st1d	z0.d, p1, [x6, x11, lsl #3]
 	subs	x10, x10, #1
 	madd	x6, x7, x12, x6
-	b.eq	END_WRITE_MEM
+	b.eq	END_WRITE_MEM_d2wx14
 	ld1d	z0.d, p0/z, [x6]	// column vector 4
 	fmad	z0.d, p0/m, z31.d, z9.d
 	st1d	z0.d, p0, [x6]
@@ -227,7 +230,7 @@ UNIT_ALPHA:
 	st1d	z0.d, p1, [x6, x11, lsl #3]
 	subs	x10, x10, #1
 	madd	x6, x7, x12, x6
-	b.eq	END_WRITE_MEM
+	b.eq	END_WRITE_MEM_d2wx14
 	ld1d	z0.d, p0/z, [x6]	// column vector 5
 	fmad	z0.d, p0/m, z31.d, z11.d
 	st1d	z0.d, p0, [x6]
@@ -236,7 +239,7 @@ UNIT_ALPHA:
 	st1d	z0.d, p1, [x6, x11, lsl #3]
 	subs	x10, x10, #1
 	madd	x6, x7, x12, x6
-	b.eq	END_WRITE_MEM
+	b.eq	END_WRITE_MEM_d2wx14
 	ld1d	z0.d, p0/z, [x6]	// column vector 6
 	fmad	z0.d, p0/m, z31.d, z13.d
 	st1d	z0.d, p0, [x6]
@@ -245,7 +248,7 @@ UNIT_ALPHA:
 	st1d	z0.d, p1, [x6, x11, lsl #3]
 	subs	x10, x10, #1
 	madd	x6, x7, x12, x6
-	b.eq	END_WRITE_MEM
+	b.eq	END_WRITE_MEM_d2wx14
 	ld1d	z0.d, p0/z, [x6]	// column vector 7
 	fmad	z0.d, p0/m, z31.d, z15.d
 	st1d	z0.d, p0, [x6]
@@ -254,7 +257,7 @@ UNIT_ALPHA:
 	st1d	z0.d, p1, [x6, x11, lsl #3]
 	subs	x10, x10, #1
 	madd	x6, x7, x12, x6
-	b.eq	END_WRITE_MEM
+	b.eq	END_WRITE_MEM_d2wx14
 	ld1d	z0.d, p0/z, [x6]	// column vector 8
 	fmad	z0.d, p0/m, z31.d, z17.d
 	st1d	z0.d, p0, [x6]
@@ -263,7 +266,7 @@ UNIT_ALPHA:
 	st1d	z0.d, p1, [x6, x11, lsl #3]
 	subs	x10, x10, #1
 	madd	x6, x7, x12, x6
-	b.eq	END_WRITE_MEM
+	b.eq	END_WRITE_MEM_d2wx14
 	ld1d	z0.d, p0/z, [x6]	// column vector 9
 	fmad	z0.d, p0/m, z31.d, z19.d
 	st1d	z0.d, p0, [x6]
@@ -272,7 +275,7 @@ UNIT_ALPHA:
 	st1d	z0.d, p1, [x6, x11, lsl #3]
 	subs	x10, x10, #1
 	madd	x6, x7, x12, x6
-	b.eq	END_WRITE_MEM
+	b.eq	END_WRITE_MEM_d2wx14
 	ld1d	z0.d, p0/z, [x6]	// column vector 10
 	fmad	z0.d, p0/m, z31.d, z21.d
 	st1d	z0.d, p0, [x6]
@@ -281,7 +284,7 @@ UNIT_ALPHA:
 	st1d	z0.d, p1, [x6, x11, lsl #3]
 	subs	x10, x10, #1
 	madd	x6, x7, x12, x6
-	b.eq	END_WRITE_MEM
+	b.eq	END_WRITE_MEM_d2wx14
 	ld1d	z0.d, p0/z, [x6]	// column vector 11
 	fmad	z0.d, p0/m, z31.d, z23.d
 	st1d	z0.d, p0, [x6]
@@ -290,7 +293,7 @@ UNIT_ALPHA:
 	st1d	z0.d, p1, [x6, x11, lsl #3]
 	subs	x10, x10, #1
 	madd	x6, x7, x12, x6
-	b.eq	END_WRITE_MEM
+	b.eq	END_WRITE_MEM_d2wx14
 	ld1d	z0.d, p0/z, [x6]	// column vector 12
 	fmad	z0.d, p0/m, z31.d, z25.d
 	st1d	z0.d, p0, [x6]
@@ -299,7 +302,7 @@ UNIT_ALPHA:
 	st1d	z0.d, p1, [x6, x11, lsl #3]
 	subs	x10, x10, #1
 	madd	x6, x7, x12, x6
-	b.eq	END_WRITE_MEM
+	b.eq	END_WRITE_MEM_d2wx14
 	ld1d	z0.d, p0/z, [x6]	// column vector 13
 	fmad	z0.d, p0/m, z31.d, z27.d
 	st1d	z0.d, p0, [x6]
@@ -308,13 +311,13 @@ UNIT_ALPHA:
 	st1d	z0.d, p1, [x6, x11, lsl #3]
 //	subs	x10, x10, #1
 //	madd	x6, x7, x12, x6
-//	b	END_WRITE_MEM
+//	b	END_WRITE_MEM_d2wx14
 // End of computation.
-END_WRITE_MEM:
+END_WRITE_MEM_d2wx14:
 	mov	x0, #0	// return normal.
-	b	END_EXEC
-END_ERROR:
+	b	END_EXEC_d2wx14
+END_ERROR_d2wx14:
 	mov	x0, #1	// return error.
-END_EXEC:
-	ret
-	.cfi_endproc
+END_EXEC_d2wx14:
+//	ret
+//	.cfi_endproc
