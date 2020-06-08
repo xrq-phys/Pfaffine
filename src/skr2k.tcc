@@ -21,12 +21,6 @@
 #define pakA(i,j) pakA[ (i) + (j)*(mr) ]
 #define pakB(i,j) pakB[ (i) + (j)*(nr) ]
 
-// Block size of k.
-const unsigned tracblk = 8;
-
-// Block size for GEMM.
-const unsigned extblk = 64;
-
 // Supplimentary GEMM procedure.
 #include "ogemm.tcc"
 

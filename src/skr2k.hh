@@ -6,10 +6,14 @@
 #pragma once
 
 // K-block size.
-extern const unsigned tracblk;
+extern unsigned tracblk;
 
 // GEMM update block size.
-extern const unsigned extblk;
+extern unsigned extblk;
+
+void set_sqblk_size(unsigned n);
+
+void set_tracdim_blk(unsigned n);
 
 template<typename T>
 void skr2k(char uplo, char trans, unsigned n, unsigned k,
