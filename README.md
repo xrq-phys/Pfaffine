@@ -24,7 +24,7 @@ Full interface looks like this in C++/C99, correspondingly. Note that it can als
 
 ```cpp
 template <typename T>
-T skpfa(char uplo, unsigned n, 
+T skpfa(char uplo, unsigned n,
         T *A, unsigned ldA, unsigned inv,
         T *Sp1, T *Sp2, T *Sp3, T *Sp4, T *Sp5, unsigned npanel);
 ```
@@ -51,7 +51,8 @@ In all cases above, `A` will be replaced by its full inverse if `inv=1`, otherwi
 
 ## Roadmaps (WIP List)
 
-- **Important**: Change Fugaku's core to inline assembly & add clobber declaration;
+- ~~**Important**: Change Fugaku's core to inline assembly & add clobber declaration~~;
+- ~~Return signed Pfaffian instead of real-part-positive component~~;
 - Implement a Pfaffian-inverse object that supports in-place *n*-term fast update;
 - ~~Migrate `gemm` kernels from Pfapack and BLIS;~~
 - `needs improvement` ~~SVE kernel for Fugaku~~;
