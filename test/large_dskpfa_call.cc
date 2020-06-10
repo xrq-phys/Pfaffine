@@ -22,6 +22,9 @@ int main(const int argc, const char *argv[])
     double matA[N * N];
     double mat1[N * NPANEL];
     double mat2[N * NPANEL];
+    // double matC[N * N];
+    // double matD[N * N];
+    // double mat3[N * (NPANEL+1)];
     for (unsigned j = 0; j < N; ++j)
         for (unsigned i = 0; i < N; ++i)
             matA(i, j) = dist(rng);
