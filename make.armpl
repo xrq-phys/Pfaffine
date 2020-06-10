@@ -1,0 +1,17 @@
+# Recommanded configuration for the supercompute Fugaku.
+# As for May., 2020, compiling on the arm1 login node doest the best job.
+AR=ar
+
+# ARM Compiler toolset.
+CC=armclang
+CFLAGS=-O2
+CXX=armclang++
+CXXFLAGS=-std=c++11 -O3
+
+# SVE, of course.
+ARCH=sve
+
+# BLAS vendor.
+# ARM vendors a high-performance math library named ARMPL.
+BLAS_LIB=-larmpl
+
