@@ -1,22 +1,27 @@
 #include <iostream>
 #include <complex>
-#include <boost/numeric/ublas/matrix.hpp>
-#include <boost/numeric/ublas/io.hpp>
 #include "../src/skpfa.hh"
+typedef std::complex<double> dcomplex;
+
+#define matA(i, j) matA[ (i) + (j)*8 ]
+#define matC(i, j) matC[ (i) + (j)*8 ]
+#define matD(i, j) matD[ (i) + (j)*8 ]
+#define mat1(i, j) mat1[ (i) + (j)*8 ]
+#define mat2(i, j) mat2[ (i) + (j)*8 ]
+#define mat3(i, j) mat3[ (i) + (j)*8 ]
 
 int main(const int argc, const char *argv[])
 {
     // these two doesn't conflict.
     using namespace std;
-    using namespace boost::numeric::ublas;
 
     // prepares input and output container.
-    matrix<complex<double>, column_major> matA(8, 8);
-    matrix<complex<double>, column_major> mat1(8, 4);
-    matrix<complex<double>, column_major> mat2(8, 4);
-    matrix<complex<double>, column_major> matC(8, 8);
-    matrix<complex<double>, column_major> matD(8, 8);
-    matrix<complex<double>, column_major> mat3(8, 4);
+    complex<double> matA[8 * 8];
+    complex<double> mat1[8 * 4];
+    complex<double> mat2[8 * 4];
+    complex<double> matC[8 * 8];
+    complex<double> matD[8 * 8];
+    complex<double> mat3[8 * 4];
     for (signed j = 0; j < 8; ++j)
         for (signed i = 0; i < 8; ++i)
             matA(i, j) = complex<double>(i*2.0 + j, i*0.25 - j*0.5);

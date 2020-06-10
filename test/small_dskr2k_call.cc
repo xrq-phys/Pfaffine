@@ -1,8 +1,5 @@
 #include <cstdio>
-#include <boost/numeric/ublas/matrix.hpp>
-#include <boost/numeric/ublas/io.hpp>
-#include <boost/random/mersenne_twister.hpp>
-#include <boost/random/normal_distribution.hpp>
+#include <random>
 #include "../src/skr2k.hh"
 #include "../src/blalink.hh"
 
@@ -10,10 +7,13 @@
 #define N_ 64
 #define K_ 8
 
+#define matA(i, j) matA[ (i) + (j)*M_ ]
+#define matB(i, j) matB[ (i) + (j)*N_ ]
+#define matC(i, j) matC[ (i) + (j)*M_ ]
+
 int main(const int argc, const char *argv[])
 {
-    using namespace boost::numeric::ublas;
-    using namespace boost::random;
+    using namespace std;
     // Plain C IO.
     auto *fid_a = fopen("AT.dat", "w");
     auto *fid_b = fopen("BT.dat", "w");
@@ -24,9 +24,9 @@ int main(const int argc, const char *argv[])
     mt19937 rng;
     normal_distribution<double> randn(0.0, 1.0);
 
-    matrix<double, column_major> matA(M_, K_);
-    matrix<double, column_major> matB(N_, K_);
-    matrix<double, column_major> matC(M_, N_);
+    double matA[M_ * K_];
+    double matB[N_ * K_];
+    double matC[M_ * N_];
     double *ptrA = &(matA(0, 0));
     double *ptrB = &(matB(0, 0));
     double *ptrC = &(matC(0, 0));
@@ -67,9 +67,9 @@ int main(const int argc, const char *argv[])
         for (unsigned i = 0; i < M_; ++i)
             matC(i, j) = 0.0;
     printf("Executing accelerated.\n");
-    skr2k<double>('U', 'N', N_, K_, 1.0, 
-                  ptrA, M_, 
-                  ptrB, N_, 1.0, 
+    skr2k<double>('U', 'N', N_, K_, 1.0,
+                  ptrA, M_,
+                  ptrB, N_, 1.0,
                   ptrC, M_, blasp);
     for (unsigned i = 0; i < M_; ++i) {
         for (unsigned j = 0; j < N_; ++j)
