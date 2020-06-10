@@ -7,7 +7,11 @@ lib: make.inc
 
 install: make.inc
 	cd src; make -f makefile install
+	# TODO: Install rule for tests?
 
 clean: make.inc
 	cd src; make -f makefile clean
+	cd test; make -f makefile clean
 
+test: make.inc
+	cd test; make -f makefile
