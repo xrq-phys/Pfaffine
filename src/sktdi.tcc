@@ -13,6 +13,9 @@
 template <typename T>
 void sktdi(unsigned n, T *A, unsigned ldA)
 {
+    for (unsigned i = 0; i < n; ++i)
+        A(i, i) = 0.0;
+
     for (unsigned i = 0; i < n-1; i+=2) {
         T r = 1.0;
         for (unsigned j = i+1; j < n; j+=2) {

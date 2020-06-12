@@ -26,6 +26,10 @@
 #define Sp3(i,j) Sp3[ (i) + (j)*(n)   ]
 #define Sp4(i,j) Sp4[ (i) + (j)*(n)   ]
 #define Sp5(i,j) Sp5[ (i) + (j)*(n)   ]
+#define exG(i,j) exG[ (i) + (j)*(n)   ]
+
+// Currently only Simple inversion is available.
+#define _PI_Simple
 
 /**
  * \brief Calculate Pfaffian and optionally inverse of antisymmetric matrix A.
@@ -35,12 +39,14 @@
  * \param A   Array (reference i.e. address of) A.
  * \param ldA Leading dimension size of A (row-skip).
  * \param inv Whether to compute inverse.
- * \param Sp[1-2] Two n*npanel scratchpad arrays.
- * \param Sp[3-4] Two n*n scratchpads for computing inverse, used only if inv=true.
- * \param Sp5 n*npanel scratchpad for computing inverse, untouched if inv=0.
+ * \param Sp1 An n*npanel scratchpad array.
+ * \param Sp2 An n*npanel scratchpad array, used if inv=false (Sp3 would be used otherwise).
+ * \param Sp3 An n*n scratchpad for computing inverse, used only if inv=true.
+ * \param Sp4 v0.2 compatibility. Not used.
+ * \param Sp5 v0.2 compatibility. Not used.
  */
 template <typename T>
-T skpfa(char uplo, unsigned n, 
+T skpfa(char uplo, unsigned n,
         T *A, unsigned ldA, unsigned inv,
         T *Sp1, T *Sp2, T *Sp3, T *Sp4, T *Sp5, unsigned npanel)
 {
@@ -51,10 +57,19 @@ T skpfa(char uplo, unsigned n,
     set_blk_size<T>(&mr, &nr);
     unsigned pakAsz = npanel * mr;
     unsigned pakBsz = tracblk * nr;
+    // Pivoting ordering.
+    // TODO: Allocate iPov externally.
+    unsigned *iPov = nullptr;
     // A-packing needs full size for maximum performance.
     T *SpBla = nullptr;
     // For sign of Pfaffian.
     unsigned cflp = 0;
+
+    // Allocate iPov.
+    iPov = (unsigned *)malloc(sizeof(unsigned) * n);
+    // Set initial permutation data.
+    for (unsigned i = 0; i < n; ++i)
+        iPov[i] = i;
     // Use malloc() as VLAs are somehow bad as the allocation is hard to check.
     // Final 32 * 2 is for alignment padding.
     unsigned nmicroblk = extblk / mr + ((extblk % mr) ? 1 : 0);
@@ -74,26 +89,16 @@ T skpfa(char uplo, unsigned n,
     T *vA = Sp1;
     T *vG = Sp2; // alpha_k: Gaussian elimination vector.
     T *vM = nullptr, *kM = nullptr;
-    if (inv) {
-        // Initialize M as identity.
-        for (unsigned j = 0; j < n; ++j) {
-            for (unsigned i = 0; i < n; ++i)
-                Sp3(i, j) = 0.0;
-            Sp3(j, j) = 1.0;
-        }
-        // 1-line buffer.
-        vM = Sp5;
-        // Reusable vector space.
-        // In addition, Sp4 serves as storage for both M-copy and inv(T) * M'.
-        // All 3 usages disposable.
-        kM = Sp4;
-    }
 
 #ifdef _PR_Simple
     // Simple variant (without blocking or pivoting) for debugging.
     // vA[:] = A[:, 0];
     skslc<T>(n, 0, vA, A, ldA);
     for (unsigned istep = 0; istep < n-2; ++istep) {
+        // Computing inverse requires logging vG vectors.
+        if (inv)
+            vG = &Sp3(0, istep);
+
         // k = istep+1, operating on column istep.
         // A(:, 0), kept from previous step.
         memcpy(vG, vA, n*sizeof(T));
@@ -120,20 +125,21 @@ T skpfa(char uplo, unsigned n,
             putchar('\n');
         }
 #endif
-
-        // Update for inverse.
-        if (inv) {
-            memcpy(vM, &Sp3(0, istep+1), n*sizeof(T));
-            ger(n, n, (T)-1.0, vM, 1, vG, 1, Sp3, n);
-        }
     }
 
 #else
     for (unsigned ist = 0; ist < n-2; ist+=npanel) {
         unsigned lpanel = (ist+npanel >= n-2) ? n-2 - ist : npanel;
+        T *exG = nullptr;
+        if (!inv)
+            exG = Sp2;
+        else
+            // Inversion requires saving transformations.
+            exG = &Sp3(0, ist);
+
         for (unsigned i = 0; i < lpanel; ++i) {
             unsigned icur = ist + i;
-            vG = &Sp2(0, i);
+            vG = &exG(0, i);
             if (i == 0)
                 // vA = A[:, ist].
                 // skslc<T>(n, ist, vG, A, ldA);
@@ -149,9 +155,9 @@ T skpfa(char uplo, unsigned n,
             for (unsigned j = 0; j < icur+1; ++j)
                 vG[j] = 0.0;
             vA = &Sp1(0, i);
-            
+
             // Pivoting
-            if (std::abs(vG[icur+1]) < 1e-3) {
+            if (std::abs(vG[icur+1]) < 1e-6) {
                 unsigned s = icur+1;
                 unsigned t;
                 T Gmax;
@@ -161,11 +167,20 @@ T skpfa(char uplo, unsigned n,
                 if (s < t) {
                     // Sign-flip corresponding to the swap.
                     cflp++;
+                    // Record permutation change.
+                    unsigned itmp = iPov[s];
+                    iPov[s] = iPov[t];
+                    iPov[t] = itmp;
 
                     if (i != 0) {
                         // For unmerged updates, swap rows (col maj.).
                         swap(i, &Sp1(s, 0), n, &Sp1(t, 0), n);
-                        swap(i, &Sp2(s, 0), n, &Sp2(t, 0), n);
+                        if (!inv)
+                            // Swap only unmerged vG.
+                            swap(i, &exG(s, 0), n, &exG(t, 0), n);
+                        else
+                            // Swap the whole recorded history.
+                            swap(icur, &Sp3(s, 0), n, &Sp3(t, 0), n);
                     }
                     // Swap A.
                     swap(s, &A(0, s), 1, &A(0, t), 1);
@@ -183,13 +198,6 @@ T skpfa(char uplo, unsigned n,
                     // Update vectors.
                     vG[t] = vG[s];
                     vG[s] = Gmax;
-
-                    // Inverse
-                    if (inv) {
-                        swap(n, &Sp3(0, s), 1, &Sp3(0, t), 1);
-                        if (i != 0)
-                            swap(lpanel, &Sp5(s, 0), n, &Sp5(t, 0), n);
-                    }
                 }
             }
 
@@ -215,29 +223,20 @@ T skpfa(char uplo, unsigned n,
 
             // vA from Original A to updated components, skipping zeros.
             if (i != 0) {
-                gemv('N', n-icur, i,-1.0, &Sp1(icur, 0), n, &Sp2(icur+1, 0), n, 1.0, vA+icur, 1);
-                gemv('N', n-icur, i, 1.0, &Sp2(icur, 0), n, &Sp1(icur+1, 0), n, 1.0, vA+icur, 1);
-            }
-
-            // M change.
-            if (inv) {
-                for (unsigned j = 0; j < i; ++j)
-                    kM[j] = Sp5(icur+1, j);
-                if (i != 0)
-                    ger(n, i, (T)-1.0, vG, 1, kM, 1, Sp5, n);
-                // Copy vG to M's change buffer (required).
-                memcpy(&Sp5(0, i), vG, n*sizeof(T));
+                gemv('N', n-icur, i,-1.0, &Sp1(icur, 0), n, &exG(icur+1, 0), n, 1.0, vA+icur, 1);
+                gemv('N', n-icur, i, 1.0, &exG(icur, 0), n, &Sp1(icur+1, 0), n, 1.0, vA+icur, 1);
             }
 
             // Write to change buffer (already done).
             // memcpy(&Sp1(0, i), vA, n*sizeof(T));
-            // memcpy(&Sp2(0, i), vG, n*sizeof(T));
+            // memcpy(&exG(0, i), vG, n*sizeof(T));
+            // if (inv) ...
         }
 
         // Apply transformation.
-        // skr2k<T>(uplo, 'N', n, lpanel, 1.0, Sp2, n, Sp1, n, 1.0, A, ldA, SpBla);
-        skr2k<T>(uplo, 'N', n-ist, lpanel, 1.0, 
-                 &Sp2(ist, 0), n, &Sp1(ist, 0), n, 1.0, &A(ist, ist), ldA, SpBla);
+        // skr2k<T>(uplo, 'N', n, lpanel, 1.0, exG, n, Sp1, n, 1.0, A, ldA, SpBla);
+        skr2k<T>(uplo, 'N', n-ist, lpanel, 1.0,
+                 &exG(ist, 0), n, &Sp1(ist, 0), n, 1.0, &A(ist, ist), ldA, SpBla);
 
 #ifdef _Pfaff_Debug
         printf("After %d changes A=\n", ist+lpanel);
@@ -247,13 +246,6 @@ T skpfa(char uplo, unsigned n,
             putchar('\n');
         }
 #endif
-
-        // Apply on M.
-        if (inv) {
-            // Borrows Sp4.
-            memcpy(Sp4, &Sp3(0, ist+1), n*lpanel*sizeof(T));
-            gemm('N', 'T', n, n, lpanel, -1.0, Sp4, n, Sp5, n, 1.0, Sp3, n);
-        }
     }
 
 #endif
@@ -267,11 +259,46 @@ T skpfa(char uplo, unsigned n,
     if (inv) {
         sktdi<T>(n, A, ldA);
 
-        // M (A M'), i.e. M' A M in Wimmer's paper.
-        // TODO: Write another skmm?
-        gemm('N', 'T', n, n, n, (T)1.0, A, ldA, Sp3, n, (T)0.0, Sp4, n);
-        gemm('N', 'N', n, n, n, (T)1.0, Sp3, n, Sp4, n, (T)0.0, A, ldA);
+#ifdef _PI_Simple
+        for (int istep = n-3; istep >= 0; --istep) {
+            // vA = invT * vG;
+            gemv('N', n, n, 1.0,
+                 &A(0, 0), ldA, &Sp3(0, istep), 1, 0.0, vA, 1);
+            // gemv('N', n, n-istep-2, 1.0,
+            //      &A(0, istep+2), ldA, &Sp3(istep+2, istep), 1, 0.0, vA, 1);
+
+            // vA[:, istep+1] -= A * vG
+            // vA[istep+1, :] += A * vG
+            for (unsigned i = 0; i < n; ++i)
+                A(i, istep+1) -= vA[i];
+            for (unsigned i = 0; i < n; ++i)
+                A(istep+1, i) += vA[i];
+        }
+#else
+#error "Block-inversion is not implemented."
+#endif
+        // Check permutation and swap back.
+        for (unsigned s = 0; s < n; ++s)
+            if (iPov[s] != s) {
+                unsigned t = s;
+                for ( ; t < n; ++t)
+                    if (iPov[t] == s)
+                        break;
+                if (iPov[t] != s) {
+                    std::cerr << "Permulation buffer broken." << std::endl;
+                    std::_Exit(EXIT_FAILURE);
+                }
+
+                // Swap the data.
+                swap(n, &A(0, s), 1, &A(0, t), 1);
+                swap(n, &A(s, 0), ldA, &A(t, 0), ldA);
+                // Swap the index.
+                iPov[t] = iPov[s];
+                iPov[s] = s;
+            }
     }
+    // Free Pivots.
+    free(iPov);
 
     // Return only PfA, inverse is stored in A.
     return (cflp % 2) ? -PfA : PfA;
