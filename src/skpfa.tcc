@@ -157,14 +157,15 @@ T skpfa(char uplo, unsigned n,
             vA = &Sp1(0, i);
 
             // Pivoting
-            if (std::abs(vG[icur+1]) < 1e-6) {
+            if (std::abs(vG[icur+1]) < 1e-3) {
                 unsigned s = icur+1;
                 unsigned t;
                 T Gmax;
                 findmax<T>(n, &t, &Gmax, vG);
 
-                // Do swapping
-                if (s < t) {
+                // Do swapping.
+                // Halfway solution: only allow even swapping.
+                if (s < t && ((s+1) % 2) && ((t+1) % 2)) {
                     // Sign-flip corresponding to the swap.
                     cflp++;
                     // Record permutation change.
