@@ -165,7 +165,7 @@ T skpfa(char uplo, unsigned n,
 
                 // Do swapping.
                 // Halfway solution: only allow even swapping.
-                if (s < t && ((s+1) % 2) && ((t+1) % 2)) {
+                if (s < t && ((s+1) % 2)) {
                     // Sign-flip corresponding to the swap.
                     cflp++;
                     // Record permutation change.
