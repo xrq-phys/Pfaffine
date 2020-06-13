@@ -263,10 +263,10 @@ T skpfa(char uplo, unsigned n,
 #ifdef _PI_Simple
         for (int istep = n-3; istep >= 0; --istep) {
             // vA = invT * vG;
-            gemv('N', n, n, 1.0,
-                 &A(0, 0), ldA, &Sp3(0, istep), 1, 0.0, vA, 1);
-            // gemv('N', n, n-istep-2, 1.0,
-            //      &A(0, istep+2), ldA, &Sp3(istep+2, istep), 1, 0.0, vA, 1);
+            // gemv('N', n, n, 1.0,
+            //      &A(0, 0), ldA, &Sp3(0, istep), 1, 0.0, vA, 1);
+            gemv('N', n, n-istep-2, 1.0,
+                 &A(0, istep+2), ldA, &Sp3(istep+2, istep), 1, 0.0, vA, 1);
 
             // vA[:, istep+1] -= A * vG
             // vA[istep+1, :] += A * vG
