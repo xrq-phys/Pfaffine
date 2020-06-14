@@ -4,6 +4,7 @@ PFAFFINE_LIB= ../src/libpfaffine.a
 TEXT_EXE= \
 	./small_dskpfa_call.x \
 	./large_dskpfa_call.x \
+	./large_dskpfa_inv_call.x \
 	./small_zskpfa_call.x \
 	./small_dskr2k_call.x \
 	./small_zskr2k_call.x
