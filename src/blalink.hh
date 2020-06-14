@@ -10,6 +10,14 @@
 #include <complex>
 typedef std::complex<float>  scomplex;
 typedef std::complex<double> dcomplex;
+typedef struct {
+    float real;
+    float imag;
+} cscomplex;
+typedef struct {
+    double real;
+    double imag;
+} cdcomplex;
 
 
 // gemm
@@ -103,3 +111,36 @@ inline void swap(unsigned n, scomplex *x, unsigned incx, scomplex *y, unsigned i
 inline void swap(unsigned n, dcomplex *x, unsigned incx, dcomplex *y, unsigned incy)
 { zswap_(&n, x, &incx, y, &incy); }
 
+// axpy
+extern "C" {
+void saxpy_(unsigned *n, float *alpha, float *sx, unsigned *incx, float *sy, unsigned *incy);
+void daxpy_(unsigned *n, double *alpha, double *sx, unsigned *incx, double *sy, unsigned *incy);
+void caxpy_(unsigned *n, void *alpha, void *sx, unsigned *incx, void *sy, unsigned *incy);
+void zaxpy_(unsigned *n, void *alpha, void *sx, unsigned *incx, void *sy, unsigned *incy);
+}
+inline void axpy(unsigned n, float alpha, float *x, unsigned incx, float *y, unsigned incy)
+{ saxpy_(&n, &alpha, x, &incx, y, &incy); }
+inline void axpy(unsigned n, double alpha, double *x, unsigned incx, double *y, unsigned incy)
+{ daxpy_(&n, &alpha, x, &incx, y, &incy); }
+inline void axpy(unsigned n, scomplex alpha, scomplex *x, unsigned incx, scomplex *y, unsigned incy)
+{ caxpy_(&n, &alpha, x, &incx, y, &incy); }
+inline void axpy(unsigned n, dcomplex alpha, dcomplex *x, unsigned incx, dcomplex *y, unsigned incy)
+{ zaxpy_(&n, &alpha, x, &incx, y, &incy); }
+
+// dot
+extern "C" {
+float sdot_(unsigned *n, float *sx, unsigned *incx, float *sy, unsigned *incy);
+double ddot_(unsigned *n, double *sx, unsigned *incx, double *sy, unsigned *incy);
+cscomplex cdotc_(unsigned *n, void *sx, unsigned *incx, void *sy, unsigned *incy);
+cdcomplex zdotc_(unsigned *n, void *sx, unsigned *incx, void *sy, unsigned *incy);
+}
+inline float dot(unsigned n, float *sx, unsigned incx, float *sy, unsigned incy)
+{ return sdot_(&n, sx, &incx, sy, &incy); }
+inline double dot(unsigned n, double *sx, unsigned incx, double *sy, unsigned incy)
+{ return ddot_(&n, sx, &incx, sy, &incy); }
+inline scomplex dot(unsigned n, scomplex *sx, unsigned incx, scomplex *sy, unsigned incy)
+{ cscomplex inner = cdotc_(&n, sx, &incx, sy, &incy);
+  return scomplex(inner.real, inner.imag); }
+inline dcomplex dot(unsigned n, dcomplex *sx, unsigned incx, dcomplex *sy, unsigned incy)
+{ cdcomplex inner = zdotc_(&n, sx, &incx, sy, &incy);
+  return dcomplex(inner.real, inner.imag); }

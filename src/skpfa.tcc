@@ -28,9 +28,6 @@
 #define Sp5(i,j) Sp5[ (i) + (j)*(n)   ]
 #define exG(i,j) exG[ (i) + (j)*(n)   ]
 
-// Currently only Simple inversion is available.
-#define _PI_Simple
-
 /**
  * \brief Calculate Pfaffian and optionally inverse of antisymmetric matrix A.
  *
@@ -276,7 +273,36 @@ T skpfa(char uplo, unsigned n,
                 A(istep+1, i) += vA[i];
         }
 #else
-#error "Block-inversion is not implemented."
+        for (int ist = ((n-2)/npanel - !((n-2)%npanel))*npanel;
+             ist >= 0; ist -= npanel) {
+            unsigned lpanel = (ist+npanel > n-2) ? n-2-ist : npanel;
+
+            // Compute inverse update.
+            // gemm('N', 'N', n, lpanel, n, 1.0,
+            //      &A(0, 0), ldA, &Sp3(0, ist), n, 0.0, Sp1, n);
+            gemm('N', 'N', n, lpanel, n-ist-2, 1.0,
+                 &A(0, ist+2), ldA, &Sp3(ist+2, ist), n, 0.0, Sp1, n);
+            for (int i = lpanel-1; i >= 0; --i) {
+                // TODO: Use ger instead of axpy.
+                for (int j = 0; j < i; ++j)
+                    axpy(n, -Sp3(ist+i+1, ist+j), &Sp1(0, i), 1, &Sp1(0, j), 1);
+
+                // Inner-product part.
+                if (i != 0)
+                    for (int k = i; k < lpanel; ++k)
+                        // Sp1(ist+k+1, i-1) += dot(n, &Sp3(0, ist+i-1), 1, &Sp1(0, k), 1);
+                        Sp1(ist+k+1, i-1) += dot(n-ist-i-1, &Sp3(ist+i+1, ist+i-1), 1,
+                                                            &Sp1(ist+i+1, k), 1);
+            }
+
+            // Write to inv(T).
+            for (unsigned j = 0; j < lpanel; ++j)
+                for (unsigned i = 0; i < n; ++i)
+                    A(i, ist+1+j) -= Sp1(i, j);
+            for (unsigned j = 0; j < lpanel; ++j)
+                for (unsigned i = 0; i < n; ++i)
+                    A(ist+1+j, i) += Sp1(i, j);
+        }
 #endif
         // Check permutation and swap back.
         for (unsigned s = 0; s < n; ++s)
