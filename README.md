@@ -1,11 +1,11 @@
-Pfaffine
-========
+☕️Pfaffine
+==========
 
 *Pfaffine aims to be the caffeine that wakes your program up when you work with Geminal wavefunctions.*
 
 ### Requirements
 
-- A working C++ compiler;
+- A working C++ 11 compiler;
 - BLAS library.
 
 ### Build and Linking
