@@ -52,6 +52,7 @@ In all cases above, `A` will be replaced by its full inverse if `inv=1`, otherwi
 ## Roadmaps (WIP List)
 
 - ~~**Important**: Change Fugaku's core to inline assembly & add clobber declaration~~;
+- Mix AVX512 and AVX2 kernels on Intel SkylakeX processors;
 - ~~Return signed Pfaffian instead of real-part-positive component~~;
 - Implement a Pfaffian-inverse object that supports in-place *n*-term fast update;
 - ~~Migrate `gemm` kernels from Pfapack and BLIS;~~
@@ -62,7 +63,6 @@ In all cases above, `A` will be replaced by its full inverse if `inv=1`, otherwi
 - ~~Add a low-level **C99**/Fortran interface~~;
 - ~~Add a compatibility interface consistent to [Pfapack](https://michaelwimmer.org/downloads.html)~~;
 - ~~Provide document here for all Pfaffine-defined interfaces;~~
-- Support CMake.
 
 ### WIPs on Fugaku's SVE Kernel
 

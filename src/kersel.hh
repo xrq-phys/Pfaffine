@@ -64,8 +64,14 @@ template <> inline void set_blk_size<double>  (unsigned *mr, unsigned *nr)
 { *mr = 4; *nr = 4; }
 #elif defined(_SVE)
 { *mr = dvecln_iso(); *nr = dvecln_iso(); }
+#elif defined(_Haswell)
+#if defined(_SkylakeX)
+{ *mr = 14; *nr = 16; }
 #else
 { *mr = 6; *nr = 8; }
+#endif
+#else
+{ *mr = 8; *nr = 8; }
 #endif
 template <> inline void set_blk_size<scomplex>(unsigned *mr, unsigned *nr) { *mr = 3; *nr = 8; }
 template <> inline void set_blk_size<dcomplex>(unsigned *mr, unsigned *nr)

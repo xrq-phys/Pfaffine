@@ -88,9 +88,12 @@ void bli_zgemm_haswell_asm_4x3
 
 // N size-Wrappers for Pfaffine.
 // Due to definition, names like 8x6 should be actually read as inverse.
+#ifndef _SkylakeX
+// SkylakeX kernels in another file.
 void udgemmn( unsigned k, double *alpha_,
         double *a, double *b, double *beta_, double *c, unsigned ldc )
 { bli_dgemm_haswell_asm_8x6(k, alpha_, b, a, beta_, c, ldc, 1, 0, 0); }
+#endif
 void usgemmn( unsigned k, float *alpha_,
         float *a, float *b, float *beta_, float *c, unsigned ldc )
 { bli_sgemm_haswell_asm_16x6(k, alpha_, b, a, beta_, c, ldc, 1, 0, 0); }
