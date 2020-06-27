@@ -68,9 +68,9 @@ T skpfa(char uplo, unsigned n,
     for (unsigned i = 0; i < n; ++i)
         iPov[i] = i;
     // Use malloc() as VLAs are somehow bad as the allocation is hard to check.
-    // Final 32 * 2 is for alignment padding.
+    // Final align_block * 2 is for alignment padding.
     unsigned nmicroblk = extblk / mr + ((extblk % mr) ? 1 : 0);
-    SpBla = (T *)malloc(sizeof(T) * (pakBsz + nmicroblk * pakAsz) + 32*2);
+    SpBla = (T *)malloc(sizeof(T) * (pakBsz + nmicroblk * pakAsz) + align_blk*2);
     if (SpBla == nullptr) {
         std::cerr << "Unable to allocate memory-packing scratchpads." << std::endl;
         std::_Exit(EXIT_FAILURE);

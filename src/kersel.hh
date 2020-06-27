@@ -11,6 +11,14 @@
 typedef std::complex<float>  scomplex;
 typedef std::complex<double> dcomplex;
 
+// Memory alignment block size.
+// TODO: Determine for SVE by vector bits.
+#if defined(_SkylakeX) || defined(_SVE)
+const unsigned align_blk = 64;
+#else
+const unsigned align_blk = 32;
+#endif
+
 #if defined(_SVE)
 // Vector length query for SVE.
 extern "C" unsigned dvecln_iso(void);
