@@ -213,16 +213,30 @@ void skr2k(char uplo, char trans, unsigned n, unsigned k,
                           &C(mi*mblk, mj*mblk), ldC, mr, nr, buffer);
             else if (mi < mj)
                 // GEMM big-kernel.
+#ifndef _Use_OGemm
                 gemm('N', 'T', leni, lenj, k, alpha,
                      &A(mi*mblk, 0), ldA,
                      &B(mj*mblk, 0), ldB, beta,
                      &C(mi*mblk, mj*mblk), ldC);
+#else
+                ogemm<T>(leni, lenj, k, alpha,
+                         &A(mi*mblk, 0), ldA,
+                         &B(mj*mblk, 0), ldB, beta,
+                         &C(mi*mblk, mj*mblk), ldC, mr, nr, buffer);
+#endif
             else
                 // GEMM negative big-kernel.
+#ifndef _Use_OGemm
                 gemm('N', 'T', lenj, leni, k, -alpha,
                      &B(mj*mblk, 0), ldB,
                      &A(mi*mblk, 0), ldA, beta,
                      &C(mj*mblk, mi*mblk), ldC);
+#else
+                ogemm<T>(lenj, leni, k, -alpha,
+                         &B(mj*mblk, 0), ldB,
+                         &A(mi*mblk, 0), ldA, beta,
+                         &C(mj*mblk, mi*mblk), ldC, mr, nr, buffer);
+#endif
         }
     }
 }

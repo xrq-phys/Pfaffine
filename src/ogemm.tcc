@@ -10,8 +10,8 @@
  * \brief Small-size 1-lv blocked GEMM program in 'N' - 'T' shape.
  */
 template<typename T>
-void ogemm(unsigned m, unsigned n, unsigned k, 
-           T alpha, T *A, unsigned ldA, T *B, unsigned ldB, 
+void ogemm(unsigned m, unsigned n, unsigned k,
+           T alpha, T *A, unsigned ldA, T *B, unsigned ldB,
            T beta, T *C, unsigned ldC, unsigned mr, unsigned nr, T *buffer)
 {
     // Determine microblock size.
@@ -81,7 +81,7 @@ void ogemm(unsigned m, unsigned n, unsigned k,
                 // TODO: prefetching.
                 if (mker_available<T>() && leni == mr && lenj == nr)
                     ugemmn(lenk, &alpha, pakA, pakB, &beta_, &C(ist, jst), ldC);
-                else if (false) // (extker_available<T>())
+                else if (extker_available<T>())
                     ugemmext(leni, lenj, lenk, &alpha, pakA, mr, pakB, nr, &beta_, &C(ist, jst), ldC);
                 else
                     // Vanilla microkernel at off-diagonal.
