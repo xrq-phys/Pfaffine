@@ -16,6 +16,7 @@
 #include "kersel.hh"
 #include "thread.h"
 
+#include "gcd.tcc"
 #include "findmax.tcc"
 #include "skslc.tcc"
 #include "sktdi.tcc"
@@ -53,6 +54,15 @@ T skpfa(char uplo, unsigned n,
     // TODO: Or allowing a global in-place allocation.
     unsigned mr, nr;
     set_blk_size<T>(&mr, &nr);
+#ifndef _Manual_SqBlk
+    // Automatically determines a square block size.
+    if (n >= 2 * lcm(mr, nr) ||
+        n % lcm(mr, nr) < 16 ||
+        n - n / lcm(mr, nr) * lcm(mr, nr) < 16)
+        set_sqblk_size(lcm(mr, nr));
+    else
+        set_sqblk_size(64);
+#endif
     unsigned pakAsz = npanel * mr;
     unsigned pakBsz = tracblk * nr;
     // Pivoting ordering.
