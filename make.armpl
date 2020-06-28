@@ -7,6 +7,9 @@ CC=armclang
 CFLAGS=-O2
 CXX=armclang++
 CXXFLAGS=-std=c++11 -O3
+# The code is written thread-aware so that
+# one can add -fopenmp flag to enable threaded version.
+#CXXFLAGS=-std=c++11 -O3 -fopenmp
 
 # SVE, of course.
 ARCH=sve
