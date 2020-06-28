@@ -13,5 +13,5 @@ clean: make.inc
 	cd src; make -f makefile clean
 	cd test; make -f makefile clean
 
-test: make.inc
+tests: make.inc
 	cd test; make -f makefile
