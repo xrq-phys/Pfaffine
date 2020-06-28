@@ -14,6 +14,7 @@
 #include "blalink.hh"
 #include "skr2k.hh"
 #include "kersel.hh"
+#include "thread.h"
 
 #include "findmax.tcc"
 #include "skslc.tcc"
@@ -69,8 +70,9 @@ T skpfa(char uplo, unsigned n,
         iPov[i] = i;
     // Use malloc() as VLAs are somehow bad as the allocation is hard to check.
     // Final align_block * 2 is for alignment padding.
-    unsigned nmicroblk = extblk / mr + ((extblk % mr) ? 1 : 0);
-    SpBla = (T *)malloc(sizeof(T) * (pakBsz + nmicroblk * pakAsz) + align_blk*2);
+    size_t nmicroblk = extblk / mr + ((extblk % mr) ? 1 : 0);
+    size_t nbitspbla = sizeof(T) * (pakBsz + nmicroblk * pakAsz) + align_blk*2;
+    SpBla = (T *)malloc(nbitspbla * omp_get_max_threads());
     if (SpBla == nullptr) {
         std::cerr << "Unable to allocate memory-packing scratchpads." << std::endl;
         std::_Exit(EXIT_FAILURE);

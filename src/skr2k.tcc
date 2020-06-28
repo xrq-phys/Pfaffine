@@ -13,6 +13,7 @@
 #include "kersel.hh"
 #include "kersel_ext.hh"
 #include "blalink.hh"
+#include "thread.h"
 
 // Macros for first-index-runs-fastest.
 #define    A(i,j)    A[ (i) + (j)*(ldA) ]
@@ -177,6 +178,13 @@ void skr2k(char uplo, char trans, unsigned n, unsigned k,
     unsigned mr, nr;
     set_blk_size<T>(&mr, &nr);
 
+    // Calculate again nbitspbla.
+    // TODO: Avoid calculating again for neat code.
+    size_t pakAsz = k * mr;
+    size_t pakBsz = tracblk * nr;
+    size_t nmicroblk = extblk / mr + ((extblk % mr) ? 1 : 0);
+    size_t nbitspbla = sizeof(T) * (pakBsz + nmicroblk * pakAsz) + align_blk*2;
+
     // Lo is not implemented. Sorry.
     if (uplo != 'U' && uplo != 'u') {
         std::cerr << "Lo is not implemented. Sorry." << std::endl;
@@ -201,17 +209,25 @@ void skr2k(char uplo, char trans, unsigned n, unsigned k,
         nblk_= n;
     }
 
+#pragma omp parallel
+#pragma omp master
     for (unsigned mj = 0; mj < nblk; ++mj) {
-        unsigned lenj = (mj+1 == nblk) ? nblk_ : mblk;
-        for (unsigned mi = 0; mi < nblk; ++mi) {
+        for (unsigned mi = 0; mi <= mj; ++mi)
+#pragma omp task default(shared) firstprivate(mi, mj)
+        {
+            unsigned lenj = (mj+1 == nblk) ? nblk_ : mblk;
             unsigned leni = (mi+1 == nblk) ? nblk_ : mblk;
+            // Scratchpad corresponding to each thread.
+            T *buff_thread = (T *)((uint8_t *)buffer + (size_t)(nbitspbla * omp_get_thread_num()));
+            // printf("Padding %d Ref %d\n",
+            //        (buff_thread - buffer) * sizeof(T), nbitspbla * omp_get_thread_num());
             if (mi == mj)
                 // SKR2K kernel.
                 uskr2k<T>(lenj, k, alpha,
                           &A(mi*mblk, 0), ldA,
                           &B(mj*mblk, 0), ldB, beta,
-                          &C(mi*mblk, mj*mblk), ldC, mr, nr, buffer);
-            else if (mi < mj)
+                          &C(mi*mblk, mj*mblk), ldC, mr, nr, buff_thread);
+            else {
                 // GEMM big-kernel.
 #ifndef _Use_OGemm
                 gemm('N', 'T', leni, lenj, k, alpha,
@@ -222,21 +238,21 @@ void skr2k(char uplo, char trans, unsigned n, unsigned k,
                 ogemm<T>(leni, lenj, k, alpha,
                          &A(mi*mblk, 0), ldA,
                          &B(mj*mblk, 0), ldB, beta,
-                         &C(mi*mblk, mj*mblk), ldC, mr, nr, buffer);
+                         &C(mi*mblk, mj*mblk), ldC, mr, nr, buff_thread);
 #endif
-            else
                 // GEMM negative big-kernel.
 #ifndef _Use_OGemm
-                gemm('N', 'T', lenj, leni, k, -alpha,
-                     &B(mj*mblk, 0), ldB,
-                     &A(mi*mblk, 0), ldA, beta,
-                     &C(mj*mblk, mi*mblk), ldC);
+                gemm('N', 'T', leni, lenj, k, -alpha,
+                     &B(mi*mblk, 0), ldB,
+                     &A(mj*mblk, 0), ldA, beta,
+                     &C(mi*mblk, mj*mblk), ldC);
 #else
-                ogemm<T>(lenj, leni, k, -alpha,
-                         &B(mj*mblk, 0), ldB,
-                         &A(mi*mblk, 0), ldA, beta,
-                         &C(mj*mblk, mi*mblk), ldC, mr, nr, buffer);
+                ogemm<T>(leni, lenj, k, -alpha,
+                         &B(mi*mblk, 0), ldB,
+                         &A(mj*mblk, 0), ldA, beta,
+                         &C(mi*mblk, mj*mblk), ldC, mr, nr, buff_thread);
 #endif
+            }
         }
     }
 }

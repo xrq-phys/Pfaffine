@@ -3,6 +3,7 @@
 #include <random>
 #include "../src/skr2k.hh"
 #include "../src/blalink.hh"
+#include "../src/thread.h"
 typedef std::complex<double> dcomplex;
 
 #define M_ 64
@@ -32,7 +33,7 @@ int main(const int argc, const char *argv[])
     dcomplex *ptrA = &(matA(0, 0));
     dcomplex *ptrB = &(matB(0, 0));
     dcomplex *ptrC = &(matC(0, 0));
-    dcomplex blasp[600];
+    dcomplex *blasp = new dcomplex[100 * K_ * omp_get_max_threads()];
     for (unsigned l = 0; l < K_; ++l) {
         for (unsigned i = 0; i < M_; ++i) {
             matA(i, l) = dcomplex(randn(rng), randn(rng));
@@ -78,11 +79,12 @@ int main(const int argc, const char *argv[])
             fprintf(fid_c2, "%16.8e %16.8e ", std::real(matC(i, j)), std::imag(matC(i, j)));
         fprintf(fid_c2, "\n");
     }
-
     fclose(fid_a);
     fclose(fid_b);
     fclose(fid_c1);
     fclose(fid_c2);
+    delete[] blasp;
+
     return 0;
 }
 

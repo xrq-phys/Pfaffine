@@ -2,6 +2,7 @@
 #include <random>
 #include "../src/skr2k.tcc"
 #include "../src/blalink.hh"
+#include "../src/thread.h"
 
 #define M_ 64
 #define N_ 60
@@ -30,7 +31,7 @@ int main(const int argc, const char *argv[])
     double *ptrA = &(matA(0, 0));
     double *ptrB = &(matB(0, 0));
     double *ptrC = &(matC(0, 0));
-    double blasp[700];
+    double *blasp = new double[100 * K_ * omp_get_max_threads()];
     for (unsigned l = 0; l < K_; ++l) {
         for (unsigned i = 0; i < M_; ++i) {
             matA(i, l) = randn(rng);
@@ -78,11 +79,12 @@ int main(const int argc, const char *argv[])
             fprintf(fid_c2, "%16.8e ", matC(i, j));
         fprintf(fid_c2, "\n");
     }
-
     fclose(fid_a);
     fclose(fid_b);
     fclose(fid_c1);
     fclose(fid_c2);
+    delete[] blasp;
+
     return 0;
 }
 

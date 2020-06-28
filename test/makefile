@@ -19,5 +19,5 @@ clean:
 
 .SUFFIXES: .x .cc
 
-%.x : %.cc
+%.x : %.cc $(PFAFFINE_LIB)
 	$(CXX) $(CXXFLAGS) $< $(PFAFFINE_LIB) $(BLAS_LIB) -o $@
