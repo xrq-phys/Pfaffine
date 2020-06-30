@@ -27,9 +27,9 @@ int main(const int argc, const char *argv[])
     normal_distribution<double> dist(0, 0.037);
 
 #ifdef _Intel_Advisor
-    // creates Advisor tasks.
-    auto *itt_domain = __itt_domain_create("Pfaffine");
-    auto *itt_task = __itt_string_handle_create("DSKPFA_Large");
+    // initialization phase.
+    // stop data collection.
+    __itt_pause();
 #endif
 
     // prepares input and output container.
@@ -55,8 +55,8 @@ int main(const int argc, const char *argv[])
     }
 
 #ifdef _Intel_Advisor
-    // start Advisor's task definition.
-    __itt_task_begin(itt_domain, __itt_null, __itt_null, itt_task);
+    // start Advisor's collection.
+    __itt_resume();
 #endif
 
     // call Pfaffian calculation.
@@ -70,8 +70,8 @@ int main(const int argc, const char *argv[])
     long long microseconds = std::chrono::duration_cast<std::chrono::microseconds>(elapsed).count();
 
 #ifdef _Intel_Advisor
-    // start Advisor's task definition.
-    __itt_task_end(itt_domain);
+    // stop collection.
+    __itt_pause();
 #endif
 
     printf("Pfa = %16.8e\n", Pfa);
