@@ -2,6 +2,9 @@
 #include <random>
 #include <chrono>
 #include "../src/skpfa.hh"
+#ifdef _Intel_Advisor
+#include <ittnotify.h>
+#endif
 
 static const unsigned N = 2240;
 static const unsigned NPANEL = 32;
@@ -23,6 +26,12 @@ int main(const int argc, const char *argv[])
     // use random.
     mt19937_64 rng(1234);
     normal_distribution<double> dist(0, 0.037);
+
+#ifdef _Intel_Advisor
+    // creates Advisor tasks.
+    auto *itt_domain = __itt_domain_create("Pfaffine");
+    auto *itt_task = __itt_string_handle_create("DSKPFA_Large");
+#endif
 
     // prepares input and output container.
     double matA[N * N];
@@ -47,6 +56,11 @@ int main(const int argc, const char *argv[])
     }
     fclose(fin);
 
+#ifdef _Intel_Advisor
+    // start Advisor's task definition.
+    __itt_task_begin(itt_domain, __itt_null, __itt_null, itt_task);
+#endif
+
     // call Pfaffian calculation.
     auto start = std::chrono::high_resolution_clock::now();
     double Pfa = skpfa<double>('U', N,
@@ -56,6 +70,11 @@ int main(const int argc, const char *argv[])
                                matC, matD, mat3, NPANEL);
     auto elapsed = std::chrono::high_resolution_clock::now() - start;
     long long microseconds = std::chrono::duration_cast<std::chrono::microseconds>(elapsed).count();
+
+#ifdef _Intel_Advisor
+    // start Advisor's task definition.
+    __itt_task_end(itt_domain);
+#endif
 
     printf("Pfa = %16.8e\n", Pfa);
     printf("Time consumed: %20lf ms\n", double(microseconds)/1000);
