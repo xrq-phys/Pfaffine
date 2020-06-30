@@ -58,9 +58,13 @@ T skpfa(char uplo, unsigned n,
     // Automatically determines a square block size.
     if (n >= 2 * lcm(mr, nr) ||
         n % lcm(mr, nr) < 16 ||
-        n - n / lcm(mr, nr) * lcm(mr, nr) < 16)
-        set_sqblk_size(lcm(mr, nr));
-    else
+        n - n / lcm(mr, nr) * lcm(mr, nr) < 16) {
+        unsigned sqblk_auto = lcm(mr, nr);
+        // The external block should not be too small.
+        while (sqblk_auto < 32)
+            sqblk_auto *= 2;
+        set_sqblk_size(sqblk_auto);
+    } else
         set_sqblk_size(64);
 #endif
     unsigned pakAsz = npanel * mr;
