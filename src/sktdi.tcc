@@ -25,12 +25,16 @@ void sktdi(unsigned n, T *A, unsigned ldA)
             if (j != n-1) {
                 r *= A(j, j+1);
                 A(j+1, i) = 0.0; // Clear redundant values.
+                A(i, j+1) = 0.0;
             }
         }
         if (i != n-2) {
             A(i+1, i+2) = 0.0;
-            for (unsigned j = i+2; j < n; ++j)
+            A(i+2, i+1) = 0.0;
+            for (unsigned j = i+2; j < n; ++j) {
                 A(j, i+1) = 0.0;
+                A(i+1, j) = 0.0;
+            }
         }
     }
 }
