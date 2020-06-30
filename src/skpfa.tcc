@@ -235,6 +235,10 @@ T skpfa(char uplo, unsigned n,
             // NB: if vG is fully copied at step-1, should do also vG[icur-1]=0.0;
             vG[icur+1] = 0.0;
 
+            // Fast-update of A[:, icur:icur+lpanel].
+            // Directly write to corresponding subdiagonal position of A.
+            A(icur, icur+1) = -alpha_k;
+
             // vA from Original A to updated components, skipping zeros.
             if (i != 0) {
                 gemv('N', n-icur, i,-1.0, &Sp1(icur, 0), n, &exG(icur+1, 0), n, 1.0, vA+icur, 1);
@@ -249,8 +253,15 @@ T skpfa(char uplo, unsigned n,
 
         // Apply transformation.
         // skr2k<T>(uplo, 'N', n, lpanel, 1.0, exG, n, Sp1, n, 1.0, A, ldA, SpBla);
-        skr2k<T>(uplo, 'N', n-ist, lpanel, 1.0,
-                 &exG(ist, 0), n, &Sp1(ist, 0), n, 1.0, &A(ist, ist), ldA, SpBla);
+        // Skip already cancelled by previous steps.
+        // skr2k<T>(uplo, 'N', n-ist, lpanel, 1.0,
+        //          &exG(ist, 0), n, &Sp1(ist, 0), n, 1.0, &A(ist, ist), ldA, SpBla);
+        // Rows & columns associated to this step are sure to be tridiagonal.
+        // Skip these columns as well (by applying Fast-update to subdiagonals above).
+        unsigned inext = ist + lpanel;
+        if (n - inext > 1)
+            skr2k<T>(uplo, 'N', n-inext, lpanel, 1.0,
+                     &exG(inext, 0), n, &Sp1(inext, 0), n, 1.0, &A(inext, inext), ldA, SpBla);
 
 #ifdef _Pfaff_Debug
         printf("After %d changes A=\n", ist+lpanel);
