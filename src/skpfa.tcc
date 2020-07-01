@@ -355,7 +355,6 @@ T skpfa(char uplo, unsigned n,
     // Free Pivots.
     free(iPov);
 
-    printf("%d flps.\n", cflp);
     // Return only PfA, inverse is stored in A.
     return (cflp % 2) ? -PfA : PfA;
 }
