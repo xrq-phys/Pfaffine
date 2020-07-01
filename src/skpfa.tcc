@@ -174,11 +174,12 @@ T skpfa(char uplo, unsigned n,
                 unsigned s = icur+1;
                 unsigned t;
                 T Gmax;
-                findmax<T>(n, &t, &Gmax, vG);
+                // Halfway solution: Skip final column.
+                // TODO: Check problem on final column.
+                findmax<T>(n-1, &t, &Gmax, vG);
 
                 // Do swapping.
-                // Halfway solution: only allow even swapping.
-                if (s < t && ((s+1) % 2)) {
+                if (s < t) {
                     // Sign-flip corresponding to the swap.
                     cflp++;
                     // Record permutation change.
@@ -354,6 +355,7 @@ T skpfa(char uplo, unsigned n,
     // Free Pivots.
     free(iPov);
 
+    printf("%d flps.\n", cflp);
     // Return only PfA, inverse is stored in A.
     return (cflp % 2) ? -PfA : PfA;
 }
