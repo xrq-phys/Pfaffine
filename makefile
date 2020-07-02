@@ -3,15 +3,15 @@ help:
 	@echo "\"make install\" to compile library and install to subdirectory \"dest\"."
 
 lib: make.inc
-	cd src; make -f makefile
+	make -C src
 
 install: make.inc
-	cd src; make -f makefile install
+	make -C src install
 	# TODO: Install rule for tests?
 
 clean: make.inc
-	cd src; make -f makefile clean
-	cd test; make -f makefile clean
+	make -C src clean
+	make -C test clean
 
 tests: make.inc
-	cd test; make -f makefile
+	make -C test
