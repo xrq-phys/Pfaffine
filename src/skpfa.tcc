@@ -211,9 +211,7 @@ T skpfa(char uplo, unsigned n,
                 unsigned s = icur+1;
                 int t;
                 T Gmax;
-                // Halfway solution: Skip columns already touched.
-                // TODO: Check problem on this.
-                findmax<T>(n, &t, &Gmax, vG, s, iPov);
+                findmax<T>(n, &t, &Gmax, vG, s);
 
                 // Do swapping.
                 if (int(s) < t) {
@@ -230,10 +228,11 @@ T skpfa(char uplo, unsigned n,
                         if (!inv)
                             // Swap only unmerged vG.
                             swap(i, &exG(s, 0), n, &exG(t, 0), n);
-                        else
+                    }
+                    if (inv)
+                        if (icur != 0)
                             // Swap the whole recorded history.
                             swap(icur, &Sp3(s, 0), n, &Sp3(t, 0), n);
-                    }
                     // Swap A.
                     swap(s, &A(0, s), 1, &A(0, t), 1);
                     A(s, t) *= -1.0;
