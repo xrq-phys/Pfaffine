@@ -64,8 +64,9 @@ In all cases above, `A` will be replaced by its full inverse if `inv=1`, otherwi
 - ~~Migrate `gemm` kernels from Pfapack and BLIS;~~
 - `needs improvement` ~~SVE kernel for Fugaku~~;
 - `needs improvement` ~~Default memory allocation~~;
-- Adjustable `k`-blocking;
-- ~~Automatically determine panel size `npanel`~~;
+- ~~Adjustable `k`-blocking~~;
+- ~~Adjustable & automatic superblocking~~;
+- Automatically determine panel size `npanel`;
 - ~~Add a low-level **C99**/Fortran interface~~;
 - ~~Add a compatibility interface consistent to [Pfapack](https://michaelwimmer.org/downloads.html)~~;
 - ~~Provide document here for all Pfaffine-defined interfaces;~~
