@@ -172,14 +172,14 @@ T skpfa(char uplo, unsigned n,
             // Pivoting
             if (std::abs(vG[icur+1]) < 1e-3) {
                 unsigned s = icur+1;
-                unsigned t;
+                int t;
                 T Gmax;
-                // Halfway solution: Skip final column.
-                // TODO: Check problem on final column.
-                findmax<T>(n-1, &t, &Gmax, vG);
+                // Halfway solution: Skip columns already touched.
+                // TODO: Check problem on this.
+                findmax<T>(n, &t, &Gmax, vG, s, iPov);
 
                 // Do swapping.
-                if (s < t) {
+                if (int(s) < t) {
                     // Sign-flip corresponding to the swap.
                     cflp++;
                     // Record permutation change.
