@@ -116,6 +116,43 @@ T skpfa(char uplo, unsigned n,
         // A(:, 0), kept from previous step.
         memcpy(vG, vA, n*sizeof(T));
 
+        if (true) {
+            unsigned s = istep+1;
+            int t;
+            T Gmax;
+            // Pivoting.
+            findmax<T>(n, &t, &Gmax, vG, s);
+
+            if (int(s) < t) {
+                cflp++;
+                // Record permutation.
+                unsigned itmp = iPov[s];
+                iPov[s] = iPov[t];
+                iPov[t] = itmp;
+
+                // Unmerged G.
+                if (inv)
+                    swap(istep, &Sp3(s, 0), n, &Sp3(t, 0), n);
+
+                // Swap A.
+                swap(s, &A(0, s), 1, &A(0, t), 1);
+                A(s, t) *= -1.0;
+                if (t > s+1) {
+                    swap(t-s-1, &A(s+1, t), 1, &A(s, s+1), ldA);
+                    for (unsigned j = s+1; j < t; ++j) {
+                        A(j, t) *= -1;
+                        A(s, j) *= -1;
+                    }
+                }
+                if (t+1 < n)
+                    swap(n-t-1, &A(s, t+1), ldA, &A(t, t+1), ldA);
+
+                // Update vectors.
+                vG[t] = vG[s];
+                vG[s] = Gmax;
+            }
+        }
+
         // vA = A[:, istep+1]
         skslc<T>(n, istep+1, vA, A, ldA);
 
