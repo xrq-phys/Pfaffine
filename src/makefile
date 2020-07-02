@@ -1,4 +1,5 @@
 include ../make.inc
+CONFIG= ../make.inc
 
 OBJECTS= skpfa.o skr2k.o \
 		 ../interface/pfaffine.o \
@@ -28,12 +29,12 @@ install: libpfaffine.a
 
 .SUFFIXES: .o .cc .tcc
 
-%.o : %.cc %.tcc $(HEADERS)
+%.o : %.cc %.tcc $(HEADERS) $(CONFIG)
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
 .SUFFIXES: .o .c
 
-%.o : %.c
+%.o : %.c $(CONFIG)
 	$(CC) $(CFLAGS) -c $< -o $@
 
 .SUFFIXES: .o .s
