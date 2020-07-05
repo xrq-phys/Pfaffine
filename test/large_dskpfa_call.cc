@@ -6,7 +6,7 @@
 #include <ittnotify.h>
 #endif
 #ifdef _Fujitsu_Profiler
-#include <fj_tool/fipp.h>
+#include <fj_tool/fapp.h>
 #endif
 
 static const unsigned N = 2240;
@@ -62,7 +62,7 @@ int main(const int argc, const char *argv[])
     __itt_resume();
 #endif
 #ifdef _Fujitsu_Profiler
-    fipp_start();
+    fapp_start("skpfa", 1, 0);
 #endif
 
     // call Pfaffian calculation.
@@ -80,7 +80,7 @@ int main(const int argc, const char *argv[])
     __itt_pause();
 #endif
 #ifdef _Fujitsu_Profiler
-    fipp_stop();
+    fapp_stop("skpfa", 1, 0);
 #endif
 
     printf("Pfa = %16.8e\n", Pfa);
