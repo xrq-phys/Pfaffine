@@ -5,6 +5,9 @@
 #ifdef _Intel_Advisor
 #include <ittnotify.h>
 #endif
+#ifdef _Fujitsu_Profiler
+#include <fj_tool/fipp.h>
+#endif
 
 static const unsigned N = 2240;
 static const unsigned NPANEL = 16;
@@ -58,6 +61,9 @@ int main(const int argc, const char *argv[])
     // start Advisor's collection.
     __itt_resume();
 #endif
+#ifdef _Fujitsu_Profiler
+    fipp_start();
+#endif
 
     // call Pfaffian calculation.
     auto start = std::chrono::high_resolution_clock::now();
@@ -72,6 +78,9 @@ int main(const int argc, const char *argv[])
 #ifdef _Intel_Advisor
     // stop collection.
     __itt_pause();
+#endif
+#ifdef _Fujitsu_Profiler
+    fipp_stop();
 #endif
 
     printf("Pfa = %16.8e\n", Pfa);
