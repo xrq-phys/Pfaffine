@@ -4,9 +4,9 @@ AR=ar
 
 # ARM Compiler toolset.
 CC=armclang
-CFLAGS=-O2
+CFLAGS=-O2 -mcpu=a64fx
 CXX=armclang++
-CXXFLAGS=-std=c++11 -O3
+CXXFLAGS=-std=c++11 -O3 -mcpu=a64fx
 # The code is written thread-aware so that
 # one can add -fopenmp flag to enable threaded version.
 #CXXFLAGS=-std=c++11 -O3 -fopenmp
@@ -16,5 +16,5 @@ ARCH=sve
 
 # BLAS vendor.
 # ARM vendors a high-performance math library named ARMPL.
-BLAS_LIB=-larmpl
+BLAS_LIB=-armpl=sequential
 
