@@ -18,5 +18,6 @@
 
 #ifndef _OPENMP
 inline int omp_get_max_threads(void) { return 1; }
+inline int omp_get_num_threads(void) { return 1; }
 inline int omp_get_thread_num (void) { return 0; }
 #endif

@@ -213,24 +213,41 @@ void skr2k(char uplo, char trans, unsigned n, unsigned k,
 #pragma omp parallel default(shared)
     {
         // Scratchpad corresponding to each thread.
-        T *buff_thread = (T *)((uint8_t *)buffer + (size_t)(nbitspbla * omp_get_thread_num()));
-#pragma omp for schedule(dynamic) nowait
-        for (unsigned mj = 0; mj < nblk; ++mj) {
-            unsigned lenj = (mj+1 == nblk) ? nblk_ : mblk;
-            // SKR2K kernel.
-            uskr2k<T>(lenj, k, alpha,
-                      &A(mj*mblk, 0), ldA,
-                      &B(mj*mblk, 0), ldB, beta,
-                      &C(mj*mblk, mj*mblk), ldC, mr, nr, buff_thread);
-        }
+        unsigned mp_id = omp_get_thread_num(),
+                 mp_stride = omp_get_num_threads();
+        T *buff_thread = (T *)((uint8_t *)buffer + (size_t)(nbitspbla * mp_id));
 
-#pragma omp for schedule(dynamic) nowait
-        for (unsigned mij = 0; mij < nblk * (nblk - 1) / 2; ++mij) {
+        // Manual scheduling.
+        for (unsigned mij = mp_id; mij < nblk * (nblk + 1) / 2; mij += mp_stride) {
             unsigned mi, mj;
-            lotrg2ij(mij, &mi, &mj);
+            glotr2ij(mij, mi, mj);
             unsigned lenj = (mj+1 == nblk) ? nblk_ : mblk;
             unsigned leni = (mi+1 == nblk) ? nblk_ : mblk;
-            { // GEMM big-kernel.
+            if (mij + mp_stride < nblk * (nblk + 1) / 2) {
+                // Prefetching
+                unsigned mi_n, mj_n;
+                glotr2ij(mij + mp_stride, mi_n, mj_n);
+                // Prefetch A & B.
+                for (unsigned l = 0; l < k; ++l) {
+                    __builtin_prefetch(&A(mi_n*mblk, l));
+                    __builtin_prefetch(&B(mi_n*mblk, l));
+                }
+                if (mj_n != mj)
+                    for (unsigned l = 0; l < k; ++l) {
+                        __builtin_prefetch(&A(mj_n*mblk, l));
+                        __builtin_prefetch(&B(mj_n*mblk, l));
+                    }
+                // Prefetch C.
+                for (unsigned j = 0; j < lenj; ++j)
+                    __builtin_prefetch(&C(mi*mblk, mj*mblk+j));
+            }
+            if (mi == mj) {
+                // SKR2K kernel.
+                uskr2k<T>(lenj, k, alpha,
+                          &A(mj*mblk, 0), ldA,
+                          &B(mj*mblk, 0), ldB, beta,
+                          &C(mj*mblk, mj*mblk), ldC, mr, nr, buff_thread);
+            } else { // GEMM extended-kernel.
 #ifndef _Use_OGemm
                 gemm('N', 'T', leni, lenj, k, alpha,
                      &A(mi*mblk, 0), ldA,
@@ -242,7 +259,7 @@ void skr2k(char uplo, char trans, unsigned n, unsigned k,
                          &B(mj*mblk, 0), ldB, beta,
                          &C(mi*mblk, mj*mblk), ldC, mr, nr, buff_thread);
 #endif
-            } { // GEMM negative big-kernel.
+                // GEMM negative big-kernel.
 #ifndef _Use_OGemm
                 gemm('N', 'T', leni, lenj, k, -alpha,
                      &B(mi*mblk, 0), ldB,
