@@ -17,15 +17,18 @@
 #include "floorsqrt.tcc"
 
 // Macros for first-index-runs-fastest.
+// TODO: switch to colmaj.tcc.
 #define    A(i,j)    A[ (i) + (j)*(ldA) ]
 #define    B(i,j)    B[ (i) + (j)*(ldB) ]
 #define    C(i,j)    C[ (i) + (j)*(ldC) ]
 #define pakA(i,j) pakA[ (i) + (j)*(mr) ]
 #define pakB(i,j) pakB[ (i) + (j)*(nr) ]
 
-// Supplimentary GEMM procedure.
+// For microkernels.
+#include "opack.tcc"
 #include "ogemm.tcc"
 
+// TODO: rename and move this function to oskr2k.tcc.
 template<typename T>
 void uskr2k(unsigned n, unsigned k, T alpha, T *A, unsigned ldA, T *B, unsigned ldB, T beta, T *C, unsigned ldC,
             unsigned mr, unsigned nr, T *buffer)
@@ -56,45 +59,59 @@ void uskr2k(unsigned n, unsigned k, T alpha, T *A, unsigned ldA, T *B, unsigned 
     // minus alpha.
     T malpha = -alpha;
 
-    // Panel sizes.
-    std::size_t spaceBsz = align_blk + nr * tracblk  * sizeof(T);
-    std::size_t spaceAsz = align_blk + mr * mblk * k * sizeof(T);
+    // Align scratchpad space.
+    std::size_t spacePak  = (mr * mblk + nr * nblk) * k;
+    std::size_t spaceBuff = (mr * mblk + nr * nblk) * k * sizeof(T) + align_blk;
+    void *buffer_ = buffer;
+    T *buffPak = (T *)std::align(align_blk, spacePak, buffer_, spaceBuff);
 
     // Allocate panels.
-    void *spaceB = (void *)buffer;
-    void *spaceA = (void *)((uint8_t *)buffer + spaceBsz);
-    T *pakB     = (T *)std::align(align_blk, nr * tracblk,  spaceB, spaceBsz);
-    T *pakAbase = (T *)std::align(align_blk, mr * mblk * k, spaceA, spaceAsz);
+    T *pakBbase = buffPak;
+    T *pakAbase = buffPak + nr * nblk * k;
 
-    // Pack the whole A.
+    // Pack the whole A & B.
     unsigned pakAsz = mr * k;
+    unsigned pakBsz = nr * k;
     unsigned pakApn = mr * tracblk;
-    for (unsigned ui = 0; ui < mblk; ++ui) {
-        unsigned leni = (ui+1==mblk) ? mblk_ : mr;
-        T *pakA = pakAbase + pakAsz * ui;
-        for (unsigned l = 0; l < k; ++l)
-            memcpy(&pakA(0, l), &A(ui*mr, l), sizeof(T) * leni);
-    }
+    unsigned pakBpn = nr * tracblk;
+    opack<T>(n, k, pakAsz, A, ldA, pakAbase, mr);
+    opack<T>(n, k, pakBsz, B, ldB, pakBbase, nr);
 
     for (unsigned uj = 0; uj < nblk; ++uj) {
         unsigned lenj = (uj+1==nblk) ? nblk_ : nr;
         for (unsigned ul = 0; ul < kblk; ++ul) {
             unsigned lenk = (ul+1==kblk) ? kblk_ : tracblk;
             T beta_ = (ul==1) ? beta : one;
-            // Pack B into panels.
-            // if (uj + 1 != nblk)
-            for (unsigned l = 0; l < lenk; ++l)
-                // TODO: change to more sophisticated routines.
-                memcpy(&pakB(0, l), &B(uj*nr, l + ul*tracblk), sizeof(T) * lenj);
+            // Select packed B panels.
+            T *pakB = pakBbase + pakBsz * uj  // <packed 1st indices.
+                               + pakBpn * ul; // <packed 2nd indices.
             for (unsigned ui = 0; ui < mblk; ++ui) {
                 unsigned leni = (ui+1==mblk) ? mblk_ : mr;
-                // Selected packed A panels.
+                // Select packed A panels.
                 T *pakA = pakAbase + pakAsz * ui  // <packed 1st indices.
                                    + pakApn * ul; // <packed 2nd indices.
                 // Starting indices.
                 unsigned ist = ui*mr;
                 unsigned jst = uj*nr;
-                // TODO: prefetching.
+                // Prefetch panels for next iteration.
+                T *pakAnext,
+                  *pakBnext;
+                if (ui+1 != mblk) {
+                    pakBnext = pakB;
+                    pakAnext = pakAbase + pakAsz *(ui+1)
+                                        + pakApn * ul;
+                } else if (ul+1 != kblk) {
+                    pakBnext = pakBbase + pakBsz * uj
+                                        + pakBpn *(ul+1);
+                    pakAnext = pakAbase + pakApn *(ul+1);
+                } else {
+                    pakBnext = pakBbase + pakBsz *(uj+1);
+                    pakAnext = pakAbase;
+                }
+                // Direct prefetch.
+                // TODO: feed pakXnext to kernels.
+                __builtin_prefetch(pakAnext);
+                __builtin_prefetch(pakBnext);
                 // Pick microkernel.
                 if (ist + leni <= jst)
                     if (mker_available<T>() && leni == mr && lenj == nr)
@@ -182,9 +199,10 @@ void skr2k(char uplo, char trans, unsigned n, unsigned k,
     // Calculate again nbitspbla.
     // TODO: Avoid calculating again for neat code.
     size_t pakAsz = k * mr,
-           pakBsz = tracblk * nr;
-    size_t nmicroblk = extblk / mr + ((extblk % mr) ? 1 : 0);
-    size_t nbitspbla = sizeof(T) * (pakBsz + nmicroblk * pakAsz) + align_blk*2;
+           pakBsz = k * nr;
+    size_t mmicroblk = extblk / mr + ((extblk % mr) ? 1 : 0);
+    size_t nmicroblk = extblk / nr + ((extblk % nr) ? 1 : 0);
+    size_t nbitspbla = sizeof(T) * (nmicroblk * pakBsz + mmicroblk * pakAsz) + align_blk;
 
     // Lo is not implemented. Sorry.
     if (uplo != 'U' && uplo != 'u') {
@@ -228,18 +246,15 @@ void skr2k(char uplo, char trans, unsigned n, unsigned k,
                 unsigned mi_n, mj_n;
                 glotr2ij(mij + mp_stride, mi_n, mj_n);
                 // Prefetch A & B.
-                for (unsigned l = 0; l < k; ++l) {
+                for (unsigned l = 0; l < 2; ++l) {
                     __builtin_prefetch(&A(mi_n*mblk, l));
                     __builtin_prefetch(&B(mi_n*mblk, l));
                 }
                 if (mj_n != mj)
-                    for (unsigned l = 0; l < k; ++l) {
+                    for (unsigned l = 0; l < 2; ++l) {
                         __builtin_prefetch(&A(mj_n*mblk, l));
                         __builtin_prefetch(&B(mj_n*mblk, l));
                     }
-                // Prefetch C.
-                for (unsigned j = 0; j < lenj; ++j)
-                    __builtin_prefetch(&C(mi*mblk, mj*mblk+j));
             }
             if (mi == mj) {
                 // SKR2K kernel.

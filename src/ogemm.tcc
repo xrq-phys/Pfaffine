@@ -5,6 +5,8 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
+// FIXME: implicitly referencing macros in skr2k.tcc.
+// TODO: switch to colmaj.tcc.
 
 /**
  * \brief Small-size 1-lv blocked GEMM program in 'N' - 'T' shape.
@@ -40,36 +42,32 @@ void ogemm(unsigned m, unsigned n, unsigned k,
     // minus alpha.
     T malpha = -alpha;
 
-    // Panel sizes.
-    std::size_t spaceBsz = align_blk + nr * tracblk  * sizeof(T);
-    std::size_t spaceAsz = align_blk + mr * mblk * k * sizeof(T);
+    // Align scratchpad space.
+    std::size_t spacePak  = (mr * mblk + nr * nblk) * k * sizeof(T);
+    std::size_t spaceBuff = (mr * mblk + nr * nblk) * k * sizeof(T) + align_blk;
+    void *buffer_ = buffer;
+    T *buffPak = (T *)std::align(align_blk, spacePak, buffer_, spaceBuff);
 
     // Allocate panels.
-    void *spaceB = (void *)buffer;
-    void *spaceA = (void *)((uint8_t *)buffer + spaceBsz);
-    T *pakB     = (T *)std::align(align_blk, nr * tracblk,  spaceB, spaceBsz);
-    T *pakAbase = (T *)std::align(align_blk, mr * mblk * k, spaceA, spaceAsz);
+    T *pakBbase = buffPak;
+    T *pakAbase = buffPak + nr * nblk * k;
 
-    // Pack the whole A.
+    // Pack the whole A & B.
     unsigned pakAsz = mr * k;
+    unsigned pakBsz = nr * k;
     unsigned pakApn = mr * tracblk;
-    for (unsigned ui = 0; ui < mblk; ++ui) {
-        unsigned leni = (ui+1==mblk) ? mblk_ : mr;
-        T *pakA = pakAbase + pakAsz * ui;
-        for (unsigned l = 0; l < k; ++l)
-            memcpy(&pakA(0, l), &A(ui*mr, l), sizeof(T) * leni);
-    }
+    unsigned pakBpn = nr * tracblk;
+    opack<T>(m, k, pakAsz, A, ldA, pakAbase, mr);
+    opack<T>(n, k, pakBsz, B, ldB, pakBbase, nr);
 
     for (unsigned uj = 0; uj < nblk; ++uj) {
         unsigned lenj = (uj+1==nblk) ? nblk_ : nr;
         for (unsigned ul = 0; ul < kblk; ++ul) {
             unsigned lenk = (ul+1==kblk) ? kblk_ : tracblk;
             T beta_ = (ul==1) ? beta : one;
-            // Pack B into panels.
-            // if (uj + 1 != nblk)
-            for (unsigned l = 0; l < lenk; ++l)
-                // TODO: change to more sophisticated routines.
-                memcpy(&pakB(0, l), &B(uj*nr, l + ul*tracblk), sizeof(T) * lenj);
+            // Selected packed B panels.
+            T *pakB = pakBbase + pakBsz * uj  // <packed 1st indices.
+                               + pakBpn * ul; // <packed 2nd indices.
             for (unsigned ui = 0; ui < mblk; ++ui) {
                 unsigned leni = (ui+1==mblk) ? mblk_ : mr;
                 // Selected packed A panels.
@@ -78,7 +76,25 @@ void ogemm(unsigned m, unsigned n, unsigned k,
                 // Starting indices.
                 unsigned ist = ui*mr;
                 unsigned jst = uj*nr;
-                // TODO: prefetching.
+                // Prefetch panels for next iteration.
+                T *pakAnext,
+                  *pakBnext;
+                if (ui+1 != mblk) {
+                    pakBnext = pakB;
+                    pakAnext = pakAbase + pakAsz *(ui+1)
+                                        + pakApn * ul;
+                } else if (ul+1 != kblk) {
+                    pakBnext = pakBbase + pakBsz * uj
+                                        + pakBpn *(ul+1);
+                    pakAnext = pakAbase + pakApn *(ul+1);
+                } else {
+                    pakBnext = pakBbase + pakBsz *(uj+1);
+                    pakAnext = pakAbase;
+                }
+                // Direct prefetch.
+                // TODO: feed pakXnext to kernels.
+                __builtin_prefetch(pakAnext);
+                __builtin_prefetch(pakBnext);
                 if (mker_available<T>() && leni == mr && lenj == nr)
                     ugemmn(lenk, &alpha, pakA, pakB, &beta_, &C(ist, jst), ldC);
                 else if (extker_available<T>())

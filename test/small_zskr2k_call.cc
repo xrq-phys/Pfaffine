@@ -33,7 +33,7 @@ int main(const int argc, const char *argv[])
     dcomplex *ptrA = &(matA(0, 0));
     dcomplex *ptrB = &(matB(0, 0));
     dcomplex *ptrC = &(matC(0, 0));
-    dcomplex *blasp = new dcomplex[100 * K_ * omp_get_max_threads()];
+    dcomplex *blasp = new dcomplex[140 * K_ * omp_get_max_threads()];
     for (unsigned l = 0; l < K_; ++l) {
         for (unsigned i = 0; i < M_; ++i) {
             matA(i, l) = dcomplex(randn(rng), randn(rng));

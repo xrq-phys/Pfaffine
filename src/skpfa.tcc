@@ -22,6 +22,7 @@
 #include "sktdi.tcc"
 
 // Macros for first-index-runs-fastest.
+// TODO: switch to colmaj.tcc.
 #define   A(i,j)   A[ (i) + (j)*(ldA) ]
 #define Sp1(i,j) Sp1[ (i) + (j)*(n)   ]
 #define Sp2(i,j) Sp2[ (i) + (j)*(n)   ]
@@ -72,7 +73,7 @@ T skpfa(char uplo, unsigned n,
 #endif
 #endif
     unsigned pakAsz = npanel * mr;
-    unsigned pakBsz = tracblk * nr;
+    unsigned pakBsz = npanel * nr;
     // Pivoting ordering.
     // TODO: Allocate iPov externally.
     unsigned *iPov = nullptr;
@@ -88,8 +89,9 @@ T skpfa(char uplo, unsigned n,
         iPov[i] = i;
     // Use malloc() as VLAs are somehow bad as the allocation is hard to check.
     // Final align_block * 2 is for alignment padding.
-    size_t nmicroblk = extblk / mr + ((extblk % mr) ? 1 : 0);
-    size_t nbitspbla = sizeof(T) * (pakBsz + nmicroblk * pakAsz) + align_blk*2;
+    size_t mmicroblk = extblk / mr + ((extblk % mr) ? 1 : 0);
+    size_t nmicroblk = extblk / nr + ((extblk % nr) ? 1 : 0);
+    size_t nbitspbla = sizeof(T) * (nmicroblk * pakBsz + mmicroblk * pakAsz) + align_blk;
     SpBla = (T *)malloc(nbitspbla * omp_get_max_threads());
     if (SpBla == nullptr) {
         std::cerr << "Unable to allocate memory-packing scratchpads." << std::endl;

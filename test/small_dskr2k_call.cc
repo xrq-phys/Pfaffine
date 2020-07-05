@@ -31,7 +31,7 @@ int main(const int argc, const char *argv[])
     double *ptrA = &(matA(0, 0));
     double *ptrB = &(matB(0, 0));
     double *ptrC = &(matC(0, 0));
-    double *blasp = new double[100 * K_ * omp_get_max_threads()];
+    double *blasp = new double[140 * K_ * omp_get_max_threads()];
     for (unsigned l = 0; l < K_; ++l) {
         for (unsigned i = 0; i < M_; ++i) {
             matA(i, l) = randn(rng);
