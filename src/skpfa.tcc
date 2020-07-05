@@ -61,11 +61,15 @@ T skpfa(char uplo, unsigned n,
         n - n / lcm(mr, nr) * lcm(mr, nr) < 16) {
         unsigned sqblk_auto = lcm(mr, nr);
         // The external block should not be too small.
-        while (sqblk_auto < 32)
+        while (sqblk_auto < 64 && sqblk_auto * 2 <= n);
             sqblk_auto *= 2;
         set_sqblk_size(sqblk_auto);
     } else
+#if defined(_SkylakeX) || defined(_SVE)
+        set_sqblk_size(128);
+#else
         set_sqblk_size(64);
+#endif
 #endif
     unsigned pakAsz = npanel * mr;
     unsigned pakBsz = tracblk * nr;
