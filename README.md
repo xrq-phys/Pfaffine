@@ -60,6 +60,7 @@ In all cases above, `A` will be replaced by its full inverse if `inv=1`, otherwi
 - ~~**Important**: Change Fugaku's core to inline assembly & add clobber declaration~~;
 - Mix AVX512 and AVX2 kernels on Intel SkylakeX processors;
 - ~~Return signed Pfaffian instead of real-part-positive component~~;
+- Due to the new inversion method, some scratchpads in skpfa<T> is no longer used. Interface needs a clean-up;
 - Implement a Pfaffian-inverse object that supports in-place *n*-term fast update;
 - ~~Migrate `gemm` kernels from Pfapack and BLIS;~~
 - `needs improvement` ~~SVE kernel for Fugaku~~;
