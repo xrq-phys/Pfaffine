@@ -7,7 +7,7 @@
 #endif
 
 static const unsigned N = 2240;
-static const unsigned NPANEL = 32;
+static const unsigned NPANEL = 16;
 
 extern void set_tracdim_blk(unsigned n);
 
@@ -20,7 +20,7 @@ int main(const int argc, const char *argv[])
     // these two doesn't conflict.
     using namespace std;
     // use larger tracblk.
-    set_tracdim_blk(16);
+    set_tracdim_blk(8);
 
     // use random.
     mt19937_64 rng(1234);
