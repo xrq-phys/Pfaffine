@@ -62,7 +62,7 @@ T skpfa(char uplo, unsigned n,
         n - n / lcm(mr, nr) * lcm(mr, nr) < 16) {
         unsigned sqblk_auto = lcm(mr, nr);
         // The external block should not be too small.
-        while (sqblk_auto < 64 && sqblk_auto * 2 <= n);
+        while (sqblk_auto < 64 && sqblk_auto * 2 <= n)
             sqblk_auto *= 2;
         set_sqblk_size(sqblk_auto);
     } else
