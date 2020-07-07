@@ -72,11 +72,12 @@ In all cases above, `A` will be replaced by its full inverse if `inv=1`, otherwi
 - ~~Add a compatibility interface consistent to [Pfapack](https://michaelwimmer.org/downloads.html)~~;
 - ~~Provide document here for all Pfaffine-defined interfaces;~~
 
-### WIPs on Fugaku's SVE Kernel
+### WIPs on Fugaku's SVE-512 and Other SVE Kernels
 
 - ~~Complex kernels~~;
-- For real double, 14x16 (T-shaped) kernels in order that 16x14 can be fully utilized (currently 14x14 used).
+- ~~For real double, 14x16 (T-shaped) kernels in order that 16x14 can be fully utilized (currently 14x14 used)~~.
 - ~~Frame driver should provide support for boundary kernels.~~
+- Optimize T-shapes other than SVE-512 for double-complex kernels.
 
 ## Licensing
 
