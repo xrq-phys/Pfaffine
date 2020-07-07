@@ -91,18 +91,22 @@ void bli_zgemm_haswell_asm_3x4
 #ifndef _SkylakeX
 // SkylakeX kernels in another file.
 void udgemmt( unsigned k, double *alpha_,
-        double *a, double *b, double *beta_, double *c, unsigned ldc )
+        double *a, double *b, double *beta_, double *c, unsigned ldc,
+        void *a_next, void *b_next )
 { bli_dgemm_haswell_asm_6x8(k, alpha_, b, a, beta_, c, ldc, 1, 0, 0); }
 #endif
 void usgemmt( unsigned k, float *alpha_,
-        float *a, float *b, float *beta_, float *c, unsigned ldc )
+        float *a, float *b, float *beta_, float *c, unsigned ldc,
+        void *a_next, void *b_next )
 { bli_sgemm_haswell_asm_6x16(k, alpha_, b, a, beta_, c, ldc, 1, 0, 0); }
 // Complex kernel.
 void ucgemmt( unsigned k, scomplex *alpha_,
-        scomplex *a, scomplex *b, scomplex *beta_, scomplex *c, unsigned ldc )
+        scomplex *a, scomplex *b, scomplex *beta_, scomplex *c, unsigned ldc,
+        void *a_next, void *b_next )
 { bli_cgemm_haswell_asm_3x8(k, alpha_, b, a, beta_, c, ldc, 1, 0, 0); }
 void uzgemmt( unsigned k, dcomplex *alpha_,
-        dcomplex *a, dcomplex *b, dcomplex *beta_, dcomplex *c, unsigned ldc )
+        dcomplex *a, dcomplex *b, dcomplex *beta_, dcomplex *c, unsigned ldc,
+        void *a_next, void *b_next )
 { bli_zgemm_haswell_asm_3x4(k, alpha_, b, a, beta_, c, ldc, 1, 0, 0); }
 
 #define SGEMM_INPUT_GS_BETA_NZ \

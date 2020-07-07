@@ -9,6 +9,11 @@
 // x5: LDB
 // x6: =>C
 // x7: LDC
+// July Update 1:
+// x18: =>A_NEXT
+// x19: =>B_NEXT
+// July Update 2:
+// x20: CSC
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -70,7 +75,10 @@ K_LOOP_d2wx14:
 	ld1d	z30.d, p0/z, [x2]
 	ld1d	z31.d, p1/z, [x2, x11, lsl 3]	// second vector
 	madd	x2, x3, x12, x2	// move forward
+	prfm	PLDL1KEEP, [x2]	// prefetch next A column
 // Apply B columns.
+	madd	x16, x5, x12, x4	// calculate address in advance for prefetching
+	prfm	PLDL1KEEP, [x16]	// prefetch next B column
 	mov	x13, x10	// counter
 // Possible BUG:
 //  When N is odd and loop reaches end,
@@ -140,7 +148,7 @@ K_LOOP_d2wx14:
 //	subs	x13, x13, #1
 //	b	NEXT_ROW_d2wx14
 NEXT_ROW_d2wx14:
-	madd	x4, x5, x12, x4	// move forward
+	mov	x4, x16	// move forward
 	subs	x8, x8, #1
 	b.ne	K_LOOP_d2wx14	// next column / row.
 WRITE_MEM_d2wx14:
@@ -150,6 +158,9 @@ WRITE_MEM_d2wx14:
 	ldr	x15, [x1]	// alpha, as 64-bits
 	ld1rd	z30.d, p0/z, [x1]	// alpha, to the vector.
 	ld1rd	z31.d, p0/z, [x1, #8]	// beta.
+// Prefetch next A and B.
+	prfm	PLDL2KEEP, [x18]
+	prfm	PLDL2KEEP, [x19]
 // (R&)Write data back to C memory.
 	cmp	x14, x15
 	b.eq	UNIT_ALPHA_d2wx14
@@ -185,7 +196,13 @@ WRITE_MEM_d2wx14:
 	fmul	z28.d, z28.d, z30.d
 // Unit alpha case.
 UNIT_ALPHA_d2wx14:
+	cmp	x20, #1
+	b.ne	CS_CCOL_d2wx14
+// Contiguous columns.
+CT_CCOL_d2wx14:
 //	mov	x10, x10	// x10 itself acts as counter.
+	madd	x16, x7, x12, x6	// next column
+	prfm	PSTL1STRM, [x16]	// prefetch next column
 	ld1d	z0.d, p0/z, [x6]	// column vector 0
 	fmad	z0.d, p0/m, z31.d, z1.d
 	st1d	z0.d, p0, [x6]
@@ -193,8 +210,10 @@ UNIT_ALPHA_d2wx14:
 	fmad	z0.d, p1/m, z31.d, z2.d
 	st1d	z0.d, p1, [x6, x11, lsl #3]
 	subs	x10, x10, #1
-	madd	x6, x7, x12, x6
+	mov	x6, x16	// move forward
 	b.eq	END_WRITE_MEM_d2wx14
+	madd	x16, x7, x12, x6	// next column
+	prfm	PSTL1STRM, [x16]	// prefetch next column
 	ld1d	z0.d, p0/z, [x6]	// column vector 1
 	fmad	z0.d, p0/m, z31.d, z3.d
 	st1d	z0.d, p0, [x6]
@@ -202,8 +221,10 @@ UNIT_ALPHA_d2wx14:
 	fmad	z0.d, p1/m, z31.d, z4.d
 	st1d	z0.d, p1, [x6, x11, lsl #3]
 	subs	x10, x10, #1
-	madd	x6, x7, x12, x6
+	mov	x6, x16	// move forward
 	b.eq	END_WRITE_MEM_d2wx14
+	madd	x16, x7, x12, x6	// next column
+	prfm	PSTL1STRM, [x16]	// prefetch next column
 	ld1d	z0.d, p0/z, [x6]	// column vector 2
 	fmad	z0.d, p0/m, z31.d, z5.d
 	st1d	z0.d, p0, [x6]
@@ -211,8 +232,10 @@ UNIT_ALPHA_d2wx14:
 	fmad	z0.d, p1/m, z31.d, z6.d
 	st1d	z0.d, p1, [x6, x11, lsl #3]
 	subs	x10, x10, #1
-	madd	x6, x7, x12, x6
+	mov	x6, x16	// move forward
 	b.eq	END_WRITE_MEM_d2wx14
+	madd	x16, x7, x12, x6	// next column
+	prfm	PSTL1STRM, [x16]	// prefetch next column
 	ld1d	z0.d, p0/z, [x6]	// column vector 3
 	fmad	z0.d, p0/m, z31.d, z7.d
 	st1d	z0.d, p0, [x6]
@@ -220,8 +243,10 @@ UNIT_ALPHA_d2wx14:
 	fmad	z0.d, p1/m, z31.d, z8.d
 	st1d	z0.d, p1, [x6, x11, lsl #3]
 	subs	x10, x10, #1
-	madd	x6, x7, x12, x6
+	mov	x6, x16	// move forward
 	b.eq	END_WRITE_MEM_d2wx14
+	madd	x16, x7, x12, x6	// next column
+	prfm	PSTL1STRM, [x16]	// prefetch next column
 	ld1d	z0.d, p0/z, [x6]	// column vector 4
 	fmad	z0.d, p0/m, z31.d, z9.d
 	st1d	z0.d, p0, [x6]
@@ -229,8 +254,10 @@ UNIT_ALPHA_d2wx14:
 	fmad	z0.d, p1/m, z31.d, z10.d
 	st1d	z0.d, p1, [x6, x11, lsl #3]
 	subs	x10, x10, #1
-	madd	x6, x7, x12, x6
+	mov	x6, x16	// move forward
 	b.eq	END_WRITE_MEM_d2wx14
+	madd	x16, x7, x12, x6	// next column
+	prfm	PSTL1STRM, [x16]	// prefetch next column
 	ld1d	z0.d, p0/z, [x6]	// column vector 5
 	fmad	z0.d, p0/m, z31.d, z11.d
 	st1d	z0.d, p0, [x6]
@@ -238,8 +265,10 @@ UNIT_ALPHA_d2wx14:
 	fmad	z0.d, p1/m, z31.d, z12.d
 	st1d	z0.d, p1, [x6, x11, lsl #3]
 	subs	x10, x10, #1
-	madd	x6, x7, x12, x6
+	mov	x6, x16	// move forward
 	b.eq	END_WRITE_MEM_d2wx14
+	madd	x16, x7, x12, x6	// next column
+	prfm	PSTL1STRM, [x16]	// prefetch next column
 	ld1d	z0.d, p0/z, [x6]	// column vector 6
 	fmad	z0.d, p0/m, z31.d, z13.d
 	st1d	z0.d, p0, [x6]
@@ -247,8 +276,10 @@ UNIT_ALPHA_d2wx14:
 	fmad	z0.d, p1/m, z31.d, z14.d
 	st1d	z0.d, p1, [x6, x11, lsl #3]
 	subs	x10, x10, #1
-	madd	x6, x7, x12, x6
+	mov	x6, x16	// move forward
 	b.eq	END_WRITE_MEM_d2wx14
+	madd	x16, x7, x12, x6	// next column
+	prfm	PSTL1STRM, [x16]	// prefetch next column
 	ld1d	z0.d, p0/z, [x6]	// column vector 7
 	fmad	z0.d, p0/m, z31.d, z15.d
 	st1d	z0.d, p0, [x6]
@@ -256,8 +287,10 @@ UNIT_ALPHA_d2wx14:
 	fmad	z0.d, p1/m, z31.d, z16.d
 	st1d	z0.d, p1, [x6, x11, lsl #3]
 	subs	x10, x10, #1
-	madd	x6, x7, x12, x6
+	mov	x6, x16	// move forward
 	b.eq	END_WRITE_MEM_d2wx14
+	madd	x16, x7, x12, x6	// next column
+	prfm	PSTL1STRM, [x16]	// prefetch next column
 	ld1d	z0.d, p0/z, [x6]	// column vector 8
 	fmad	z0.d, p0/m, z31.d, z17.d
 	st1d	z0.d, p0, [x6]
@@ -265,8 +298,10 @@ UNIT_ALPHA_d2wx14:
 	fmad	z0.d, p1/m, z31.d, z18.d
 	st1d	z0.d, p1, [x6, x11, lsl #3]
 	subs	x10, x10, #1
-	madd	x6, x7, x12, x6
+	mov	x6, x16	// move forward
 	b.eq	END_WRITE_MEM_d2wx14
+	madd	x16, x7, x12, x6	// next column
+	prfm	PSTL1STRM, [x16]	// prefetch next column
 	ld1d	z0.d, p0/z, [x6]	// column vector 9
 	fmad	z0.d, p0/m, z31.d, z19.d
 	st1d	z0.d, p0, [x6]
@@ -274,8 +309,10 @@ UNIT_ALPHA_d2wx14:
 	fmad	z0.d, p1/m, z31.d, z20.d
 	st1d	z0.d, p1, [x6, x11, lsl #3]
 	subs	x10, x10, #1
-	madd	x6, x7, x12, x6
+	mov	x6, x16	// move forward
 	b.eq	END_WRITE_MEM_d2wx14
+	madd	x16, x7, x12, x6	// next column
+	prfm	PSTL1STRM, [x16]	// prefetch next column
 	ld1d	z0.d, p0/z, [x6]	// column vector 10
 	fmad	z0.d, p0/m, z31.d, z21.d
 	st1d	z0.d, p0, [x6]
@@ -283,8 +320,10 @@ UNIT_ALPHA_d2wx14:
 	fmad	z0.d, p1/m, z31.d, z22.d
 	st1d	z0.d, p1, [x6, x11, lsl #3]
 	subs	x10, x10, #1
-	madd	x6, x7, x12, x6
+	mov	x6, x16	// move forward
 	b.eq	END_WRITE_MEM_d2wx14
+	madd	x16, x7, x12, x6	// next column
+	prfm	PSTL1STRM, [x16]	// prefetch next column
 	ld1d	z0.d, p0/z, [x6]	// column vector 11
 	fmad	z0.d, p0/m, z31.d, z23.d
 	st1d	z0.d, p0, [x6]
@@ -292,8 +331,10 @@ UNIT_ALPHA_d2wx14:
 	fmad	z0.d, p1/m, z31.d, z24.d
 	st1d	z0.d, p1, [x6, x11, lsl #3]
 	subs	x10, x10, #1
-	madd	x6, x7, x12, x6
+	mov	x6, x16	// move forward
 	b.eq	END_WRITE_MEM_d2wx14
+	madd	x16, x7, x12, x6	// next column
+	prfm	PSTL1STRM, [x16]	// prefetch next column
 	ld1d	z0.d, p0/z, [x6]	// column vector 12
 	fmad	z0.d, p0/m, z31.d, z25.d
 	st1d	z0.d, p0, [x6]
@@ -301,14 +342,163 @@ UNIT_ALPHA_d2wx14:
 	fmad	z0.d, p1/m, z31.d, z26.d
 	st1d	z0.d, p1, [x6, x11, lsl #3]
 	subs	x10, x10, #1
-	madd	x6, x7, x12, x6
+	mov	x6, x16	// move forward
 	b.eq	END_WRITE_MEM_d2wx14
+	madd	x16, x7, x12, x6	// next column
+	prfm	PSTL1STRM, [x16]	// prefetch next column
 	ld1d	z0.d, p0/z, [x6]	// column vector 13
 	fmad	z0.d, p0/m, z31.d, z27.d
 	st1d	z0.d, p0, [x6]
 	ld1d	z0.d, p1/z, [x6, x11, lsl #3]
 	fmad	z0.d, p1/m, z31.d, z28.d
 	st1d	z0.d, p1, [x6, x11, lsl #3]
+//	subs	x10, x10, #1
+//	mov	x6, x16	// move forward
+	b	END_WRITE_MEM_d2wx14
+// C has column strides.
+CS_CCOL_d2wx14:
+	mul	x21, x20, x12	// column stride in bytes
+	mul	x17, x21, x11	// vector length in memory
+// Generate indices.
+// Z30: index for loading C columns.
+	index	z30.d, xzr, x21
+	ld1d	z0.d, p0/z, [x6, z30.d]	// column vector 0
+	fmad	z0.d, p0/m, z31.d, z1.d
+	st1d	z0.d, p0, [x6, z30.d]
+	add	x16, x17, x6
+	ld1d	z0.d, p1/z, [x16, z30.d]
+	fmad	z0.d, p1/m, z31.d, z2.d
+	st1d	z0.d, p1, [x16, z30.d]
+	subs	x10, x10, #1
+	madd	x6, x7, x12, x6
+	b.eq	END_WRITE_MEM_d2wx14
+	ld1d	z0.d, p0/z, [x6, z30.d]	// column vector 1
+	fmad	z0.d, p0/m, z31.d, z3.d
+	st1d	z0.d, p0, [x6, z30.d]
+	add	x16, x17, x6
+	ld1d	z0.d, p1/z, [x16, z30.d]
+	fmad	z0.d, p1/m, z31.d, z4.d
+	st1d	z0.d, p1, [x16, z30.d]
+	subs	x10, x10, #1
+	madd	x6, x7, x12, x6
+	b.eq	END_WRITE_MEM_d2wx14
+	ld1d	z0.d, p0/z, [x6, z30.d]	// column vector 2
+	fmad	z0.d, p0/m, z31.d, z5.d
+	st1d	z0.d, p0, [x6, z30.d]
+	add	x16, x17, x6
+	ld1d	z0.d, p1/z, [x16, z30.d]
+	fmad	z0.d, p1/m, z31.d, z6.d
+	st1d	z0.d, p1, [x16, z30.d]
+	subs	x10, x10, #1
+	madd	x6, x7, x12, x6
+	b.eq	END_WRITE_MEM_d2wx14
+	ld1d	z0.d, p0/z, [x6, z30.d]	// column vector 3
+	fmad	z0.d, p0/m, z31.d, z7.d
+	st1d	z0.d, p0, [x6, z30.d]
+	add	x16, x17, x6
+	ld1d	z0.d, p1/z, [x16, z30.d]
+	fmad	z0.d, p1/m, z31.d, z8.d
+	st1d	z0.d, p1, [x16, z30.d]
+	subs	x10, x10, #1
+	madd	x6, x7, x12, x6
+	b.eq	END_WRITE_MEM_d2wx14
+	ld1d	z0.d, p0/z, [x6, z30.d]	// column vector 4
+	fmad	z0.d, p0/m, z31.d, z9.d
+	st1d	z0.d, p0, [x6, z30.d]
+	add	x16, x17, x6
+	ld1d	z0.d, p1/z, [x16, z30.d]
+	fmad	z0.d, p1/m, z31.d, z10.d
+	st1d	z0.d, p1, [x16, z30.d]
+	subs	x10, x10, #1
+	madd	x6, x7, x12, x6
+	b.eq	END_WRITE_MEM_d2wx14
+	ld1d	z0.d, p0/z, [x6, z30.d]	// column vector 5
+	fmad	z0.d, p0/m, z31.d, z11.d
+	st1d	z0.d, p0, [x6, z30.d]
+	add	x16, x17, x6
+	ld1d	z0.d, p1/z, [x16, z30.d]
+	fmad	z0.d, p1/m, z31.d, z12.d
+	st1d	z0.d, p1, [x16, z30.d]
+	subs	x10, x10, #1
+	madd	x6, x7, x12, x6
+	b.eq	END_WRITE_MEM_d2wx14
+	ld1d	z0.d, p0/z, [x6, z30.d]	// column vector 6
+	fmad	z0.d, p0/m, z31.d, z13.d
+	st1d	z0.d, p0, [x6, z30.d]
+	add	x16, x17, x6
+	ld1d	z0.d, p1/z, [x16, z30.d]
+	fmad	z0.d, p1/m, z31.d, z14.d
+	st1d	z0.d, p1, [x16, z30.d]
+	subs	x10, x10, #1
+	madd	x6, x7, x12, x6
+	b.eq	END_WRITE_MEM_d2wx14
+	ld1d	z0.d, p0/z, [x6, z30.d]	// column vector 7
+	fmad	z0.d, p0/m, z31.d, z15.d
+	st1d	z0.d, p0, [x6, z30.d]
+	add	x16, x17, x6
+	ld1d	z0.d, p1/z, [x16, z30.d]
+	fmad	z0.d, p1/m, z31.d, z16.d
+	st1d	z0.d, p1, [x16, z30.d]
+	subs	x10, x10, #1
+	madd	x6, x7, x12, x6
+	b.eq	END_WRITE_MEM_d2wx14
+	ld1d	z0.d, p0/z, [x6, z30.d]	// column vector 8
+	fmad	z0.d, p0/m, z31.d, z17.d
+	st1d	z0.d, p0, [x6, z30.d]
+	add	x16, x17, x6
+	ld1d	z0.d, p1/z, [x16, z30.d]
+	fmad	z0.d, p1/m, z31.d, z18.d
+	st1d	z0.d, p1, [x16, z30.d]
+	subs	x10, x10, #1
+	madd	x6, x7, x12, x6
+	b.eq	END_WRITE_MEM_d2wx14
+	ld1d	z0.d, p0/z, [x6, z30.d]	// column vector 9
+	fmad	z0.d, p0/m, z31.d, z19.d
+	st1d	z0.d, p0, [x6, z30.d]
+	add	x16, x17, x6
+	ld1d	z0.d, p1/z, [x16, z30.d]
+	fmad	z0.d, p1/m, z31.d, z20.d
+	st1d	z0.d, p1, [x16, z30.d]
+	subs	x10, x10, #1
+	madd	x6, x7, x12, x6
+	b.eq	END_WRITE_MEM_d2wx14
+	ld1d	z0.d, p0/z, [x6, z30.d]	// column vector 10
+	fmad	z0.d, p0/m, z31.d, z21.d
+	st1d	z0.d, p0, [x6, z30.d]
+	add	x16, x17, x6
+	ld1d	z0.d, p1/z, [x16, z30.d]
+	fmad	z0.d, p1/m, z31.d, z22.d
+	st1d	z0.d, p1, [x16, z30.d]
+	subs	x10, x10, #1
+	madd	x6, x7, x12, x6
+	b.eq	END_WRITE_MEM_d2wx14
+	ld1d	z0.d, p0/z, [x6, z30.d]	// column vector 11
+	fmad	z0.d, p0/m, z31.d, z23.d
+	st1d	z0.d, p0, [x6, z30.d]
+	add	x16, x17, x6
+	ld1d	z0.d, p1/z, [x16, z30.d]
+	fmad	z0.d, p1/m, z31.d, z24.d
+	st1d	z0.d, p1, [x16, z30.d]
+	subs	x10, x10, #1
+	madd	x6, x7, x12, x6
+	b.eq	END_WRITE_MEM_d2wx14
+	ld1d	z0.d, p0/z, [x6, z30.d]	// column vector 12
+	fmad	z0.d, p0/m, z31.d, z25.d
+	st1d	z0.d, p0, [x6, z30.d]
+	add	x16, x17, x6
+	ld1d	z0.d, p1/z, [x16, z30.d]
+	fmad	z0.d, p1/m, z31.d, z26.d
+	st1d	z0.d, p1, [x16, z30.d]
+	subs	x10, x10, #1
+	madd	x6, x7, x12, x6
+	b.eq	END_WRITE_MEM_d2wx14
+	ld1d	z0.d, p0/z, [x6, z30.d]	// column vector 13
+	fmad	z0.d, p0/m, z31.d, z27.d
+	st1d	z0.d, p0, [x6, z30.d]
+	add	x16, x17, x6
+	ld1d	z0.d, p1/z, [x16, z30.d]
+	fmad	z0.d, p1/m, z31.d, z28.d
+	st1d	z0.d, p1, [x16, z30.d]
 //	subs	x10, x10, #1
 //	madd	x6, x7, x12, x6
 //	b	END_WRITE_MEM_d2wx14

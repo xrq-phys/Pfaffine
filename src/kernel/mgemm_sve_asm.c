@@ -23,6 +23,9 @@
   "z16", "z17", "z18", "z19", "z20", "z21", "z22", "z23", \
   "z24", "z25", "z26", "z27", "z28", "z29", "z30", "z31"
 
+#define I_CLOBBER_SAVED \
+  "x16", "x17", "x18", "x19", "x20", "x21", "x22", "x23"
+
 #define I_CLOBBER_SP \
   "x0", "x1", "x2", "x3", "x4", "x5", "x6", "x7", "x8", \
   "x9", "x10", "x11", "x12", "x13", "x14", "x15"
@@ -35,7 +38,10 @@
   [B]   "m" (B),   \
   [ldB] "m" (ldB), \
   [C]   "m" (C),   \
-  [ldC] "m" (ldC)
+  [ldC] "m" (ldC), \
+  [csC] "m" (csC), \
+  [nextA] "m" (nextA), \
+  [nextB] "m" (nextB)
 
 #define I_PARAMS_ASM \
   "	ldr	x0, %[shape]	\r\n" \
@@ -45,7 +51,10 @@
   "	ldr	x4, %[B]	\r\n" \
   "	ldr	x5, %[ldB]	\r\n" \
   "	ldr	x6, %[C]	\r\n" \
-  "	ldr	x7, %[ldC]	\r\n"
+  "	ldr	x7, %[ldC]	\r\n" \
+  "	ldr	x20, %[csC]	\r\n" \
+  "	ldr	x18, %[nextA]	\r\n" \
+  "	ldr	x19, %[nextB]	\r\n"
 
 // Kernels by including external ASM.
 
@@ -53,7 +62,8 @@ unsigned long dmgemm_2wx14(unsigned long *shape,
                            void *coeffs,
                            void *A, unsigned long ldA,
                            void *B, unsigned long ldB,
-                           void *C, unsigned long ldC)
+                           void *C, unsigned long ldC, long csC,
+                           void *nextA, void *nextB)
 { __asm__ __volatile__ (
 #ifndef _Asm_Allow_Convension
   I_PARAMS_ASM
@@ -65,7 +75,7 @@ unsigned long dmgemm_2wx14(unsigned long *shape,
   I_PARAMS
 #endif
 :
-  FP_CLOBBER_SAVED
+  FP_CLOBBER_SAVED, I_CLOBBER_SAVED
 #ifndef _Asm_Allow_Convension
 , FP_CLOBBER_SP, I_CLOBBER_SP
 #endif
@@ -75,7 +85,8 @@ unsigned long dmgemm_1wx28(unsigned long *shape,
                            void *coeffs,
                            void *A, unsigned long ldA,
                            void *B, unsigned long ldB,
-                           void *C, unsigned long ldC)
+                           void *C, unsigned long ldC, long csC,
+                           void *nextA, void *nextB)
 { __asm__ __volatile__ (
 #ifndef _Asm_Allow_Convension
   I_PARAMS_ASM
@@ -87,7 +98,7 @@ unsigned long dmgemm_1wx28(unsigned long *shape,
   I_PARAMS
 #endif
 :
-  FP_CLOBBER_SAVED
+  FP_CLOBBER_SAVED, I_CLOBBER_SAVED
 #ifndef _Asm_Allow_Convension
 , FP_CLOBBER_SP, I_CLOBBER_SP
 #endif
@@ -97,8 +108,10 @@ unsigned long zmgemm_3wx9 (unsigned long *shape,
                            double *coeffs,
                            void *A, unsigned long ldA,
                            void *B, unsigned long ldB,
-                           void *C, unsigned long ldC)
-{ __asm__ __volatile__ (
+                           void *C, unsigned long ldC, long csC,
+                           void *nextA, void *nextB)
+{ if (csC != 1) return -1; // Column striding for complex is not yet implemented.
+  __asm__ __volatile__ (
 #ifndef _Asm_Allow_Convension
   I_PARAMS_ASM
 #endif
@@ -109,7 +122,7 @@ unsigned long zmgemm_3wx9 (unsigned long *shape,
   I_PARAMS
 #endif
 :
-  FP_CLOBBER_SAVED
+  FP_CLOBBER_SAVED, I_CLOBBER_SAVED
 #ifndef _Asm_Allow_Convension
 , FP_CLOBBER_SP, I_CLOBBER_SP
 #endif
@@ -119,8 +132,10 @@ unsigned long zmgemm_2wx14(unsigned long *shape,
                            double *coeffs,
                            void *A, unsigned long ldA,
                            void *B, unsigned long ldB,
-                           void *C, unsigned long ldC)
-{ __asm__ __volatile__ (
+                           void *C, unsigned long ldC, long csC,
+                           void *nextA, void *nextB)
+{ if (csC != 1) return -1; // Column striding for complex is not yet implemented.
+  __asm__ __volatile__ (
 #ifndef _Asm_Allow_Convension
   I_PARAMS_ASM
 #endif
@@ -131,7 +146,7 @@ unsigned long zmgemm_2wx14(unsigned long *shape,
   I_PARAMS
 #endif
 :
-  FP_CLOBBER_SAVED
+  FP_CLOBBER_SAVED, I_CLOBBER_SAVED
 #ifndef _Asm_Allow_Convension
 , FP_CLOBBER_SP, I_CLOBBER_SP
 #endif
@@ -141,8 +156,10 @@ unsigned long zmgemm_1wx28(unsigned long *shape,
                            double *coeffs,
                            void *A, unsigned long ldA,
                            void *B, unsigned long ldB,
-                           void *C, unsigned long ldC)
-{ __asm__ __volatile__ (
+                           void *C, unsigned long ldC, long csC,
+                           void *nextA, void *nextB)
+{ if (csC != 1) return -1; // Column striding for complex is not yet implemented.
+  __asm__ __volatile__ (
 #ifndef _Asm_Allow_Convension
   I_PARAMS_ASM
 #endif
@@ -153,7 +170,7 @@ unsigned long zmgemm_1wx28(unsigned long *shape,
   I_PARAMS
 #endif
 :
-  FP_CLOBBER_SAVED
+  FP_CLOBBER_SAVED, I_CLOBBER_SAVED
 #ifndef _Asm_Allow_Convension
 , FP_CLOBBER_SP, I_CLOBBER_SP
 #endif

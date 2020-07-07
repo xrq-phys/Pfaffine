@@ -9,6 +9,9 @@
 // x5: LDB
 // x6: =>C
 // x7: LDC
+// July Update 1:
+// x18: =>A_NEXT
+// x19: =>B_NEXT
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -72,7 +75,10 @@ K_LOOP_z2wx14:
 	ld1d	z30.d, p0/z, [x2]
 	ld1d	z31.d, p1/z, [x2, x11, lsl 3]	// second vector
 	madd	x2, x3, x12, x2	// move forward
+	prfm	PLDL1KEEP, [x2]	// prefetch next A column
 // Apply B columns.
+	madd	x22, x5, x12, x4	// calculate address in advance for prefetching
+	prfm	PLDL1KEEP, [x22]	// prefetch next B column
 	mov	x13, x10	// counter
 	ld1rqd	z0.d, p0/z, [x4, #0]	// row L column 0
 	fcmla	z1.d, p0/m, z30.d, z0.d, #0
@@ -186,6 +192,9 @@ WRITE_MEM_z2wx14:
 	ldp	x16, x17, [x1]	// alpha, as 128-bits
 	ld1rqd	z30.d, p0/z, [x1]	// alpha, to the vector.
 	ld1rd	z31.d, p0/z, [x1]	// alpha, real parts to the vector.
+// Prefetch next A and B.
+	prfm	PLDL2KEEP, [x18]
+	prfm	PLDL2KEEP, [x19]
 // (R&)Write data back to C memory.
 	cmp	x14, x16
 	b.ne	NONUNIT_ALPHA_z2wx14

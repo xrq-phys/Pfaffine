@@ -21,7 +21,8 @@ const unsigned align_blk = 32;
 
 #if defined(_SVE)
 // Vector length query for SVE.
-extern "C" unsigned dvecln_iso(void);
+extern "C" unsigned dgemm_sve_mr(void);
+extern "C" unsigned dgemm_sve_nr(void);
 extern "C" unsigned zgemm_sve_mr(void);
 extern "C" unsigned zgemm_sve_nr(void);
 #endif
@@ -71,7 +72,7 @@ template <> inline void set_blk_size<double>  (unsigned *mr, unsigned *nr)
 #if defined(_Sandy)
 { *mr = 4; *nr = 4; }
 #elif defined(_SVE)
-{ *mr = dvecln_iso(); *nr = dvecln_iso(); }
+{ *mr = dgemm_sve_mr(); *nr = dgemm_sve_nr(); }
 #elif defined(_Haswell)
 #if defined(_SkylakeX)
 { *mr = 14; *nr = 16; }

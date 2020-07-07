@@ -8,31 +8,36 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-unsigned long dmgemm_2wx14(unsigned long *shape, 
+unsigned long dmgemm_2wx14(unsigned long *shape,
                            double *coeffs,
                            double *A, unsigned long ldA,
                            double *B, unsigned long ldB,
-                           double *C, unsigned long ldC);
-unsigned long dmgemm_1wx28(unsigned long *shape, 
+                           double *C, unsigned long ldC, long csC,
+                           double *nextA, double *nextB);
+unsigned long dmgemm_1wx28(unsigned long *shape,
                            double *coeffs,
                            double *A, unsigned long ldA,
                            double *B, unsigned long ldB,
-                           double *C, unsigned long ldC);
+                           double *C, unsigned long ldC, long csC,
+                           double *nextA, double *nextB);
 unsigned long zmgemm_3wx9 (unsigned long *shape,
                            double *coeffs,
                            void *A, unsigned long ldA,
                            void *B, unsigned long ldB,
-                           void *C, unsigned long ldC);
+                           void *C, unsigned long ldC, long csC,
+                           void *nextA, void *nextB);
 unsigned long zmgemm_2wx14(unsigned long *shape,
                            double *coeffs,
                            void *A, unsigned long ldA,
                            void *B, unsigned long ldB,
-                           void *C, unsigned long ldC);
+                           void *C, unsigned long ldC, long csC,
+                           void *nextA, void *nextB);
 unsigned long zmgemm_1wx28(unsigned long *shape,
                            double *coeffs,
                            void *A, unsigned long ldA,
                            void *B, unsigned long ldB,
-                           void *C, unsigned long ldC);
+                           void *C, unsigned long ldC, long csC,
+                           void *nextA, void *nextB);
 unsigned dvecln(void);
 unsigned zvecln(void);
 
@@ -50,16 +55,20 @@ unsigned dvecln_iso(void)
 unsigned zvecln_iso(void)
 { return vecln_iso(zvecln()); }
 
+unsigned dgemm_sve_mr(void)
+{ return (dvecln() < 32) ? 2 * dvecln() : dvecln(); }
+unsigned dgemm_sve_nr(void)
+{ return (dvecln() < 32) ? 14 : 28; }
 unsigned zgemm_sve_mr(void)
 { return (zvecln() == 4) ? 12 : zvecln_iso(); }
 unsigned zgemm_sve_nr(void)
 { return (zvecln() == 4) ? 8 : zvecln_iso(); }
 
-// Using only isotropic kernels at the moment.
-// TODO: Implement 14x2w kernels to utilize the full power.
+// Isotropic kernel. Not used anymore.
 void udgemm_isomax(unsigned k,
-                   double alpha, double *A, double *B, 
-                   double beta, double *C, unsigned ldC)
+                   double alpha, double *A, double *B,
+                   double beta, double *C, unsigned ldC,
+                   double *nextA, double *nextB)
 {
     // Array-parameters are static.
     const unsigned ldAB = dvecln_iso();
@@ -72,13 +81,14 @@ void udgemm_isomax(unsigned k,
     coeffs[0] = alpha;
     coeffs[1] = beta;
     // Not handling error output currently.
-    info = dmgemm_2wx14(shape, coeffs, A, ldAB, B, ldAB, C, ldC);
+    info = dmgemm_2wx14(shape, coeffs, A, ldAB, B, ldAB, C, ldC, 1, nextA, nextB);
 }
 
 // Complex: special 12x8 and 8x12 kernels for 512-bit vectors.
 void uzgemm_12x8(unsigned k,
                  double *Alpha_, void *A, void *B,
-                 double *Beta_, void *C, unsigned ldC)
+                 double *Beta_, void *C, unsigned ldC,
+                 void *nextA, void *nextB)
 {
     static unsigned long info;
     static unsigned long shape[3];
@@ -90,11 +100,12 @@ void uzgemm_12x8(unsigned k,
     shape[2] = k;
     coeffs[0] = Alpha_[0]; coeffs[1] = Alpha_[1];
     coeffs[2] = Beta_[0];  coeffs[3] = Beta_[1];
-    info = zmgemm_3wx9(shape, coeffs, A, 12, B, 8, C, ldC);
+    info = zmgemm_3wx9(shape, coeffs, A, 12, B, 8, C, ldC, 1, nextA, nextB);
 }
 void uzgemm_8x12(unsigned k,
                  double *Alpha_, void *A, void *B,
-                 double *Beta_, void *C, unsigned ldC)
+                 double *Beta_, void *C, unsigned ldC,
+                 void *nextA, void *nextB)
 {
     static unsigned long info;
     static unsigned long shape[3];
@@ -106,12 +117,13 @@ void uzgemm_8x12(unsigned k,
     shape[2] = k;
     coeffs[0] = Alpha_[0]; coeffs[1] = Alpha_[1];
     coeffs[2] = Beta_[0];  coeffs[3] = Beta_[1];
-    info = zmgemm_2wx14(shape, coeffs, A, 8, B, 12, C, ldC);
+    info = zmgemm_2wx14(shape, coeffs, A, 8, B, 12, C, ldC, 1, nextA, nextB);
 }
 // Uniform fallback.
 void uzgemm_isomax(unsigned k,
                    double *Alpha_, void *A, void *B,
-                   double *Beta_, void *C, unsigned ldC)
+                   double *Beta_, void *C, unsigned ldC,
+                   void *nextA, void *nextB)
 {
     const unsigned ldAB = zvecln_iso();
     static unsigned long info;
@@ -122,21 +134,53 @@ void uzgemm_isomax(unsigned k,
     shape[2] = k;
     coeffs[0] = Alpha_[0]; coeffs[1] = Alpha_[1];
     coeffs[2] = Beta_[0];  coeffs[3] = Beta_[1];
-    info = zmgemm_2wx14(shape, coeffs, A, ldAB, B, ldAB, C, ldC);
+    info = zmgemm_2wx14(shape, coeffs, A, ldAB, B, ldAB, C, ldC, 1, nextA, nextB);
 }
 
 // As isotropic kernel is used,
 // N-shape and T-shape are obviously the same.
-void udgemmn(unsigned k, 
-             double *Alpha_, double *A, double *B, 
+void udgemmn(unsigned k,
+             double *Alpha_, double *A, double *B,
              double *Beta_, double *C, unsigned ldC,
              double *nextA, double *nextB)
-{ udgemm_isomax(k, *Alpha_, A, B, *Beta_, C, ldC); }
-void udgemmt(unsigned k, 
-             double *Alpha_, double *A, double *B, 
+{
+    static unsigned long info;
+    static unsigned long shape[3];
+    static double coeffs[2];
+    shape[2] = k;
+    coeffs[0] = *Alpha_;
+    coeffs[1] = *Beta_;
+    if (dvecln() < 32) {
+        shape[0] = dvecln() * 2;
+        shape[1] = 14;
+        info = dmgemm_2wx14(shape, coeffs, A, dvecln() * 2, B, 14, C, ldC, 1, nextA, nextB);
+    } else {
+        shape[0] = dvecln();
+        shape[1] = 28;
+        info = dmgemm_1wx28(shape, coeffs, A, dvecln(), B, 28, C, ldC, 1, nextA, nextB);
+    }
+}
+void udgemmt(unsigned k,
+             double *Alpha_, double *A, double *B,
              double *Beta_, double *C, unsigned ldC,
              double *nextA, double *nextB)
-{ udgemm_isomax(k, *Alpha_, A, B, *Beta_, C, ldC); }
+{
+    static unsigned long info;
+    static unsigned long shape[3];
+    static double coeffs[2];
+    shape[2] = k;
+    coeffs[0] = *Alpha_;
+    coeffs[1] = *Beta_;
+    if (dvecln() < 32) {
+        shape[0] = dvecln() * 2;
+        shape[1] = 14;
+        info = dmgemm_2wx14(shape, coeffs, B, dvecln() * 2, A, 14, C, 1, ldC, nextA, nextB);
+    } else {
+        shape[0] = dvecln();
+        shape[1] = 28;
+        info = dmgemm_1wx28(shape, coeffs, B, dvecln(), A, 28, C, 1, ldC, nextA, nextB);
+    }
+}
 
 // Complex situation is more complicated.
 void uzgemmn(unsigned k,
@@ -144,15 +188,15 @@ void uzgemmn(unsigned k,
              double *Beta_, void *C, unsigned ldC,
              void *nextA, void *nextB)
 { if (zvecln() == 4)
-    uzgemm_12x8(k, Alpha_, A, B, Beta_, C, ldC);
-  else uzgemm_isomax(k, Alpha_, A, B, Beta_, C, ldC); }
+    uzgemm_12x8(k, Alpha_, A, B, Beta_, C, ldC, nextA, nextB);
+  else uzgemm_isomax(k, Alpha_, A, B, Beta_, C, ldC, nextA, nextB); }
 void uzgemmt(unsigned k,
              double *Alpha_, void *A, double *B,
              double *Beta_, void *C, unsigned ldC,
              void *nextA, void *nextB)
 { if (zvecln() == 4)
-    uzgemm_8x12(k, Alpha_, A, B, Beta_, C, ldC);
-  else uzgemm_isomax(k, Alpha_, A, B, Beta_, C, ldC); }
+    uzgemm_8x12(k, Alpha_, A, B, Beta_, C, ldC, nextA, nextB);
+  else uzgemm_isomax(k, Alpha_, A, B, Beta_, C, ldC, nextA, nextB); }
 
 // Custom-size extension.
 unsigned udgemmext(unsigned m, unsigned n, unsigned k,
@@ -168,9 +212,21 @@ unsigned udgemmext(unsigned m, unsigned n, unsigned k,
     coeffs[0] = *Alpha_;
     coeffs[1] = *Beta_;
     if (m <= dvecln())
-        info = dmgemm_1wx28(shape, coeffs, A, ldA, B, ldB, C, ldC);
+        if (n < 28)
+            info = dmgemm_1wx28(shape, coeffs, A, ldA, B, ldB, C, ldC, 1, nextA, nextB);
+        else { // N-kernel cannot contain. Use T-kernel.
+            shape[0] = n;
+            shape[1] = m;
+            info = dmgemm_1wx28(shape, coeffs, B, ldB, A, ldA, C, 1, ldC, nextA, nextB);
+        }
     else if (m <= dvecln() * 2)
-        info = dmgemm_2wx14(shape, coeffs, A, ldA, B, ldB, C, ldC);
+        if (n < 14)
+            info = dmgemm_2wx14(shape, coeffs, A, ldA, B, ldB, C, ldC, 1, nextA, nextB);
+        else {
+            shape[0] = n;
+            shape[1] = m;
+            info = dmgemm_2wx14(shape, coeffs, B, ldB, A, ldA, C, 1, ldC, nextA, nextB);
+        }
     else
         // No such kernel.
         info = 1;
@@ -190,11 +246,11 @@ unsigned uzgemmext(unsigned m, unsigned n, unsigned k,
     coeffs[0] = Alpha_[0]; coeffs[1] = Alpha_[1];
     coeffs[2] = Beta_[0];  coeffs[3] = Beta_[1];
     if (m <= zvecln())
-        info = zmgemm_1wx28(shape, coeffs, A, ldA, B, ldB, C, ldC);
+        info = zmgemm_1wx28(shape, coeffs, A, ldA, B, ldB, C, ldC, 1, nextA, nextB);
     else if (m <= zvecln() * 2)
-        info = zmgemm_2wx14(shape, coeffs, A, ldA, B, ldB, C, ldC);
+        info = zmgemm_2wx14(shape, coeffs, A, ldA, B, ldB, C, ldC, 1, nextA, nextB);
     else if (m <= zvecln() * 3)
-        info = zmgemm_3wx9(shape, coeffs, A, ldA, B, ldB, C, ldC);
+        info = zmgemm_3wx9(shape, coeffs, A, ldA, B, ldB, C, ldC, 1, nextA, nextB);
     else
         // No such kernel.
         info = 1;
