@@ -78,6 +78,8 @@ template <> inline void set_blk_size<double>  (unsigned *mr, unsigned *nr)
 #else
 { *mr = 6; *nr = 8; }
 #endif
+#elif defined(_Neon)
+{ *mr = 6; *nr = 8; }
 #else
 { *mr = 8; *nr = 8; }
 #endif
