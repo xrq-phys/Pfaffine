@@ -214,8 +214,8 @@ void skr2k(char uplo, char trans, unsigned n, unsigned k,
         std::cerr << "Trans is not implemented. Sorry." << std::endl;
         std::_Exit(EXIT_FAILURE);
     }
-    if (alpha == 0.0)
-        return 0;
+    if (std::real(alpha) == 0.0 && std::imag(alpha) == 0.0)
+        return;
     // TODO: More checks.
 
     // Big-blocking scheme, only for n.
