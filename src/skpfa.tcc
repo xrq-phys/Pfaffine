@@ -22,7 +22,7 @@
 #include "sktdi.tcc"
 
 // Macros for first-index-runs-fastest.
-// TODO: switch to colmaj.tcc.
+// TODO: Switch to colmaj.tcc.
 #define   A(i,j)   A[ (i) + (j)*(ldA) ]
 #define Sp1(i,j) Sp1[ (i) + (j)*(n)   ]
 #define Sp2(i,j) Sp2[ (i) + (j)*(n)   ]

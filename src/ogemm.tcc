@@ -5,8 +5,8 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
-// FIXME: implicitly referencing macros in skr2k.tcc.
-// TODO: switch to colmaj.tcc.
+// FIXME: Implicitly referencing macros in skr2k.tcc.
+// TODO: Switch to colmaj.tcc.
 
 /**
  * \brief Small-size 1-lv blocked GEMM program in 'N' - 'T' shape.

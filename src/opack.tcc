@@ -7,8 +7,8 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 // Macros for first-index-runs-fastest.
-// FIXME: implicitly referencing macros in skr2k.tcc.
-// TODO: switch to colmaj.tcc.
+// FIXME: Implicitly referencing macros in skr2k.tcc.
+// TODO: Switch to colmaj.tcc.
 #define M(i,j) M[ (i) + (j)*(mr) ]
 
 template <typename T>

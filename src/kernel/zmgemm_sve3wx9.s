@@ -189,7 +189,6 @@ WRITE_MEM_z3wx9:
 NONUNIT_ALPHA_z3wx9:
 // Honestly speaking this is not optimal here,
 // but skr2k is called only with alpha=1.0 in Pfaffine.
-// TODO: Separately handle beta real and beta complex.
 	fmov	z29.d, p0/m, #0.0	// 0-memory buffer.
 	fadd	z0.d, z1.d, z29.d
 	fmul	z1.d, z1.d, z31.d	// magnify z1: real part
@@ -275,7 +274,7 @@ NONUNIT_ALPHA_z3wx9:
 // Unit alpha case.
 UNIT_ALPHA_z3wx9:
 // Non-pure-real beta here yields one more instruction.
-// TODO: separating real-alpha-beta situations might be necessary.
+// TODO: Separating real-alpha-beta situations might be necessary.
 // Override alpha buffers with beta.
 // Note: now z31.d is complete and z30.d is real part vector.
 	ld1rqd	z31.d, p0/z, [x1, #16]	// full entries of beta.

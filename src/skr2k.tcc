@@ -17,7 +17,7 @@
 #include "floorsqrt.tcc"
 
 // Macros for first-index-runs-fastest.
-// TODO: switch to colmaj.tcc.
+// TODO: Switch to colmaj.tcc.
 #define    A(i,j)    A[ (i) + (j)*(ldA) ]
 #define    B(i,j)    B[ (i) + (j)*(ldB) ]
 #define    C(i,j)    C[ (i) + (j)*(ldC) ]
@@ -28,7 +28,7 @@
 #include "opack.tcc"
 #include "ogemm.tcc"
 
-// TODO: rename and move this function to oskr2k.tcc.
+// TODO: Rename and move this function to oskr2k.tcc.
 template<typename T>
 void uskr2k(unsigned n, unsigned k, T alpha, T *A, unsigned ldA, T *B, unsigned ldB, T beta, T *C, unsigned ldC,
             unsigned mr, unsigned nr, T *buffer)
@@ -214,8 +214,9 @@ void skr2k(char uplo, char trans, unsigned n, unsigned k,
         std::cerr << "Trans is not implemented. Sorry." << std::endl;
         std::_Exit(EXIT_FAILURE);
     }
-    // TODO: more checks.
-    // TODO: special case when alpha==0
+    if (alpha == 0.0)
+        return 0;
+    // TODO: More checks.
 
     // Big-blocking scheme, only for n.
     unsigned nblk = n / mblk;
