@@ -36,6 +36,7 @@ dmgemm_1wx28__:
 // Z29: B elements broadcasted
 // Z28: not used
 // Z[0-27]: C change buffer
+	fmov	z0.d, p0/m, #0.0
 	fmov	z1.d, p0/m, #0.0
 	fmov	z2.d, p0/m, #0.0
 	fmov	z3.d, p0/m, #0.0
@@ -63,7 +64,6 @@ dmgemm_1wx28__:
 	fmov	z25.d, p0/m, #0.0
 	fmov	z26.d, p0/m, #0.0
 	fmov	z27.d, p0/m, #0.0
-	fmov	z28.d, p0/m, #0.0
 K_LOOP_d1wx28:
 // Load columns from A.
 	ld1d	z30.d, p1/z, [x2]
