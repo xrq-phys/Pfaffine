@@ -94,71 +94,71 @@ template <> inline void set_blk_size<dcomplex>(unsigned *mr, unsigned *nr)
 // defined kernels.
 extern "C" {
 #if defined(_Haswell) || defined(_Neon)
-void usgemmn(unsigned k, float *alpha, float *pakA, float *pakB, float *beta, float *C, unsigned ldC);
-void usgemmt(unsigned k, float *alpha, float *pakA, float *pakB, float *beta, float *C, unsigned ldC);
+void usgemmn(unsigned k, float *alpha, float *pakA, float *pakB, float *beta, float *C, unsigned ldC, float *nextA, float *nextB);
+void usgemmt(unsigned k, float *alpha, float *pakA, float *pakB, float *beta, float *C, unsigned ldC, float *nextA, float *nextB);
 #endif
 #if defined(_Haswell) || defined(_Sandy) || defined(_Neon) || defined(_SVE)
-void udgemmn(unsigned k, double *alpha, double *pakA, double *pakB, double *beta, double *C, unsigned ldC);
-void udgemmt(unsigned k, double *alpha, double *pakA, double *pakB, double *beta, double *C, unsigned ldC);
+void udgemmn(unsigned k, double *alpha, double *pakA, double *pakB, double *beta, double *C, unsigned ldC, double *nextA, double *nextB);
+void udgemmt(unsigned k, double *alpha, double *pakA, double *pakB, double *beta, double *C, unsigned ldC, double *nextA, double *nextB);
 #endif
 #if defined(_Haswell)
-void ucgemmn(unsigned k, scomplex *alpha, scomplex *pakA, scomplex *pakB, scomplex *beta, scomplex *C, unsigned ldC);
-void ucgemmt(unsigned k, scomplex *alpha, scomplex *pakA, scomplex *pakB, scomplex *beta, scomplex *C, unsigned ldC);
+void ucgemmn(unsigned k, scomplex *alpha, scomplex *pakA, scomplex *pakB, scomplex *beta, scomplex *C, unsigned ldC, scomplex *nextA, scomplex *nextB);
+void ucgemmt(unsigned k, scomplex *alpha, scomplex *pakA, scomplex *pakB, scomplex *beta, scomplex *C, unsigned ldC, scomplex *nextA, scomplex *nextB);
 #endif
 #if defined(_Haswell) || defined(_SVE)
-void uzgemmn(unsigned k, dcomplex *alpha, dcomplex *pakA, dcomplex *pakB, dcomplex *beta, dcomplex *C, unsigned ldC);
-void uzgemmt(unsigned k, dcomplex *alpha, dcomplex *pakA, dcomplex *pakB, dcomplex *beta, dcomplex *C, unsigned ldC);
+void uzgemmn(unsigned k, dcomplex *alpha, dcomplex *pakA, dcomplex *pakB, dcomplex *beta, dcomplex *C, unsigned ldC, dcomplex *nextA, dcomplex *nextB);
+void uzgemmt(unsigned k, dcomplex *alpha, dcomplex *pakA, dcomplex *pakB, dcomplex *beta, dcomplex *C, unsigned ldC, dcomplex *nextA, dcomplex *nextB);
 #endif
 }
 
 // gemm selectors.
 // mr * nr kernels.
-inline void ugemmn(unsigned k, float *alpha, float *pakA, float *pakB, float *beta, float *C, unsigned ldC)
+inline void ugemmn(unsigned k, float *alpha, float *pakA, float *pakB, float *beta, float *C, unsigned ldC, float *nextA, float *nextB)
 #if defined(_Haswell) || defined(_Neon)
-{ usgemmn(k, alpha, pakA, pakB, beta, C, ldC); }
+{ usgemmn(k, alpha, pakA, pakB, beta, C, ldC, nextA, nextB); }
 #else
 { std::_Exit(EXIT_FAILURE); }
 #endif
-inline void ugemmn(unsigned k, double *alpha, double *pakA, double *pakB, double *beta, double *C, unsigned ldC)
+inline void ugemmn(unsigned k, double *alpha, double *pakA, double *pakB, double *beta, double *C, unsigned ldC, double *nextA, double *nextB)
 #if defined(_Haswell) || defined(_Sandy) || defined(_Neon) || defined(_SVE)
-{ udgemmn(k, alpha, pakA, pakB, beta, C, ldC); }
+{ udgemmn(k, alpha, pakA, pakB, beta, C, ldC, nextA, nextB); }
 #else
 { std::_Exit(EXIT_FAILURE); }
 #endif
-inline void ugemmn(unsigned k, scomplex *alpha, scomplex *pakA, scomplex *pakB, scomplex *beta, scomplex *C, unsigned ldC)
+inline void ugemmn(unsigned k, scomplex *alpha, scomplex *pakA, scomplex *pakB, scomplex *beta, scomplex *C, unsigned ldC, scomplex *nextA, scomplex *nextB)
 #if defined(_Haswell)
-{ ucgemmn(k, alpha, pakA, pakB, beta, C, ldC); }
+{ ucgemmn(k, alpha, pakA, pakB, beta, C, ldC, nextA, nextB); }
 #else
 { std::_Exit(EXIT_FAILURE); }
 #endif
-inline void ugemmn(unsigned k, dcomplex *alpha, dcomplex *pakA, dcomplex *pakB, dcomplex *beta, dcomplex *C, unsigned ldC)
+inline void ugemmn(unsigned k, dcomplex *alpha, dcomplex *pakA, dcomplex *pakB, dcomplex *beta, dcomplex *C, unsigned ldC, dcomplex *nextA, dcomplex *nextB)
 #if defined(_Haswell) || defined(_SVE)
-{ uzgemmn(k, alpha, pakA, pakB, beta, C, ldC); }
+{ uzgemmn(k, alpha, pakA, pakB, beta, C, ldC, nextA, nextB); }
 #else
 { std::_Exit(EXIT_FAILURE); }
 #endif
 // nr * mr kernels.
-inline void ugemmt(unsigned k, float *alpha, float *pakA, float *pakB, float *beta, float *C, unsigned ldC)
+inline void ugemmt(unsigned k, float *alpha, float *pakA, float *pakB, float *beta, float *C, unsigned ldC, float *nextA, float *nextB)
 #if defined(_Haswell) || defined(_Neon)
-{ usgemmt(k, alpha, pakA, pakB, beta, C, ldC); }
+{ usgemmt(k, alpha, pakA, pakB, beta, C, ldC, nextA, nextB); }
 #else
 { std::_Exit(EXIT_FAILURE); }
 #endif
-inline void ugemmt(unsigned k, double *alpha, double *pakA, double *pakB, double *beta, double *C, unsigned ldC)
+inline void ugemmt(unsigned k, double *alpha, double *pakA, double *pakB, double *beta, double *C, unsigned ldC, double *nextA, double *nextB)
 #if defined(_Haswell) || defined(_Sandy) || defined(_Neon) || defined(_SVE)
-{ udgemmt(k, alpha, pakA, pakB, beta, C, ldC); }
+{ udgemmt(k, alpha, pakA, pakB, beta, C, ldC, nextA, nextB); }
 #else
 { std::_Exit(EXIT_FAILURE); }
 #endif
-inline void ugemmt(unsigned k, scomplex *alpha, scomplex *pakA, scomplex *pakB, scomplex *beta, scomplex *C, unsigned ldC)
+inline void ugemmt(unsigned k, scomplex *alpha, scomplex *pakA, scomplex *pakB, scomplex *beta, scomplex *C, unsigned ldC, scomplex *nextA, scomplex *nextB)
 #if defined(_Haswell)
-{ ucgemmt(k, alpha, pakA, pakB, beta, C, ldC); }
+{ ucgemmt(k, alpha, pakA, pakB, beta, C, ldC, nextA, nextB); }
 #else
 { std::_Exit(EXIT_FAILURE); }
 #endif
-inline void ugemmt(unsigned k, dcomplex *alpha, dcomplex *pakA, dcomplex *pakB, dcomplex *beta, dcomplex *C, unsigned ldC)
+inline void ugemmt(unsigned k, dcomplex *alpha, dcomplex *pakA, dcomplex *pakB, dcomplex *beta, dcomplex *C, unsigned ldC, dcomplex *nextA, dcomplex *nextB)
 #if defined(_Haswell) || defined(_SVE)
-{ uzgemmt(k, alpha, pakA, pakB, beta, C, ldC); }
+{ uzgemmt(k, alpha, pakA, pakB, beta, C, ldC, nextA, nextB); }
 #else
 { std::_Exit(EXIT_FAILURE); }
 #endif

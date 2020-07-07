@@ -55,16 +55,19 @@ typedef union
 } v2df_t;
 
 void udgemmn( unsigned k, double *alpha_,
-        double *a, double *b, double *beta_, double *c, unsigned ldc );
+        double *a, double *b, double *beta_, double *c, unsigned ldc,
+        double *a_next, double *b_next );
 
 // Note that t is only for the size not the matrix itself.
 // Hence for 4x4 kernels the N and K kernels are the same.
 void udgemmt( unsigned k, double *alpha_,
-        double *a, double *b, double *beta_, double *c, unsigned ldc )
-{ udgemmn(k, alpha_, a, b, beta_, c, ldc); }
+        double *a, double *b, double *beta_, double *c, unsigned ldc,
+        double *a_next, double *b_next )
+{ udgemmn(k, alpha_, a, b, beta_, c, ldc, a_next, b_next); }
 
 void udgemmn( unsigned k, double *alpha_,
-        double *a, double *b, double *beta_, double *c, unsigned ldc )
+        double *a, double *b, double *beta_, double *c, unsigned ldc,
+        double *a_next, double *b_next )
 {
   const unsigned lda = 4,
                  ldb = 4;

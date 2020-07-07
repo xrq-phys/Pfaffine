@@ -94,8 +94,8 @@ void uskr2k(unsigned n, unsigned k, T alpha, T *A, unsigned ldA, T *B, unsigned 
                 unsigned ist = ui*mr;
                 unsigned jst = uj*nr;
                 // Prefetch panels for next iteration.
-                T *pakAnext,
-                  *pakBnext;
+                T *pakAnext = nullptr,
+                  *pakBnext = nullptr;
                 if (ui+1 != mblk) {
                     pakBnext = pakB;
                     pakAnext = pakAbase + pakAsz *(ui+1)
@@ -108,16 +108,13 @@ void uskr2k(unsigned n, unsigned k, T alpha, T *A, unsigned ldA, T *B, unsigned 
                     pakBnext = pakBbase + pakBsz *(uj+1);
                     pakAnext = pakAbase;
                 }
-                // Direct prefetch.
-                // TODO: feed pakXnext to kernels.
-                __builtin_prefetch(pakAnext);
-                __builtin_prefetch(pakBnext);
                 // Pick microkernel.
                 if (ist + leni <= jst)
                     if (mker_available<T>() && leni == mr && lenj == nr)
-                        ugemmn(lenk, &alpha, pakA, pakB, &beta_, &C(ist, jst), ldC);
+                        ugemmn(lenk, &alpha, pakA, pakB, &beta_, &C(ist, jst), ldC, pakAnext, pakBnext);
                     else if (extker_available<T>())
-                        ugemmext(leni, lenj, lenk, &alpha, pakA, mr, pakB, nr, &beta_, &C(ist, jst), ldC);
+                        ugemmext(leni, lenj, lenk, &alpha, pakA, mr, pakB, nr, &beta_, &C(ist, jst), ldC,
+                                 pakAnext, pakBnext);
                     else
                         // Vanilla microkernel at off-diagonal.
                         for (unsigned j = 0; j < lenj; ++j)
@@ -129,9 +126,10 @@ void uskr2k(unsigned n, unsigned k, T alpha, T *A, unsigned ldA, T *B, unsigned 
                             }
                 else if (ist >= jst + lenj)
                     if (mker_available<T>() && leni == mr && lenj == nr)
-                        ugemmt(lenk, &malpha, pakB, pakA, &one, &C(jst, ist), ldC);
+                        ugemmt(lenk, &malpha, pakB, pakA, &one, &C(jst, ist), ldC, pakAnext, pakBnext);
                     else if (extker_available<T>())
-                        ugemmext(lenj, leni, lenk, &malpha, pakB, nr, pakA, mr, &one, &C(jst, ist), ldC);
+                        ugemmext(lenj, leni, lenk, &malpha, pakB, nr, pakA, mr, &one, &C(jst, ist), ldC,
+                                 pakAnext, pakBnext);
                     else
                         for (unsigned i = 0; i < leni; ++i)
                             for (unsigned l = 0; l < lenk; ++l) {
@@ -146,11 +144,13 @@ void uskr2k(unsigned n, unsigned k, T alpha, T *A, unsigned ldA, T *B, unsigned 
                         // Update both contributions at diagonal.
                         // NOTE: This will cause some of lower triangular part overriden.
                         //       Still, no effect on result.
-                        ugemmn(lenk, &alpha, pakA, pakB, &beta_, &C(ist, jst), ldC);
-                        ugemmt(lenk, &malpha, pakB, pakA, &one, &C(jst, ist), ldC);
+                        ugemmn(lenk, &alpha, pakA, pakB, &beta_, &C(ist, jst), ldC, pakB, pakA);
+                        ugemmt(lenk, &malpha, pakB, pakA, &one, &C(jst, ist), ldC, pakAnext, pakBnext);
                     } else if (extker_available<T>()) {
-                        ugemmext(leni, lenj, lenk, &alpha, pakA, mr, pakB, nr, &beta_, &C(ist, jst), ldC);
-                        ugemmext(lenj, leni, lenk, &malpha, pakB, nr, pakA, mr, &one, &C(jst, ist), ldC);
+                        ugemmext(leni, lenj, lenk, &alpha, pakA, mr, pakB, nr, &beta_, &C(ist, jst), ldC,
+                                 pakB, pakA);
+                        ugemmext(lenj, leni, lenk, &malpha, pakB, nr, pakA, mr, &one, &C(jst, ist), ldC,
+                                 pakAnext, pakBnext);
                     } else
                         if (leni == lenj && ist == jst)
                             // Symmetric diagonal case.

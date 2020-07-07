@@ -129,23 +129,27 @@ void uzgemm_isomax(unsigned k,
 // N-shape and T-shape are obviously the same.
 void udgemmn(unsigned k, 
              double *Alpha_, double *A, double *B, 
-             double *Beta_, double *C, unsigned ldC)
+             double *Beta_, double *C, unsigned ldC,
+             double *nextA, double *nextB)
 { udgemm_isomax(k, *Alpha_, A, B, *Beta_, C, ldC); }
 void udgemmt(unsigned k, 
              double *Alpha_, double *A, double *B, 
-             double *Beta_, double *C, unsigned ldC)
+             double *Beta_, double *C, unsigned ldC,
+             double *nextA, double *nextB)
 { udgemm_isomax(k, *Alpha_, A, B, *Beta_, C, ldC); }
 
 // Complex situation is more complicated.
 void uzgemmn(unsigned k,
              double *Alpha_, void *A, void *B,
-             double *Beta_, void *C, unsigned ldC)
+             double *Beta_, void *C, unsigned ldC,
+             void *nextA, void *nextB)
 { if (zvecln() == 4)
     uzgemm_12x8(k, Alpha_, A, B, Beta_, C, ldC);
   else uzgemm_isomax(k, Alpha_, A, B, Beta_, C, ldC); }
 void uzgemmt(unsigned k,
              double *Alpha_, void *A, double *B,
-             double *Beta_, void *C, unsigned ldC)
+             double *Beta_, void *C, unsigned ldC,
+             void *nextA, void *nextB)
 { if (zvecln() == 4)
     uzgemm_8x12(k, Alpha_, A, B, Beta_, C, ldC);
   else uzgemm_isomax(k, Alpha_, A, B, Beta_, C, ldC); }
@@ -153,7 +157,7 @@ void uzgemmt(unsigned k,
 // Custom-size extension.
 unsigned udgemmext(unsigned m, unsigned n, unsigned k,
                    double *Alpha_, double *A, unsigned ldA, double *B, unsigned ldB,
-                   double *Beta_, double *C, unsigned ldC)
+                   double *Beta_, double *C, unsigned ldC, double *nextA, double *nextB)
 {
     static unsigned long info;
     static unsigned long shape[3];
@@ -175,7 +179,7 @@ unsigned udgemmext(unsigned m, unsigned n, unsigned k,
 
 unsigned uzgemmext(unsigned m, unsigned n, unsigned k,
                    double *Alpha_, void *A, unsigned ldA, void *B, unsigned ldB,
-                   double *Beta_, void *C, unsigned ldC)
+                   double *Beta_, void *C, unsigned ldC, double *nextA, double *nextB)
 {
     static unsigned long info;
     static unsigned long shape[3];

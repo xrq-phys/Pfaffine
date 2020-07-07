@@ -34,46 +34,50 @@ extern "C" {
 #if defined(_SVE)
 unsigned udgemmext(unsigned m, unsigned n, unsigned k,
                    double *Alpha_, double *A, unsigned ldA, double *B, unsigned ldB,
-                   double *Beta_, double *C, unsigned ldC);
+                   double *Beta_, double *C, unsigned ldC, double *nextA, double *nextB);
 unsigned uzgemmext(unsigned m, unsigned n, unsigned k,
                    dcomplex *Alpha_, dcomplex *A, unsigned ldA, dcomplex *B, unsigned ldB,
-                   dcomplex *Beta_, dcomplex *C, unsigned ldC);
+                   dcomplex *Beta_, dcomplex *C, unsigned ldC, dcomplex *nextA, dcomplex *nextB);
 #endif
 }
 
 unsigned ugemmext(unsigned m, unsigned n, unsigned k,
-                  float *Alpha_, 
-                  float *A, unsigned ldA, 
+                  float *Alpha_,
+                  float *A, unsigned ldA,
                   float *B, unsigned ldB,
-                  float *Beta_, 
-                  float *C, unsigned ldC)
+                  float *Beta_,
+                  float *C, unsigned ldC,
+                  float *nextA, float *nextB)
 { const static unsigned info_err = 1; return info_err; }
 unsigned ugemmext(unsigned m, unsigned n, unsigned k,
-                  double *Alpha_, 
-                  double *A, unsigned ldA, 
+                  double *Alpha_,
+                  double *A, unsigned ldA,
                   double *B, unsigned ldB,
-                  double *Beta_, 
-                  double *C, unsigned ldC)
+                  double *Beta_,
+                  double *C, unsigned ldC,
+                  double *nextA, double *nextB)
 #if defined(_SVE)
-{ return udgemmext(m, n, k, Alpha_, A, ldA, B, ldB, Beta_, C, ldC); }
+{ return udgemmext(m, n, k, Alpha_, A, ldA, B, ldB, Beta_, C, ldC, nextA, nextB); }
 #else
 { const static unsigned info_err = 1; return info_err; }
 #endif
 unsigned ugemmext(unsigned m, unsigned n, unsigned k,
-                  scomplex *Alpha_, 
-                  scomplex *A, unsigned ldA, 
+                  scomplex *Alpha_,
+                  scomplex *A, unsigned ldA,
                   scomplex *B, unsigned ldB,
-                  scomplex *Beta_, 
-                  scomplex *C, unsigned ldC)
+                  scomplex *Beta_,
+                  scomplex *C, unsigned ldC,
+                  scomplex *nextA, scomplex *nextB)
 { const static unsigned info_err = 1; return info_err; }
 unsigned ugemmext(unsigned m, unsigned n, unsigned k,
-                  dcomplex *Alpha_, 
-                  dcomplex *A, unsigned ldA, 
+                  dcomplex *Alpha_,
+                  dcomplex *A, unsigned ldA,
                   dcomplex *B, unsigned ldB,
-                  dcomplex *Beta_, 
-                  dcomplex *C, unsigned ldC)
+                  dcomplex *Beta_,
+                  dcomplex *C, unsigned ldC,
+                  dcomplex *nextA, dcomplex *nextB)
 #if defined(_SVE)
-{ return uzgemmext(m, n, k, Alpha_, A, ldA, B, ldB, Beta_, C, ldC); }
+{ return uzgemmext(m, n, k, Alpha_, A, ldA, B, ldB, Beta_, C, ldC, nextA, nextB); }
 #else
 { const static unsigned info_err = 1; return info_err; }
 #endif

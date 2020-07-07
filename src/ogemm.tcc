@@ -91,14 +91,11 @@ void ogemm(unsigned m, unsigned n, unsigned k,
                     pakBnext = pakBbase + pakBsz *(uj+1);
                     pakAnext = pakAbase;
                 }
-                // Direct prefetch.
-                // TODO: feed pakXnext to kernels.
-                __builtin_prefetch(pakAnext);
-                __builtin_prefetch(pakBnext);
                 if (mker_available<T>() && leni == mr && lenj == nr)
-                    ugemmn(lenk, &alpha, pakA, pakB, &beta_, &C(ist, jst), ldC);
+                    ugemmn(lenk, &alpha, pakA, pakB, &beta_, &C(ist, jst), ldC, pakAnext, pakBnext);
                 else if (extker_available<T>())
-                    ugemmext(leni, lenj, lenk, &alpha, pakA, mr, pakB, nr, &beta_, &C(ist, jst), ldC);
+                    ugemmext(leni, lenj, lenk, &alpha, pakA, mr, pakB, nr, &beta_, &C(ist, jst), ldC,
+                             pakAnext, pakBnext);
                 else
                     // Vanilla microkernel at off-diagonal.
                     for (unsigned j = 0; j < lenj; ++j)

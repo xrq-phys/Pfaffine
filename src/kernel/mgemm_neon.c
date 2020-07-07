@@ -1,6 +1,6 @@
-/* 
+/*
  * \file mgemm_neon.c
- * This file contains armv8 neon-register-based kernel imported from 
+ * This file contains armv8 neon-register-based kernel imported from
  * the BLIS project and redistributed under a 3-clause BSD license.
  *
  * BLIS
@@ -64,34 +64,38 @@ void bli_sgemm_armv8a_asm_8x12
 
 // N and T size-Wrapper for Pfaffine.
 void udgemmn( unsigned k, double *alpha_,
-        double *a, double *b, double *beta_, double *c, unsigned ldc )
-{ bli_dgemm_armv8a_asm_6x8(k, alpha_, a, b, beta_, c, 1, ldc, 0, 0); }
+        double *a, double *b, double *beta_, double *c, unsigned ldc,
+        void *a_next, void *b_next )
+{ bli_dgemm_armv8a_asm_6x8(k, alpha_, a, b, beta_, c, 1, ldc, a_next, b_next); }
 // T means only size. Do A<=>B swap and C transpose.
 void udgemmt( unsigned k, double *alpha_,
-        double *a, double *b, double *beta_, double *c, unsigned ldc )
-{ bli_dgemm_armv8a_asm_6x8(k, alpha_, b, a, beta_, c, ldc, 1, 0, 0); }
+        double *a, double *b, double *beta_, double *c, unsigned ldc,
+        void *a_next, void *b_next )
+{ bli_dgemm_armv8a_asm_6x8(k, alpha_, b, a, beta_, c, ldc, 1, a_next, b_next); }
 // Single precision
 void usgemmn( unsigned k, float *alpha_,
-        float *a, float *b, float *beta_, float *c, unsigned ldc )
-{ bli_sgemm_armv8a_asm_8x12(k, alpha_, a, b, beta_, c, 1, ldc, 0, 0); }
+        float *a, float *b, float *beta_, float *c, unsigned ldc,
+        void *a_next, void *b_next )
+{ bli_sgemm_armv8a_asm_8x12(k, alpha_, a, b, beta_, c, 1, ldc, a_next, b_next); }
 void usgemmt( unsigned k, float *alpha_,
-        float *a, float *b, float *beta_, float *c, unsigned ldc )
-{ bli_sgemm_armv8a_asm_8x12(k, alpha_, b, a, beta_, c, ldc, 1, 0, 0); }
+        float *a, float *b, float *beta_, float *c, unsigned ldc,
+        void *a_next, void *b_next )
+{ bli_sgemm_armv8a_asm_8x12(k, alpha_, b, a, beta_, c, ldc, 1, a_next, b_next); }
 
 
 /*
    o 4x4 Single precision micro-kernel fully functional.
    o Runnable on ARMv8, compiled with aarch64 GCC.
    o Use it together with the armv8 BLIS configuration.
-   o Tested on Juno board. Around 7.3 GFLOPS @ 1.1 GHz. 
+   o Tested on Juno board. Around 7.3 GFLOPS @ 1.1 GHz.
 
    December 2014.
- 
+
  * UPDATE NOVEMBER 2015
  * Micro-kernel changed to 8x12
  * Tested on Juno Board. Around  8.1 GFLOPS, 1 x A57 core  @ 1.1 GHz.
  * Tested on Juno Board. Around 15.9 GFLOPS, 2 x A57 cores @ 1.1 GHz.
- * Tested on Juno board. Around  3.1 GFLOPS, 1 x A53 core  @ 850 MHz. 
+ * Tested on Juno board. Around  3.1 GFLOPS, 1 x A53 core  @ 850 MHz.
  * Tested on Juno board. Around 12   GFLOPS, 4 x A53 cores @ 850 MHz.
 */
 void bli_sgemm_armv8a_asm_8x12
@@ -118,11 +122,11 @@ void bli_sgemm_armv8a_asm_8x12
 	uint64_t cs_c   = cs_c0;
 
 
-__asm__ volatile 
+__asm__ volatile
 (
 "                                            \n\t"
 "                                            \n\t"
-" ldr x0,%[aaddr]                            \n\t" // Load address of A. 
+" ldr x0,%[aaddr]                            \n\t" // Load address of A.
 " ldr x1,%[baddr]                            \n\t" // Load address of B.
 " ldr x2,%[caddr]                            \n\t" // Load address of C.
 "                                            \n\t"
@@ -131,13 +135,13 @@ __asm__ volatile
 "                                            \n\t"
 " ldr x5,%[k_iter]                           \n\t" // Number of unrolled iterations (k_iter).
 " ldr x6,%[k_left]                           \n\t" // Number of remaining iterations (k_left).
-"                                            \n\t" 
-" ldr x7,%[alpha]                            \n\t" // Alpha address.      
-" ldr x8,%[beta]                             \n\t" // Beta address.     
-"                                            \n\t" 
+"                                            \n\t"
+" ldr x7,%[alpha]                            \n\t" // Alpha address.
+" ldr x8,%[beta]                             \n\t" // Beta address.
+"                                            \n\t"
 " ldr x9,%[cs_c]                             \n\t" // Load cs_c.
 " lsl x10,x9,#2                              \n\t" // cs_c * sizeof(float) -- AUX.
-"                                            \n\t" 
+"                                            \n\t"
 " ldr x13,%[rs_c]                            \n\t" // Load rs_c.
 " lsl x14,x13,#2                             \n\t" // rs_c * sizeof(float).
 "                                            \n\t"
@@ -174,13 +178,13 @@ __asm__ volatile
 " prfm pldl1keep,[x26]                       \n\t" // Prefetch c.
 "                                            \n\t"
 " dup  v8.4s, wzr                            \n\t" // Vector for accummulating column 0
-" prfm    PLDL1KEEP, [x1, #192]              \n\t" 
+" prfm    PLDL1KEEP, [x1, #192]              \n\t"
 " dup  v9.4s, wzr                            \n\t" // Vector for accummulating column 0
 " prfm    PLDL1KEEP, [x1, #256]              \n\t"
 " dup  v10.4s, wzr                           \n\t" // Vector for accummulating column 1
 " prfm    PLDL1KEEP, [x1, #320]              \n\t"
 " dup  v11.4s, wzr                           \n\t" // Vector for accummulating column 1
-" dup  v12.4s, wzr                           \n\t" // Vector for accummulating column 2 
+" dup  v12.4s, wzr                           \n\t" // Vector for accummulating column 2
 " dup  v13.4s, wzr                           \n\t" // Vector for accummulating column 2
 "                                            \n\t"
 " dup  v14.4s, wzr                           \n\t" // Vector for accummulating column 3
@@ -189,21 +193,21 @@ __asm__ volatile
 " prfm    PLDL1KEEP, [x0, #192]              \n\t"
 " dup  v16.4s, wzr                           \n\t" // Vector for accummulating column 4
 " dup  v17.4s, wzr                           \n\t" // Vector for accummulating column 4
-" dup  v18.4s, wzr                           \n\t" // Vector for accummulating column 5 
+" dup  v18.4s, wzr                           \n\t" // Vector for accummulating column 5
 " dup  v19.4s, wzr                           \n\t" // Vector for accummulating column 5
 "                                            \n\t"
-" dup  v20.4s, wzr                           \n\t" // Vector for accummulating column 6 
+" dup  v20.4s, wzr                           \n\t" // Vector for accummulating column 6
 " dup  v21.4s, wzr                           \n\t" // Vector for accummulating column 6
 " dup  v22.4s, wzr                           \n\t" // Vector for accummulating column 7
 " dup  v23.4s, wzr                           \n\t" // Vector for accummulating column 7
-" dup  v24.4s, wzr                           \n\t" // Vector for accummulating column 8 
+" dup  v24.4s, wzr                           \n\t" // Vector for accummulating column 8
 " dup  v25.4s, wzr                           \n\t" // Vector for accummulating column 8
 "                                            \n\t"
-" dup  v26.4s, wzr                           \n\t" // Vector for accummulating column 9 
+" dup  v26.4s, wzr                           \n\t" // Vector for accummulating column 9
 " dup  v27.4s, wzr                           \n\t" // Vector for accummulating column 9
 " dup  v28.4s, wzr                           \n\t" // Vector for accummulating column 10
 " dup  v29.4s, wzr                           \n\t" // Vector for accummulating column 10
-" dup  v30.4s, wzr                           \n\t" // Vector for accummulating column 11 
+" dup  v30.4s, wzr                           \n\t" // Vector for accummulating column 11
 " dup  v31.4s, wzr                           \n\t" // Vector for accummulating column 11
 "                                            \n\t"
 " cmp x5,#0                                  \n\t" // If k_iter == 0, jump to k_left.
@@ -212,7 +216,7 @@ __asm__ volatile
 "add x0, x0, #32                             \n\t" //update address of A
 "add x1, x1, #48                             \n\t" //update address of B
 "                                            \n\t"
-" cmp x5,1                                   \n\t" // If there is just one k_iter, jump to that one. 
+" cmp x5,1                                   \n\t" // If there is just one k_iter, jump to that one.
 " beq .SLASTITER                             \n\t" // (as loop is do-while-like).
 "                                            \n\t"
 " .SLOOPKITER:                               \n\t" // Body of the k_iter loop.
@@ -230,12 +234,12 @@ __asm__ volatile
 " ldr q2, [x1]                               \n\t"
 "                                            \n\t"
 " fmla v16.4s,v0.4s,v3.s[0]                  \n\t" // Accummulate.
-" prfm    PLDL1KEEP, [x1, #336]              \n\t" 
+" prfm    PLDL1KEEP, [x1, #336]              \n\t"
 " fmla v17.4s,v1.4s,v3.s[0]                  \n\t" // Accummulate.
-" prfm    PLDL1KEEP, [x1, #400]              \n\t" 
+" prfm    PLDL1KEEP, [x1, #400]              \n\t"
 " fmla v18.4s,v0.4s,v3.s[1]                  \n\t" // Accummulate.
 " fmla v19.4s,v1.4s,v3.s[1]                  \n\t" // Accummulate.
-" prfm    PLDL1KEEP, [x1, #464]              \n\t" 
+" prfm    PLDL1KEEP, [x1, #464]              \n\t"
 " fmla v20.4s,v0.4s,v3.s[2]                  \n\t" // Accummulate.
 " fmla v21.4s,v1.4s,v3.s[2]                  \n\t" // Accummulate.
 " fmla v22.4s,v0.4s,v3.s[3]                  \n\t" // Accummulate.
@@ -362,9 +366,9 @@ __asm__ volatile
 " sub x5,x5,1                                \n\t" // i-=1.
 " cmp x5,1                                   \n\t" // Iterate again if we are not in k_iter == 1.
 " bne .SLOOPKITER                            \n\t"
-"                                            \n\t" 
+"                                            \n\t"
 " .SLASTITER:                                \n\t" // Last iteration of k_iter loop.
-"                                            \n\t" 
+"                                            \n\t"
 "                                            \n\t"
 " ldr q5, [x0]                               \n\t"
 " fmla v8.4s,v0.4s,v2.s[0]                   \n\t" // Accummulate.
@@ -499,7 +503,7 @@ __asm__ volatile
 " add x0, x0, #96                            \n\t"
 "                                            \n\t" //End It 4
 "                                            \n\t"
-" .SCONSIDERKLEFT:                           \n\t" 
+" .SCONSIDERKLEFT:                           \n\t"
 " cmp x6,0                                   \n\t" // If k_left == 0, we are done.
 " beq .SPOSTACCUM                            \n\t" // else, we enter the k_left loop.
 "                                            \n\t"
@@ -1115,7 +1119,7 @@ __asm__ volatile
  "x5", "x6", "x7", "x8",
  "x9", "x10","x11","x12",
  "x13","x14","x15",
- "x16","x17","x18","x19",       
+ "x16","x17","x18","x19",
  "x20","x21","x22","x23",
  "x24","x25","x26","x27",
  "v0", "v1", "v2", "v3",
@@ -1135,19 +1139,19 @@ __asm__ volatile
    o 4x4 Double precision micro-kernel NOT fully functional yet.
    o Runnable on ARMv8, compiled with aarch64 GCC.
    o Use it together with the armv8 BLIS configuration.
-   o Tested on Juno board. Around 3 GFLOPS @ 1.1 GHz. 
+   o Tested on Juno board. Around 3 GFLOPS @ 1.1 GHz.
 
    December 2014.
-  
+
  * UPDATE OCTOBER 2015: Now is fully functional.
  * Tested on Juno board. Around 5.6 GFLOPS, 2 A57 cores @ 1.1 GHz.
  * Tested on Juno board. Around 4 GFLOPS, 4 A53 cores @ 850 MHz.
- 
+
  * UPDATE NOVEMBER 2015
  * Micro-kernel changed to 6x8
  * Tested on Juno Board. Around 4   GFLOPS, 1 x A57 core  @ 1.1 GHz.
  * Tested on Juno Board. Around 7.6 GFLOPS, 2 x A57 cores @ 1.1 GHz.
- * Tested on Juno board. Around 1.5 GFLOPS, 1 x A53 core  @ 850 MHz. 
+ * Tested on Juno board. Around 1.5 GFLOPS, 1 x A53 core  @ 850 MHz.
  * Tested on Juno board. Around 5.5 GFLOPS, 4 x A53 cores @ 850 MHz.
 */
 void bli_dgemm_armv8a_asm_6x8
@@ -1174,8 +1178,8 @@ void bli_dgemm_armv8a_asm_6x8
 
 __asm__ volatile
 (
-"                                            \n\t" 
-" ldr x0,%[aaddr]                            \n\t" // Load address of A 
+"                                            \n\t"
+" ldr x0,%[aaddr]                            \n\t" // Load address of A
 " ldr x1,%[baddr]                            \n\t" // Load address of B
 " ldr x2,%[caddr]                            \n\t" // Load address of C
 "                                            \n\t"
@@ -1184,15 +1188,15 @@ __asm__ volatile
 "                                            \n\t"
 " ldr x5,%[k_iter]                           \n\t" // Init guard (k_iter)
 " ldr x6,%[k_left]                           \n\t" // Init guard (k_iter)
-"                                            \n\t" 
-" ldr x7,%[alpha]                            \n\t" // Alpha address      
-" ldr x8,%[beta]                             \n\t" // Beta address      
-"                                            \n\t" 
+"                                            \n\t"
+" ldr x7,%[alpha]                            \n\t" // Alpha address
+" ldr x8,%[beta]                             \n\t" // Beta address
+"                                            \n\t"
 " ldr x9,%[cs_c]                             \n\t" // Load cs_c
 " lsl x10,x9,#3                              \n\t" // cs_c * sizeof(double)
 "                                            \n\t"
 " ldr x13,%[rs_c]                            \n\t" // Load rs_c.
-" lsl x14,x13,#3                             \n\t" // rs_c * sizeof(double). 
+" lsl x14,x13,#3                             \n\t" // rs_c * sizeof(double).
 "                                            \n\t"
 " add x20,x2,x10                             \n\t" //Load address Column 1 of C
 " add x21,x20,x10                            \n\t" //Load address Column 2 of C
@@ -1221,14 +1225,14 @@ __asm__ volatile
 " ldr q6, [x1, #48]                          \n\t"
 "                                            \n\t"
 " dup  v8.2d, xzr                            \n\t" // Vector for accummulating column 0
-" prfm    PLDL1KEEP, [x1, #256]              \n\t" 
+" prfm    PLDL1KEEP, [x1, #256]              \n\t"
 " dup  v9.2d, xzr                            \n\t" // Vector for accummulating column 0
 " prfm    PLDL1KEEP, [x1, #320]              \n\t"
 " dup  v10.2d, xzr                           \n\t" // Vector for accummulating column 0
 " prfm    PLDL1KEEP, [x1, #384]              \n\t"
 " dup  v11.2d, xzr                           \n\t" // Vector for accummulating column 1
 " prfm    PLDL1KEEP, [x1, #448]              \n\t"
-" dup  v12.2d, xzr                           \n\t" // Vector for accummulating column 1 
+" dup  v12.2d, xzr                           \n\t" // Vector for accummulating column 1
 " dup  v13.2d, xzr                           \n\t" // Vector for accummulating column 1
 "                                            \n\t"
 " dup  v14.2d, xzr                           \n\t" // Vector for accummulating column 2
@@ -1238,21 +1242,21 @@ __asm__ volatile
 " dup  v16.2d, xzr                           \n\t" // Vector for accummulating column 2
 " prfm    PLDL1KEEP, [x0, #320]              \n\t"
 " dup  v17.2d, xzr                           \n\t" // Vector for accummulating column 3
-" dup  v18.2d, xzr                           \n\t" // Vector for accummulating column 3 
+" dup  v18.2d, xzr                           \n\t" // Vector for accummulating column 3
 " dup  v19.2d, xzr                           \n\t" // Vector for accummulating column 3
 "                                            \n\t"
-" dup  v20.2d, xzr                           \n\t" // Vector for accummulating column 4 
+" dup  v20.2d, xzr                           \n\t" // Vector for accummulating column 4
 " dup  v21.2d, xzr                           \n\t" // Vector for accummulating column 4
 " dup  v22.2d, xzr                           \n\t" // Vector for accummulating column 4
 " dup  v23.2d, xzr                           \n\t" // Vector for accummulating column 5
-" dup  v24.2d, xzr                           \n\t" // Vector for accummulating column 5 
+" dup  v24.2d, xzr                           \n\t" // Vector for accummulating column 5
 " dup  v25.2d, xzr                           \n\t" // Vector for accummulating column 5
 "                                            \n\t"
-" dup  v26.2d, xzr                           \n\t" // Vector for accummulating column 6 
+" dup  v26.2d, xzr                           \n\t" // Vector for accummulating column 6
 " dup  v27.2d, xzr                           \n\t" // Vector for accummulating column 6
 " dup  v28.2d, xzr                           \n\t" // Vector for accummulating column 6
 " dup  v29.2d, xzr                           \n\t" // Vector for accummulating column 7
-" dup  v30.2d, xzr                           \n\t" // Vector for accummulating column 7 
+" dup  v30.2d, xzr                           \n\t" // Vector for accummulating column 7
 " dup  v31.2d, xzr                           \n\t" // Vector for accummulating column 7
 "                                            \n\t"
 "                                            \n\t"
@@ -1262,7 +1266,7 @@ __asm__ volatile
 "add x0, x0, #48                             \n\t" //update address of A
 "add x1, x1, #64                             \n\t" //update address of B
 "                                            \n\t"
-" cmp x5,1                                   \n\t" // If there is just one k_iter, jump to that one. 
+" cmp x5,1                                   \n\t" // If there is just one k_iter, jump to that one.
 " beq .DLASTITER                             \n\t" // (as loop is do-while-like).
 "                                            \n\t"
 " DLOOP:                                     \n\t" // Body
@@ -1599,7 +1603,7 @@ __asm__ volatile
 "                                            \n\t"                  //End it 4
 " add x0, x0, #144                           \n\t"
 "                                            \n\t"
-" .DCONSIDERKLEFT:                           \n\t" 
+" .DCONSIDERKLEFT:                           \n\t"
 " cmp x6,0                                   \n\t" // If k_left == 0, we are done.
 " beq .DPOSTACCUM                            \n\t" // else, we enter the k_left loop.
 "                                            \n\t"
@@ -2109,7 +2113,7 @@ __asm__ volatile
  "x7","x8","x9",
  "x10","x11","x12","x13","x14","x16","x17",
  "x20","x21","x22","x23","x24","x25","x26",
- "x27",       
+ "x27",
  "v0","v1","v2",
  "v3","v4","v5",
  "v6","v7","v8",

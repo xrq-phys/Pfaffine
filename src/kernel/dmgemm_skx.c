@@ -49,10 +49,12 @@ void bli_dgemm_skx_asm_16x14(
 
 // Wrapper for Pfaffine.
 void udgemmn( unsigned k, double *alpha_,
-        double *a, double *b, double *beta_, double *c, unsigned ldc )
+        double *a, double *b, double *beta_, double *c, unsigned ldc,
+        void *a_next, void *b_next )
 { bli_dgemm_skx_asm_16x14(k, alpha_, b, a, beta_, c, ldc, 1, 0, 0); }
 void udgemmt( unsigned k, double *alpha_,
-        double *a, double *b, double *beta_, double *c, unsigned ldc )
+        double *a, double *b, double *beta_, double *c, unsigned ldc,
+        void *a_next, void *b_next )
 { bli_dgemm_skx_asm_16x14(k, alpha_, a, b, beta_, c, 1, ldc, 0, 0); }
 
 #define A_L1_PREFETCH_DIST 4 // in units of k iterations
