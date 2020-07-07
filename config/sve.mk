@@ -3,7 +3,7 @@
 # Please use this kernel for the Post-K (Fugaku) supercomputer.
 
 # CC +=
-CFLAGS += -D_Asm_Allow_Convension -march=armv8-a+sve
+CFLAGS += -march=armv8-a+sve
 
 # CXX +=
 CXXFLAGS += -D_SVE
