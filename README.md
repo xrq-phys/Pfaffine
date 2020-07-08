@@ -5,7 +5,18 @@
 
 ### Requirements
 
-- Working C++ 11 compiler;
+#### C++ Compiler
+- Compiler supports C++ 11;
+- Compiler recognizes `#pragma once`:
+- [x] Almost all compilers has this support;
+- GNU style inline assembly suport if custom kernel is to be used.
+- [x] GCC 4.8 or later;
+- [x] Clang and other LLVM-based compilers (e.g. ARM Allinea);
+- [x] Intel Compilers with GCC/Clang ABI;
+- [x] Fujitsu Compilers on Fugaku;
+- [ ] Microsoft Visual C++.
+
+#### Library and Others
 - BLAS library;
 - (Optional 1) Parallel BLAS library which is thread-safe under OpenMP;
 - (Optional 2) OpenMP 3.0+ support of your C++ compiler.
@@ -57,26 +68,26 @@ In all cases above, `A` will be replaced by its full inverse if `inv=1`, otherwi
 
 ## Roadmaps (WIP List)
 
-- ~~**Important**: Change Fugaku's core to inline assembly & add clobber declaration~~;
-- Mix AVX512 and AVX2 kernels on Intel SkylakeX processors;
-- ~~Return signed Pfaffian instead of real-part-positive component~~;
-- Due to the new inversion method, some scratchpads in skpfa<T> is no longer used. Interface needs a clean-up;
-- Implement a Pfaffian-inverse object that supports in-place *n*-term fast update;
-- ~~Migrate `gemm` kernels from Pfapack and BLIS;~~
-- `needs improvement` ~~SVE kernel for Fugaku~~;
-- `needs improvement` ~~Default memory allocation~~;
-- ~~Adjustable `k`-blocking~~;
-- ~~Adjustable & automatic superblocking~~;
-- Automatically determine panel size `npanel`;
-- ~~Add a low-level **C99**/Fortran interface~~;
-- ~~Add a compatibility interface consistent to [Pfapack](https://michaelwimmer.org/downloads.html)~~;
-- ~~Provide document here for all Pfaffine-defined interfaces;~~
+- [x] **Important**: Change Fugaku's core to inline assembly & add clobber declaration;
+- [ ] Mix AVX512 and AVX2 kernels on Intel SkylakeX processors;
+- [x] Return signed Pfaffian instead of real-part-positive component;
+- [x] Due to the new inversion method, some scratchpads in skpfa<T> is no longer used. Interface needs a clean-up;
+- [ ] Implement a Pfaffian-inverse object that supports in-place *n*-term fast update;
+- [x] Migrate `gemm` kernels from Pfapack and BLIS;
+- [x] `needs improvement` SVE kernel for Fugaku;
+- [x] `needs improvement` Default memory allocation;
+- [x] Adjustable `k`-blocking;
+- [x] Adjustable & automatic superblocking;
+- [ ] Automatically determine panel size `npanel`;
+- [x] Add a low-level **C99**/Fortran interface;
+- [x] Add a compatibility interface consistent to [Pfapack](https://michaelwimmer.org/downloads.html);
+- [x] Provide document here for all Pfaffine-defined interfaces;
 
 ### WIPs on Fugaku's SVE-512 and Other SVE Kernels
 
-- ~~Complex kernels~~;
-- ~~For real double, 14x16 (T-shaped) kernels in order that 16x14 can be fully utilized (currently 14x14 used)~~.
-- ~~Frame driver should provide support for boundary kernels.~~
+- [x] Complex kernels;
+- [x] For real double, 14x16 (T-shaped) kernels instead of isotropic size (14x14).
+- [x] Frame driver should provide support for boundary kernels.
 - Optimize T-shapes other than SVE-512 for double-complex kernels.
 
 ## Licensing
