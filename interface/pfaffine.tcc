@@ -14,13 +14,12 @@ T skpfa(char uplo, unsigned n, T *A, unsigned ldA, unsigned inv)
     unsigned npanel = 8;
 
     T Sp1[n*npanel];
-    T Sp2[n*npanel];
     if (inv) {
         T Sp3[n*n];
-        T Sp4[n*n];
-        T Sp5[n*npanel];
-        return skpfa<T>(uplo, n, A, ldA, 1, Sp1, Sp2, Sp3, Sp4, Sp5, npanel);
-    } else
+        return skpfa<T>(uplo, n, A, ldA, 1, Sp1, 0, Sp3, 0, 0, npanel);
+    } else {
+        T Sp2[n*npanel];
         return skpfa<T>(uplo, n, A, ldA, 0, Sp1, Sp2, 0, 0, 0, npanel);
+    }
 }
 
