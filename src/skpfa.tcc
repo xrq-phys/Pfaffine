@@ -16,40 +16,35 @@
 #include "kersel.hh"
 #include "thread.h"
 
+#include "colmaj.tcc"
 #include "gcd.tcc"
 #include "findmax.tcc"
 #include "skslc.tcc"
 #include "sktdi.tcc"
 
-// Macros for first-index-runs-fastest.
-// TODO: Switch to colmaj.tcc.
-#define   A(i,j)   A[ (i) + (j)*(ldA) ]
-#define Sp1(i,j) Sp1[ (i) + (j)*(n)   ]
-#define Sp2(i,j) Sp2[ (i) + (j)*(n)   ]
-#define Sp3(i,j) Sp3[ (i) + (j)*(n)   ]
-#define Sp4(i,j) Sp4[ (i) + (j)*(n)   ]
-#define Sp5(i,j) Sp5[ (i) + (j)*(n)   ]
-#define exG(i,j) exG[ (i) + (j)*(n)   ]
-
 /**
  * \brief Calculate Pfaffian and optionally inverse of antisymmetric matrix A.
  *
  * \param uplo Only 'U' allowed.
- * \param n   Dimension of A.
- * \param A   Array (reference i.e. address of) A.
- * \param ldA Leading dimension size of A (row-skip).
- * \param inv Whether to compute inverse.
- * \param Sp1 An n*npanel scratchpad array.
- * \param Sp2 An n*npanel scratchpad array, used if inv=false (Sp3 would be used otherwise).
- * \param Sp3 An n*n scratchpad for computing inverse, used only if inv=true.
+ * \param n    Dimension of A.
+ * \param _A   Array (reference i.e. address of) A.
+ * \param ldA  Leading dimension size of A (row-skip).
+ * \param inv  Whether to compute inverse.
+ * \param _Sp1 An n*npanel scratchpad array.
+ * \param _Sp2 An n*npanel scratchpad array, used if inv=false (Sp3 would be used otherwise).
+ * \param _Sp3 An n*n scratchpad for computing inverse, used only if inv=true.
  * \param Sp4 v0.2 compatibility. Not used.
  * \param Sp5 v0.2 compatibility. Not used.
  */
 template <typename T>
 T skpfa(char uplo, unsigned n,
-        T *A, unsigned ldA, unsigned inv,
-        T *Sp1, T *Sp2, T *Sp3, T *Sp4, T *Sp5, unsigned npanel)
+        T *_A, unsigned ldA, unsigned inv,
+        T *_Sp1, T *_Sp2, T *_Sp3, T *Sp4, T *Sp5, unsigned npanel)
 {
+    colmaj<T> A(_A, ldA);
+    colmaj<T> Sp1(_Sp1, n);
+    colmaj<T> Sp2(_Sp2, n);
+    colmaj<T> Sp3(_Sp3, n);
     // Allocates packing space.
     // TODO: Try avoiding in-place allocation.
     // TODO: Or allowing a global in-place allocation.
@@ -105,8 +100,8 @@ T skpfa(char uplo, unsigned n,
     }
     // Updating-vector's scratchpad.
     // Default value (1-line buffer) used only when _PR_Simple is enabled.
-    T *vA = Sp1;
-    T *vG = Sp2; // alpha_k: Gaussian elimination vector.
+    T *vA = &Sp1(0, 0);
+    T *vG = &Sp2(0, 0); // alpha_k: Gaussian elimination vector.
     T *vM = nullptr, *kM = nullptr;
 
 #ifdef _PR_Simple
@@ -186,12 +181,8 @@ T skpfa(char uplo, unsigned n,
 #else
     for (unsigned ist = 0; ist < n-2; ist+=npanel) {
         unsigned lpanel = (ist+npanel >= n-2) ? n-2 - ist : npanel;
-        T *exG = nullptr;
-        if (!inv)
-            exG = Sp2;
-        else
-            // Inversion requires saving transformations.
-            exG = &Sp3(0, ist);
+        // Inversion requires saving transformations.
+        colmaj<T> exG(!inv ? _Sp2 : &Sp3(0, ist), n);
 
         for (unsigned i = 0; i < lpanel; ++i) {
             unsigned icur = ist + i;
@@ -295,7 +286,7 @@ T skpfa(char uplo, unsigned n,
         }
 
         // Apply transformation.
-        // skr2k<T>(uplo, 'N', n, lpanel, 1.0, exG, n, Sp1, n, 1.0, A, ldA, SpBla);
+        // skr2k<T>(uplo, 'N', n, lpanel, 1.0, exG, n, &Sp1(0, 0), n, 1.0, A, ldA, SpBla);
         // Skip already cancelled by previous steps.
         // skr2k<T>(uplo, 'N', n-ist, lpanel, 1.0,
         //          &exG(ist, 0), n, &Sp1(ist, 0), n, 1.0, &A(ist, ist), ldA, SpBla);
@@ -325,7 +316,7 @@ T skpfa(char uplo, unsigned n,
     for (unsigned i = 0; i < n-1; i+=2)
         PfA *= A(i, i+1);
     if (inv) {
-        sktdi<T>(n, A, ldA);
+        sktdi<T>(n, &A(0, 0), ldA);
 
 #ifdef _PI_Simple
         for (int istep = n-3; istep >= 0; --istep) {
@@ -349,9 +340,9 @@ T skpfa(char uplo, unsigned n,
 
             // Compute inverse update.
             // gemm('N', 'N', n, lpanel, n, 1.0,
-            //      &A(0, 0), ldA, &Sp3(0, ist), n, 0.0, Sp1, n);
+            //      &A(0, 0), ldA, &Sp3(0, ist), n, 0.0, &Sp1(0, 0), n);
             gemm('N', 'N', n, lpanel, n-ist-2, 1.0,
-                 &A(0, ist+2), ldA, &Sp3(ist+2, ist), n, 0.0, Sp1, n);
+                 &A(0, ist+2), ldA, &Sp3(ist+2, ist), n, 0.0, &Sp1(0, 0), n);
             for (int i = lpanel-1; i >= 0; --i) {
                 // TODO: Use ger instead of axpy.
                 for (int j = 0; j < i; ++j)

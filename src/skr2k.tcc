@@ -14,15 +14,8 @@
 #include "kersel_ext.hh"
 #include "blalink.hh"
 #include "thread.h"
+#include "colmaj.tcc"
 #include "floorsqrt.tcc"
-
-// Macros for first-index-runs-fastest.
-// TODO: Switch to colmaj.tcc.
-#define    A(i,j)    A[ (i) + (j)*(ldA) ]
-#define    B(i,j)    B[ (i) + (j)*(ldB) ]
-#define    C(i,j)    C[ (i) + (j)*(ldC) ]
-#define pakA(i,j) pakA[ (i) + (j)*(mr) ]
-#define pakB(i,j) pakB[ (i) + (j)*(nr) ]
 
 // For microkernels.
 #include "opack.tcc"
@@ -30,9 +23,18 @@
 
 // TODO: Rename and move this function to oskr2k.tcc.
 template<typename T>
-void uskr2k(unsigned n, unsigned k, T alpha, T *A, unsigned ldA, T *B, unsigned ldB, T beta, T *C, unsigned ldC,
-            unsigned mr, unsigned nr, T *buffer)
+void uskr2k(unsigned n, unsigned k,
+            T alpha,
+            T *_A, unsigned ldA,
+            T *_B, unsigned ldB,
+            T beta,
+            T *_C, unsigned ldC,
+            unsigned mr, unsigned nr,
+            T *buffer)
 {
+    colmaj<T> A(_A, ldA);
+    colmaj<T> B(_B, ldB);
+    colmaj<T> C(_C, ldC);
     // Determine microblock size.
     // Sorry for the confusion, but mbkl here shares meaning with nblk, not representing block size.
     unsigned mblk = n / mr;
@@ -74,8 +76,8 @@ void uskr2k(unsigned n, unsigned k, T alpha, T *A, unsigned ldA, T *B, unsigned 
     unsigned pakBsz = nr * k;
     unsigned pakApn = mr * tracblk;
     unsigned pakBpn = nr * tracblk;
-    opack<T>(n, k, pakAsz, A, ldA, pakAbase, mr);
-    opack<T>(n, k, pakBsz, B, ldB, pakBbase, nr);
+    opack<T>(n, k, pakAsz, &A(), ldA, pakAbase, mr);
+    opack<T>(n, k, pakBsz, &B(), ldB, pakBbase, nr);
 
     for (unsigned uj = 0; uj < nblk; ++uj) {
         unsigned lenj = (uj+1==nblk) ? nblk_ : nr;
@@ -83,13 +85,13 @@ void uskr2k(unsigned n, unsigned k, T alpha, T *A, unsigned ldA, T *B, unsigned 
             unsigned lenk = (ul+1==kblk) ? kblk_ : tracblk;
             T beta_ = (ul==1) ? beta : one;
             // Select packed B panels.
-            T *pakB = pakBbase + pakBsz * uj  // <packed 1st indices.
-                               + pakBpn * ul; // <packed 2nd indices.
+            colmaj<T> pakB(pakBbase + pakBsz * uj       // <packed 1st indices.
+                                    + pakBpn * ul, nr); // <packed 2nd indices.
             for (unsigned ui = 0; ui < mblk; ++ui) {
                 unsigned leni = (ui+1==mblk) ? mblk_ : mr;
                 // Select packed A panels.
-                T *pakA = pakAbase + pakAsz * ui  // <packed 1st indices.
-                                   + pakApn * ul; // <packed 2nd indices.
+                colmaj<T> pakA(pakAbase + pakAsz * ui       // <packed 1st indices.
+                                        + pakApn * ul, mr); // <packed 2nd indices.
                 // Starting indices.
                 unsigned ist = ui*mr;
                 unsigned jst = uj*nr;
@@ -97,7 +99,7 @@ void uskr2k(unsigned n, unsigned k, T alpha, T *A, unsigned ldA, T *B, unsigned 
                 T *pakAnext = nullptr,
                   *pakBnext = nullptr;
                 if (ui+1 != mblk) {
-                    pakBnext = pakB;
+                    pakBnext = &pakB();
                     pakAnext = pakAbase + pakAsz *(ui+1)
                                         + pakApn * ul;
                 } else if (ul+1 != kblk) {
@@ -111,9 +113,9 @@ void uskr2k(unsigned n, unsigned k, T alpha, T *A, unsigned ldA, T *B, unsigned 
                 // Pick microkernel.
                 if (ist + leni <= jst)
                     if (mker_available<T>() && leni == mr && lenj == nr)
-                        ugemmn(lenk, &alpha, pakA, pakB, &beta_, &C(ist, jst), ldC, pakAnext, pakBnext);
+                        ugemmn(lenk, &alpha, &pakA(), &pakB(), &beta_, &C(ist, jst), ldC, pakAnext, pakBnext);
                     else if (extker_available<T>())
-                        ugemmext(leni, lenj, lenk, &alpha, pakA, mr, pakB, nr, &beta_, &C(ist, jst), ldC,
+                        ugemmext(leni, lenj, lenk, &alpha, &pakA(), mr, &pakB(), nr, &beta_, &C(ist, jst), ldC,
                                  pakAnext, pakBnext);
                     else
                         // Vanilla microkernel at off-diagonal.
@@ -126,9 +128,9 @@ void uskr2k(unsigned n, unsigned k, T alpha, T *A, unsigned ldA, T *B, unsigned 
                             }
                 else if (ist >= jst + lenj)
                     if (mker_available<T>() && leni == mr && lenj == nr)
-                        ugemmt(lenk, &malpha, pakB, pakA, &one, &C(jst, ist), ldC, pakAnext, pakBnext);
+                        ugemmt(lenk, &malpha, &pakB(), &pakA(), &one, &C(jst, ist), ldC, pakAnext, pakBnext);
                     else if (extker_available<T>())
-                        ugemmext(lenj, leni, lenk, &malpha, pakB, nr, pakA, mr, &one, &C(jst, ist), ldC,
+                        ugemmext(lenj, leni, lenk, &malpha, &pakB(), nr, &pakA(), mr, &one, &C(jst, ist), ldC,
                                  pakAnext, pakBnext);
                     else
                         for (unsigned i = 0; i < leni; ++i)
@@ -144,12 +146,12 @@ void uskr2k(unsigned n, unsigned k, T alpha, T *A, unsigned ldA, T *B, unsigned 
                         // Update both contributions at diagonal.
                         // NOTE: This will cause some of lower triangular part overriden.
                         //       Still, no effect on result.
-                        ugemmn(lenk, &alpha, pakA, pakB, &beta_, &C(ist, jst), ldC, pakB, pakA);
-                        ugemmt(lenk, &malpha, pakB, pakA, &one, &C(jst, ist), ldC, pakAnext, pakBnext);
+                        ugemmn(lenk, &alpha, &pakA(), &pakB(), &beta_, &C(ist, jst), ldC, &pakB(), &pakA());
+                        ugemmt(lenk, &malpha, &pakB(), &pakA(), &one, &C(jst, ist), ldC, pakAnext, pakBnext);
                     } else if (extker_available<T>()) {
-                        ugemmext(leni, lenj, lenk, &alpha, pakA, mr, pakB, nr, &beta_, &C(ist, jst), ldC,
-                                 pakB, pakA);
-                        ugemmext(lenj, leni, lenk, &malpha, pakB, nr, pakA, mr, &one, &C(jst, ist), ldC,
+                        ugemmext(leni, lenj, lenk, &alpha, &pakA(), mr, &pakB(), nr, &beta_, &C(ist, jst), ldC,
+                                 &pakB(), &pakA());
+                        ugemmext(lenj, leni, lenk, &malpha, &pakB(), nr, &pakA(), mr, &one, &C(jst, ist), ldC,
                                  pakAnext, pakBnext);
                     } else
                         if (leni == lenj && ist == jst)
@@ -187,9 +189,18 @@ void uskr2k(unsigned n, unsigned k, T alpha, T *A, unsigned ldA, T *B, unsigned 
 }
 
 template<typename T>
-void skr2k(char uplo, char trans, unsigned n, unsigned k,
-           T alpha, T *A, unsigned ldA, T *B, unsigned ldB, T beta, T *C, unsigned ldC, T *buffer)
+void skr2k(char uplo, char trans,
+           unsigned n, unsigned k,
+           T alpha,
+           T *_A, unsigned ldA,
+           T *_B, unsigned ldB,
+           T beta,
+           T *_C, unsigned ldC,
+           T *buffer)
 {
+    colmaj<T> A(_A, ldA);
+    colmaj<T> B(_B, ldB);
+    colmaj<T> C(_C, ldC);
     // Size to call directly interface GEMM.
     const unsigned mblk = extblk;
     // Size of microblocks.

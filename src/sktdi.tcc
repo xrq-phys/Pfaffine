@@ -6,13 +6,12 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
-
-// Macros for first-index-runs-fastest.
-#define A(i,j) A[ (i) + (j)*(ldA) ]
+#include "colmaj.tcc"
 
 template <typename T>
-void sktdi(unsigned n, T *A, unsigned ldA)
+void sktdi(unsigned n, T *_A, unsigned ldA)
 {
+    colmaj<T> A(_A, ldA);
     for (unsigned i = 0; i < n; ++i)
         A(i, i) = 0.0;
 

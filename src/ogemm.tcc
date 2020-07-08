@@ -5,17 +5,24 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
-// FIXME: Implicitly referencing macros in skr2k.tcc.
-// TODO: Switch to colmaj.tcc.
+#include "colmaj.tcc"
 
 /**
  * \brief Small-size 1-lv blocked GEMM program in 'N' - 'T' shape.
  */
 template<typename T>
 void ogemm(unsigned m, unsigned n, unsigned k,
-           T alpha, T *A, unsigned ldA, T *B, unsigned ldB,
-           T beta, T *C, unsigned ldC, unsigned mr, unsigned nr, T *buffer)
+           T alpha,
+           T *_A, unsigned ldA,
+           T *_B, unsigned ldB,
+           T beta,
+           T *_C, unsigned ldC,
+           unsigned mr, unsigned nr,
+           T *buffer)
 {
+    colmaj<T> A(_A, ldA);
+    colmaj<T> B(_B, ldB);
+    colmaj<T> C(_C, ldC);
     // Determine microblock size.
     // Sorry for the confusion, but mbkl here shares meaning with nblk, not representing block size.
     unsigned mblk = m / mr;
@@ -57,8 +64,8 @@ void ogemm(unsigned m, unsigned n, unsigned k,
     unsigned pakBsz = nr * k;
     unsigned pakApn = mr * tracblk;
     unsigned pakBpn = nr * tracblk;
-    opack<T>(m, k, pakAsz, A, ldA, pakAbase, mr);
-    opack<T>(n, k, pakBsz, B, ldB, pakBbase, nr);
+    opack<T>(m, k, pakAsz, &A(), ldA, pakAbase, mr);
+    opack<T>(n, k, pakBsz, &B(), ldB, pakBbase, nr);
 
     for (unsigned uj = 0; uj < nblk; ++uj) {
         unsigned lenj = (uj+1==nblk) ? nblk_ : nr;
@@ -66,13 +73,13 @@ void ogemm(unsigned m, unsigned n, unsigned k,
             unsigned lenk = (ul+1==kblk) ? kblk_ : tracblk;
             T beta_ = (ul==1) ? beta : one;
             // Selected packed B panels.
-            T *pakB = pakBbase + pakBsz * uj  // <packed 1st indices.
-                               + pakBpn * ul; // <packed 2nd indices.
+            colmaj<T> pakB(pakBbase + pakBsz * uj       // <packed 1st indices.
+                                    + pakBpn * ul, nr); // <packed 2nd indices.
             for (unsigned ui = 0; ui < mblk; ++ui) {
                 unsigned leni = (ui+1==mblk) ? mblk_ : mr;
                 // Selected packed A panels.
-                T *pakA = pakAbase + pakAsz * ui  // <packed 1st indices.
-                                   + pakApn * ul; // <packed 2nd indices.
+                colmaj<T> pakA(pakAbase + pakAsz * ui       // <packed 1st indices.
+                                        + pakApn * ul, mr); // <packed 2nd indices.
                 // Starting indices.
                 unsigned ist = ui*mr;
                 unsigned jst = uj*nr;
@@ -80,7 +87,7 @@ void ogemm(unsigned m, unsigned n, unsigned k,
                 T *pakAnext,
                   *pakBnext;
                 if (ui+1 != mblk) {
-                    pakBnext = pakB;
+                    pakBnext = &pakB();
                     pakAnext = pakAbase + pakAsz *(ui+1)
                                         + pakApn * ul;
                 } else if (ul+1 != kblk) {
@@ -92,9 +99,9 @@ void ogemm(unsigned m, unsigned n, unsigned k,
                     pakAnext = pakAbase;
                 }
                 if (mker_available<T>() && leni == mr && lenj == nr)
-                    ugemmn(lenk, &alpha, pakA, pakB, &beta_, &C(ist, jst), ldC, pakAnext, pakBnext);
+                    ugemmn(lenk, &alpha, &pakA(), &pakB(), &beta_, &C(ist, jst), ldC, pakAnext, pakBnext);
                 else if (extker_available<T>())
-                    ugemmext(leni, lenj, lenk, &alpha, pakA, mr, pakB, nr, &beta_, &C(ist, jst), ldC,
+                    ugemmext(leni, lenj, lenk, &alpha, &pakA(), mr, &pakB(), nr, &beta_, &C(ist, jst), ldC,
                              pakAnext, pakBnext);
                 else
                     // Vanilla microkernel at off-diagonal.
