@@ -258,15 +258,44 @@ void skr2k(char uplo, char trans,
                 unsigned mi_n, mj_n;
                 glotr2ij(mij + mp_stride, mi_n, mj_n);
                 // Prefetch A & B.
-                for (unsigned l = 0; l < 2; ++l) {
-                    __builtin_prefetch(&A(mi_n*mblk, l));
-                    __builtin_prefetch(&B(mi_n*mblk, l));
-                }
+#if defined(_Neon) || defined(_SVE)
+                void *nextAiSq = &A(mi_n*mblk, 0);
+                void *nextBiSq = &B(mi_n*mblk, 0);
+                void *nextAjSq = &A(mj_n*mblk, 0);
+                void *nextBjSq = &B(mj_n*mblk, 0);
+                __asm__ volatile (
+                    " ldr  x0, %[nextAiSq] \r\n" \
+                    " ldr  x1, %[nextBiSq] \r\n" \
+                    " prfm PLDL2STRM, [x0] \r\n" \
+                    " prfm PLDL2STRM, [x1] \r\n"
+                    :
+                    : [nextAiSq] "m" (nextAiSq), \
+                      [nextBiSq] "m" (nextBiSq)
+                    : "x0", "x1"
+                );
                 if (mj_n != mj)
-                    for (unsigned l = 0; l < 2; ++l) {
-                        __builtin_prefetch(&A(mj_n*mblk, l));
-                        __builtin_prefetch(&B(mj_n*mblk, l));
-                    }
+                    __asm__ volatile (
+                        " ldr  x0, %[nextAiSq] \r\n" \
+                        " ldr  x1, %[nextBiSq] \r\n" \
+                        " prfm PLDL2STRM, [x0] \r\n" \
+                        " prfm PLDL2STRM, [x1] \r\n"
+                        :
+                        : [nextAiSq] "m" (nextAiSq), \
+                          [nextBiSq] "m" (nextBiSq)
+                        : "x0", "x1"
+                    );
+// #elif defined(_Sandy) || defined(_Haswell) || defined(_SkylakeX)
+// TODO: Add this Intel-specific prefetching.
+#elif defined(__GNUC__)
+                __builtin_prefetch(&A(mi_n*mblk, 0));
+                __builtin_prefetch(&B(mi_n*mblk, 0));
+                if (mj_n != mj) {
+                    __builtin_prefetch(&A(mj_n*mblk, 0));
+                    __builtin_prefetch(&B(mj_n*mblk, 0));
+                }
+#else
+                // ANSI C has no prefetching. Doing nothing.
+#endif
             }
             if (mi == mj) {
                 // SKR2K kernel.
