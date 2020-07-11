@@ -13,7 +13,7 @@ This branch has its background relinked against an extended version of [BLIS](ht
 - Compiler recognizes `#pragma once`;
 
 #### Library and Others
-- My [BLIS library fork](https://github.com/xrq-phys/blis) with `skr2k`;
+- My [BLIS library fork](https://github.com/xrq-phys/blis) with `skr2k`. This API-dependence is explicit;
 
 ### Build and Linking
 
