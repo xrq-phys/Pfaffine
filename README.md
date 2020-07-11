@@ -3,33 +3,23 @@
 
 *Pfaffine aims to be the caffeine that wakes your program up when you work with Geminal wavefunctions.*
 
+Pfaffine is an numerical package for fast calculation of Pfaffian.
+This branch has its background relinked against an extended version of [BLIS](https://github.com/flame/blis).
+
 ### Requirements
 
 #### C++ Compiler
 - Compiler supports C++ 11;
-- Compiler recognizes `#pragma once`:
-- [x] Almost all compilers has this support;
-- GNU style inline assembly suport if custom kernel is to be used.
-- [x] GCC 4.8 or later;
-- [x] Clang and other LLVM-based compilers (e.g. ARM Allinea);
-- [x] Intel Compilers with GCC/Clang ABI;
-- [x] Fujitsu Compilers on Fugaku;
-- [ ] Microsoft Visual C++.
+- Compiler recognizes `#pragma once`;
 
 #### Library and Others
-- BLAS library;
-- (Optional 1) Parallel BLAS library which is thread-safe under OpenMP;
-- (Optional 2) OpenMP 3.0+ support of your C++ compiler.
+- My [BLIS library fork](https://github.com/xrq-phys/blis) with `skr2k`;
 
 ### Build and Linking
 
 Simple `makefile` is provided. One can copy the example `make.darwin` to `make.inc` and modify accordingly. `make install` builds and installs an instantiated library together with several templated headers into `{Repository root}/dest`.
 
 Including directly the `.tcc` files is another way and it's more extensive in some sense.
-
-### Build with OpenMP Threading Support
-
-If one's computing environment satisfies the two optional requirements above, they might be able to build a thread-parallel version of Pfaffine library. To do this, one only needs to add OpenMP compiler options to `CXXFLAGS` in their `make.inc`. e.g. in cases of GCC or Clang, it's `-fopenmp` and in cases of Intel C++ Compiler it's `-qopenmp`.
 
 ## Usage
 
@@ -66,30 +56,6 @@ void ?skpfa(fpType *Pfa, char uplo, unsigned n, fpType *A, unsigned ldA, unsigne
 
 In all cases above, `A` will be replaced by its full inverse if `inv=1`, otherwise the upper-half of tri-diagonal form will be kept. Detailed explanation for parameters referred here is available in docstring in `src/skpfa.tcc`.
 
-## Roadmaps (WIP List)
-
-- [x] **Important**: Change Fugaku's core to inline assembly & add clobber declaration;
-- [ ] Mix AVX512 and AVX2 kernels on Intel SkylakeX processors;
-- [x] Return signed Pfaffian instead of real-part-positive component;
-- [x] Due to the new inversion method, some scratchpads in skpfa<T> is no longer used. Interface needs a clean-up;
-- [ ] Implement a Pfaffian-inverse object that supports in-place *n*-term fast update;
-- [x] Migrate `gemm` kernels from Pfapack and BLIS;
-- [x] `needs improvement` SVE kernel for Fugaku;
-- [x] `needs improvement` Default memory allocation;
-- [x] Adjustable `k`-blocking;
-- [x] Adjustable & automatic superblocking;
-- [ ] Automatically determine panel size `npanel`;
-- [x] Add a low-level **C99**/Fortran interface;
-- [x] Add a compatibility interface consistent to [Pfapack](https://michaelwimmer.org/downloads.html);
-- [x] Provide document here for all Pfaffine-defined interfaces;
-
-### WIPs on Fugaku's SVE-512 and Other SVE Kernels
-
-- [x] Complex kernels;
-- [x] For real double, 14x16 (T-shaped) kernels instead of isotropic size (14x14).
-- [x] Frame driver should provide support for boundary kernels.
-- Optimize T-shapes other than SVE-512 for double-complex kernels.
-
 ## Licensing
 
-Except for some [BSD-licensed](https://opensource.org/licenses/BSD-3-Clause) kernels from the [BLIS](https://github.com/flame/blis) project, these source code forms are provided under the [Mozilla Public License](https://www.mozilla.org/en-US/MPL). As long as one keep modifications of these specific files open, they are is allowed to use it for whatever they like *at her or his own risk*.
+Source code forms under this branch are provided under the [Mozilla Public License](https://www.mozilla.org/en-US/MPL). As long as one keep modifications of these specific files open, they are is allowed to use it for whatever they like *at her or his own risk*.
