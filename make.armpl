@@ -11,10 +11,5 @@ CXXFLAGS=-std=c++11 -O3 -mcpu=a64fx
 # one can add -fopenmp flag to enable threaded version.
 #CXXFLAGS=-std=c++11 -O3 -fopenmp
 
-# SVE, of course.
-ARCH=sve
-
-# BLAS vendor.
-# ARM vendors a high-performance math library named ARMPL.
-BLAS_LIB=-armpl=sequential
-
+# BLIS installation.
+BLIS_ROOT=$(HOME)/blis

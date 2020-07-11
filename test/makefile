@@ -1,14 +1,14 @@
 include ../make.inc
 
+CXXFLAGS += -I. -I$(BLIS_ROOT)/include -I$(BLIS_ROOT)/include/blis
+BLIS_LIB= $(BLIS_ROOT)/lib/libblis.a
 PFAFFINE_LIB= ../src/libpfaffine.a
+
 TEXT_EXE= \
 	./small_dskpfa_call.x \
 	./large_dskpfa_call.x \
 	./large_dskpfa_inv_call.x \
-	./small_zskpfa_call.x \
-	./small_dskr2k_call.x \
-	./small_zskr2k_call.x
-#	./small_dogemm_call.x
+	./small_zskpfa_call.x
 
 all: $(TEXT_EXE)
 
@@ -20,4 +20,4 @@ clean:
 .SUFFIXES: .x .cc
 
 %.x : %.cc $(PFAFFINE_LIB)
-	$(CXX) $(CXXFLAGS) $< $(PFAFFINE_LIB) $(BLAS_LIB) -o $@
+	$(CXX) $(CXXFLAGS) $< $(PFAFFINE_LIB) $(BLIS_LIB) -o $@

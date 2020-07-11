@@ -1,13 +1,11 @@
 include ../make.inc
 CONFIG= ../make.inc
 
-OBJECTS= skpfa.o skr2k.o \
+OBJECTS= skpfa.o \
 		 ../interface/pfaffine.o \
 		 ../interface/pfapack.o
-HEADERS= blalink.hh kersel.hh skpfa.hh skr2k.hh
-CXXFLAGS += -I.
-
-include ../config/$(ARCH).mk
+HEADERS= blalink.hh skpfa.hh
+CXXFLAGS += -I. -I$(BLIS_ROOT)/include -I$(BLIS_ROOT)/include/blis
 
 all: $(OBJECTS) libpfaffine.a
 
@@ -16,7 +14,6 @@ libpfaffine.a: $(OBJECTS)
 
 clean:
 	rm -f *.o
-	rm -f kernel/*.o
 	rm -f ../interface/*.o
 	rm -f libpfaffine.a
 
@@ -24,7 +21,6 @@ install: libpfaffine.a
 	mkdir -p ../dest/include
 	mkdir -p ../dest/lib
 	cp skpfa.hh ../dest/include
-	cp skr2k.hh ../dest/include
 	cp libpfaffine.a ../dest/lib
 
 .SUFFIXES: .o .cc .tcc
