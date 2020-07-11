@@ -6,15 +6,15 @@
 #include "skpfa.tcc"
 
 template float skpfa<float>
-  (char, unsigned, float *, unsigned, unsigned, 
+  (char, unsigned, float *, unsigned, unsigned,
    float *, float *, float *, float *, float *, unsigned);
 template double skpfa<double>
-  (char, unsigned, double *, unsigned, unsigned, 
+  (char, unsigned, double *, unsigned, unsigned,
    double *, double *, double *, double *, double *, unsigned);
-template scomplex skpfa<scomplex>
-  (char, unsigned, scomplex *, unsigned, unsigned,
-   scomplex *, scomplex *, scomplex *, scomplex *, scomplex *, unsigned);
-template dcomplex skpfa<dcomplex>
-  (char, unsigned, dcomplex *, unsigned, unsigned,
-   dcomplex *, dcomplex *, dcomplex *, dcomplex *, dcomplex *, unsigned);
+template ccscmplx skpfa<ccscmplx>
+  (char, unsigned, ccscmplx *, unsigned, unsigned,
+   ccscmplx *, ccscmplx *, ccscmplx *, ccscmplx *, ccscmplx *, unsigned);
+template ccdcmplx skpfa<ccdcmplx>
+  (char, unsigned, ccdcmplx *, unsigned, unsigned,
+   ccdcmplx *, ccdcmplx *, ccdcmplx *, ccdcmplx *, ccdcmplx *, unsigned);
 

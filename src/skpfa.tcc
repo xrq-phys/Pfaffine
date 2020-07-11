@@ -11,10 +11,9 @@
 #include <cstring>
 #include <cstdlib>
 #include <complex>
+
+// BLAS and SkBLAS vendor.
 #include "blalink.hh"
-#include "skr2k.hh"
-#include "kersel.hh"
-#include "thread.h"
 
 #include "colmaj.tcc"
 #include "gcd.tcc"
@@ -45,35 +44,9 @@ T skpfa(char uplo, unsigned n,
     colmaj<T> Sp1(_Sp1, n);
     colmaj<T> Sp2(_Sp2, n);
     colmaj<T> Sp3(_Sp3, n);
-    // Allocates packing space.
-    // TODO: Try avoiding in-place allocation.
-    // TODO: Or allowing a global in-place allocation.
-    unsigned mr, nr;
-    set_blk_size<T>(&mr, &nr);
-#ifndef _Manual_SqBlk
-    // Automatically determines a square block size.
-    if (n >= 2 * lcm(mr, nr) ||
-        n % lcm(mr, nr) < 16 ||
-        n - n / lcm(mr, nr) * lcm(mr, nr) < 16) {
-        unsigned sqblk_auto = lcm(mr, nr);
-        // The external block should not be too small.
-        while (sqblk_auto < 64 && sqblk_auto * 2 <= n)
-            sqblk_auto *= 2;
-        set_sqblk_size(sqblk_auto);
-    } else
-#if defined(_SkylakeX) || defined(_SVE)
-        set_sqblk_size(128);
-#else
-        set_sqblk_size(64);
-#endif
-#endif
-    unsigned pakAsz = npanel * mr;
-    unsigned pakBsz = npanel * nr;
     // Pivoting ordering.
     // TODO: Allocate iPov externally.
     unsigned *iPov = nullptr;
-    // A-packing needs full size for maximum performance.
-    T *SpBla = nullptr;
     // For sign of Pfaffian.
     unsigned cflp = 0;
 
@@ -82,16 +55,6 @@ T skpfa(char uplo, unsigned n,
     // Set initial permutation data.
     for (unsigned i = 0; i < n; ++i)
         iPov[i] = i;
-    // Use malloc() as VLAs are somehow bad as the allocation is hard to check.
-    // Final align_block * 2 is for alignment padding.
-    size_t mmicroblk = extblk / mr + ((extblk % mr) ? 1 : 0);
-    size_t nmicroblk = extblk / nr + ((extblk % nr) ? 1 : 0);
-    size_t nbitspbla = sizeof(T) * (nmicroblk * pakBsz + mmicroblk * pakAsz) + align_blk;
-    SpBla = (T *)malloc(nbitspbla * omp_get_max_threads());
-    if (SpBla == nullptr) {
-        std::cerr << "Unable to allocate memory-packing scratchpads." << std::endl;
-        std::_Exit(EXIT_FAILURE);
-    }
 
     // Error exit for not implemented.
     if (uplo != 'U' && uplo != 'u') {
@@ -133,20 +96,20 @@ T skpfa(char uplo, unsigned n,
 
                 // Unmerged G.
                 if (inv)
-                    swap(istep, &Sp3(s, 0), n, &Sp3(t, 0), n);
+                    swap<T>(istep, &Sp3(s, 0), n, &Sp3(t, 0), n);
 
                 // Swap A.
-                swap(s, &A(0, s), 1, &A(0, t), 1);
+                swap<T>(s, &A(0, s), 1, &A(0, t), 1);
                 A(s, t) *= -1.0;
                 if (t > s+1) {
-                    swap(t-s-1, &A(s+1, t), 1, &A(s, s+1), ldA);
+                    swap<T>(t-s-1, &A(s+1, t), 1, &A(s, s+1), ldA);
                     for (unsigned j = s+1; j < t; ++j) {
                         A(j, t) *= -1;
                         A(s, j) *= -1;
                     }
                 }
                 if (t+1 < n)
-                    swap(n-t-1, &A(s, t+1), ldA, &A(t, t+1), ldA);
+                    swap<T>(n-t-1, &A(s, t+1), ldA, &A(t, t+1), ldA);
 
                 // Update vectors.
                 vG[t] = vG[s];
@@ -166,7 +129,7 @@ T skpfa(char uplo, unsigned n,
 
         // Here I'm not implementing additional skr2.
         // Directly call special case of skr2k<T>.
-        skr2k<T>(uplo, 'N', n, 1, 1.0, vG, n, vA, n, 1.0, A, ldA, SpBla);
+        skr2k<T>(BLIS_UPPER, BLIS_NO_TRANSPOSE, n, 1, 1.0, vG, n, vA, n, 1.0, A, ldA);
 
 #ifdef _Pfaff_Debug
         printf("After %d changes A=\n", istep+1);
@@ -221,28 +184,28 @@ T skpfa(char uplo, unsigned n,
 
                     if (i != 0) {
                         // For unmerged updates, swap rows (col maj.).
-                        swap(i, &Sp1(s, 0), n, &Sp1(t, 0), n);
+                        swap<T>(i, &Sp1(s, 0), n, &Sp1(t, 0), n);
                         if (!inv)
                             // Swap only unmerged vG.
-                            swap(i, &exG(s, 0), n, &exG(t, 0), n);
+                            swap<T>(i, &exG(s, 0), n, &exG(t, 0), n);
                     }
                     if (inv)
                         if (icur != 0)
                             // Swap the whole recorded history.
-                            swap(icur, &Sp3(s, 0), n, &Sp3(t, 0), n);
+                            swap<T>(icur, &Sp3(s, 0), n, &Sp3(t, 0), n);
                     // Swap A.
-                    swap(s, &A(0, s), 1, &A(0, t), 1);
+                    swap<T>(s, &A(0, s), 1, &A(0, t), 1);
                     A(s, t) *= -1.0;
                     if (t > s+1) {
                         // TODO: This swap-and-flip needs independent kernel for max spd:
-                        swap(t-s-1, &A(s+1, t), 1, &A(s, s+1), ldA);
+                        swap<T>(t-s-1, &A(s+1, t), 1, &A(s, s+1), ldA);
                         for (unsigned j = s+1; j < t; ++j) {
                             A(j, t) *= -1;
                             A(s, j) *= -1;
                         }
                     }
                     if (t+1 < n)
-                        swap(n-t-1, &A(s, t+1), ldA, &A(t, t+1), ldA);
+                        swap<T>(n-t-1, &A(s, t+1), ldA, &A(t, t+1), ldA);
                     // Update vectors.
                     vG[t] = vG[s];
                     vG[s] = Gmax;
@@ -275,8 +238,8 @@ T skpfa(char uplo, unsigned n,
 
             // vA from Original A to updated components, skipping zeros.
             if (i != 0) {
-                gemv('N', n-icur, i,-1.0, &Sp1(icur, 0), n, &exG(icur+1, 0), n, 1.0, vA+icur, 1);
-                gemv('N', n-icur, i, 1.0, &exG(icur, 0), n, &Sp1(icur+1, 0), n, 1.0, vA+icur, 1);
+                gemv<T>(BLIS_NO_TRANSPOSE, n-icur, i,-1.0, &Sp1(icur, 0), n, &exG(icur+1, 0), n, 1.0, vA+icur, 1);
+                gemv<T>(BLIS_NO_TRANSPOSE, n-icur, i, 1.0, &exG(icur, 0), n, &Sp1(icur+1, 0), n, 1.0, vA+icur, 1);
             }
 
             // Write to change buffer (already done).
@@ -286,16 +249,16 @@ T skpfa(char uplo, unsigned n,
         }
 
         // Apply transformation.
-        // skr2k<T>(uplo, 'N', n, lpanel, 1.0, exG, n, &Sp1(0, 0), n, 1.0, A, ldA, SpBla);
+        // skr2k<T>(BLIS_UPPER, BLIS_NO_TRANSPOSE, n, lpanel, 1.0, exG, n, &Sp1(0, 0), n, 1.0, A, ldA);
         // Skip already cancelled by previous steps.
-        // skr2k<T>(uplo, 'N', n-ist, lpanel, 1.0,
-        //          &exG(ist, 0), n, &Sp1(ist, 0), n, 1.0, &A(ist, ist), ldA, SpBla);
+        // skr2k<T>(BLIS_UPPER, BLIS_NO_TRANSPOSE, n-ist, lpanel, 1.0,
+        //          &exG(ist, 0), n, &Sp1(ist, 0), n, 1.0, &A(ist, ist), ldA);
         // Rows & columns associated to this step are sure to be tridiagonal.
         // Skip these columns as well (by applying Fast-update to subdiagonals above).
         unsigned inext = ist + lpanel;
         if (n - inext > 1)
-            skr2k<T>(uplo, 'N', n-inext, lpanel, 1.0,
-                     &exG(inext, 0), n, &Sp1(inext, 0), n, 1.0, &A(inext, inext), ldA, SpBla);
+            skr2k<T>(BLIS_UPPER, BLIS_NO_TRANSPOSE, n-inext, lpanel, 1.0,
+                     &exG(inext, 0), n, &Sp1(inext, 0), n, 1.0, &A(inext, inext), ldA);
 
 #ifdef _Pfaff_Debug
         printf("After %d changes A=\n", ist+lpanel);
@@ -308,8 +271,6 @@ T skpfa(char uplo, unsigned n,
     }
 
 #endif
-    // Free memory-packing scratchpad.
-    free(SpBla);
 
     // Pfaffian
     T PfA = 1.0;
@@ -321,10 +282,10 @@ T skpfa(char uplo, unsigned n,
 #ifdef _PI_Simple
         for (int istep = n-3; istep >= 0; --istep) {
             // vA = invT * vG;
-            // gemv('N', n, n, 1.0,
-            //      &A(0, 0), ldA, &Sp3(0, istep), 1, 0.0, vA, 1);
-            gemv('N', n, n-istep-2, 1.0,
-                 &A(0, istep+2), ldA, &Sp3(istep+2, istep), 1, 0.0, vA, 1);
+            // gemv<T>(BLIS_NO_TRANSPOSE, n, n, 1.0,
+            //         &A(0, 0), ldA, &Sp3(0, istep), 1, 0.0, vA, 1);
+            gemv<T>(BLIS_NO_TRANSPOSE, n, n-istep-2, 1.0,
+                    &A(0, istep+2), ldA, &Sp3(istep+2, istep), 1, 0.0, vA, 1);
 
             // vA[:, istep+1] -= A * vG
             // vA[istep+1, :] += A * vG
@@ -339,10 +300,10 @@ T skpfa(char uplo, unsigned n,
             unsigned lpanel = (ist+npanel > n-2) ? n-2-ist : npanel;
 
             // Compute inverse update.
-            // gemm('N', 'N', n, lpanel, n, 1.0,
-            //      &A(0, 0), ldA, &Sp3(0, ist), n, 0.0, &Sp1(0, 0), n);
-            gemm('N', 'N', n, lpanel, n-ist-2, 1.0,
-                 &A(0, ist+2), ldA, &Sp3(ist+2, ist), n, 0.0, &Sp1(0, 0), n);
+            // gemm<T>(BLIS_NO_TRANSPOSE, BLIS_NO_TRANSPOSE, n, lpanel, n, 1.0,
+            //         &A(0, 0), ldA, &Sp3(0, ist), n, 0.0, &Sp1(0, 0), n);
+            gemm<T>(BLIS_NO_TRANSPOSE, BLIS_NO_TRANSPOSE, n, lpanel, n-ist-2, 1.0,
+                    &A(0, ist+2), ldA, &Sp3(ist+2, ist), n, 0.0, &Sp1(0, 0), n);
             for (int i = lpanel-1; i >= 0; --i) {
                 // TODO: Use ger instead of axpy.
                 for (int j = 0; j < i; ++j)
@@ -378,8 +339,8 @@ T skpfa(char uplo, unsigned n,
                 }
 
                 // Swap the data.
-                swap(n, &A(0, s), 1, &A(0, t), 1);
-                swap(n, &A(s, 0), ldA, &A(t, 0), ldA);
+                swap<T>(n, &A(0, s), 1, &A(0, t), 1);
+                swap<T>(n, &A(s, 0), ldA, &A(t, 0), ldA);
                 // Swap the index.
                 iPov[t] = iPov[s];
                 iPov[s] = s;
