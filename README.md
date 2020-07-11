@@ -3,6 +3,10 @@
 
 *Pfaffine aims to be the caffeine that wakes your program up when you work with Geminal wavefunctions.*
 
+Pfaffine is an numerical package for fast calculation of Pfaffian.
+This branch contains a `skr2k` backend made from scratch.
+There is another branch [`blis`](https://github.com/xrq-phys/Pfaffine/tree/blis) whose background is relinked against an extended version of [BLIS](https://github.com/flame/blis).
+
 ### Requirements
 
 #### C++ Compiler
