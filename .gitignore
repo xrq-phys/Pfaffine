@@ -1,7 +1,12 @@
+# Config
+make.inc
+
 # Compiled
 *.x
 *.o
+*.a
 *.dSYM
+dest/
 
 # Editor
 *~
