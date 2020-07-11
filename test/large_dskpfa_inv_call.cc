@@ -9,8 +9,6 @@
 static const unsigned N = 2240;
 static const unsigned NPANEL = 32;
 
-extern void set_tracdim_blk(unsigned n);
-
 #define matA(i, j) matA[ (i) + (j)*N ]
 #define mat1(i, j) mat1[ (i) + (j)*N ]
 #define mat2(i, j) mat2[ (i) + (j)*N ]
@@ -20,8 +18,6 @@ int main(const int argc, const char *argv[])
 {
     // these two doesn't conflict.
     using namespace std;
-    // use larger tracblk.
-    set_tracdim_blk(16);
 
     // use random.
     mt19937_64 rng(1234);
