@@ -1,0 +1,14 @@
+AR=ar
+
+# ARM Compiler toolset.
+CC=fccpx -Nclang
+CFLAGS=-O2
+CXX=FCCpx -Nclang
+CXXFLAGS=-std=c++11 -Ofast -D_Manual_SqBlk -D_Fujitsu_Profiler -ffj-fjprof
+
+# SVE, of course.
+ARCH=sve
+
+# BLAS vendor.
+BLAS_LIB=-SSL2 -lfjlapacksve
+

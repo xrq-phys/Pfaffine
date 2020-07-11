@@ -1,16 +1,23 @@
-INC=-I $(BLIS_ROOT)/include -I/usr/local/include
-LIB=-L $(BLIS_ROOT)/lib -lblis
-CXX=g++ -std=c++11 $(INC) -g
+include ../make.inc
 
-simple_bli_ker_call.x: simple_bli_ker_call.cc
-	$(CXX) $(LIB) simple_bli_ker_call.cc -o simple_bli_ker_call.x
+PFAFFINE_LIB= ../src/libpfaffine.a
+TEXT_EXE= \
+	./small_dskpfa_call.x \
+	./large_dskpfa_call.x \
+	./large_dskpfa_inv_call.x \
+	./small_zskpfa_call.x \
+	./small_dskr2k_call.x \
+	./small_zskr2k_call.x
+#	./small_dogemm_call.x
 
-small_dskr2k_call.x: small_dskr2k_call.cc ../src/skr2k.tcc
-	$(CXX) $(LIB) small_dskr2k_call.cc -o small_dskr2k_call.x
+all: $(TEXT_EXE)
 
-skr2k.o: ../src/skr2k.tcc
-	$(CXX) ../src/skr2k.tcc -o skr2k.o
+clean:
+	rm *.x
+	rm *.o
+	rm -r *.dSYM
 
-exec: simple_bli_ker_call.x small_dskr2k_call.x
-	LD_LIBRARY_PATH=$(BLIS_ROOT)/lib ./simple_bli_ker_call.x
-	LD_LIBRARY_PATH=$(BLIS_ROOT)/lib ./small_dskr2k_call.x
+.SUFFIXES: .x .cc
+
+%.x : %.cc $(PFAFFINE_LIB)
+	$(CXX) $(CXXFLAGS) $< $(PFAFFINE_LIB) $(BLAS_LIB) -o $@

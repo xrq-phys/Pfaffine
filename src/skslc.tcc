@@ -6,12 +6,14 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
-
-#define A(i,j) A[ (i) + (j)*(ldA) ]
+#include "colmaj.tcc"
 
 template<typename T>
-inline void skslc(unsigned n, unsigned i, T *x, T *A, unsigned ldA)
+inline void skslc(unsigned n, unsigned i,
+                  T *x,
+                  T *_A, unsigned ldA)
 {
+    colmaj<T> A(_A, ldA);
     x[i] = 0.0;
     for (unsigned j = 0; j < i; ++j)
         x[j] =  A(j, i);
