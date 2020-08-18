@@ -12,6 +12,8 @@ typedef std::complex<float>  ccscmplx;
 typedef std::complex<double> ccdcmplx;
 // BLIS definitions.
 #include "blis.h"
+// BLAS interface.
+#include "blalink_fort.h"
 
 
 // gemm
@@ -24,13 +26,13 @@ inline void gemm(trans_t transa, trans_t transb,
                  T beta,
                  T *c, inc_t ldc);
 template <> inline void gemm<float>(trans_t transa, trans_t transb, dim_t m, dim_t n, dim_t k, float alpha, float *a, inc_t lda, float *b, inc_t ldb, float beta, float *c, inc_t ldc)
-{ bli_sgemm(transa, transb, m, n, k, &alpha, a, 1, lda, b, 1, ldb, &beta, c, 1, ldc); }
+{ char ta = trans2char(transa), tb = trans2char(transb); sgemm_(&ta, &tb, &m, &n, &k, &alpha, a, &lda, b, &ldb, &beta, c, &ldc); }
 template <> inline void gemm<double>(trans_t transa, trans_t transb, dim_t m, dim_t n, dim_t k, double alpha, double *a, inc_t lda, double *b, inc_t ldb, double beta, double *c, inc_t ldc)
-{ bli_dgemm(transa, transb, m, n, k, &alpha, a, 1, lda, b, 1, ldb, &beta, c, 1, ldc); }
+{ char ta = trans2char(transa), tb = trans2char(transb); dgemm_(&ta, &tb, &m, &n, &k, &alpha, a, &lda, b, &ldb, &beta, c, &ldc); }
 template <> inline void gemm<ccscmplx>(trans_t transa, trans_t transb, dim_t m, dim_t n, dim_t k, ccscmplx alpha, ccscmplx *a, inc_t lda, ccscmplx *b, inc_t ldb, ccscmplx beta, ccscmplx *c, inc_t ldc)
-{ bli_cgemm(transa, transb, m, n, k, (scomplex *)&alpha, (scomplex *)a, 1, lda, (scomplex *)b, 1, ldb, (scomplex *)&beta, (scomplex *)c, 1, ldc); }
+{ char ta = trans2char(transa), tb = trans2char(transb); cgemm_(&ta, &tb, &m, &n, &k, &alpha, a, &lda, b, &ldb, &beta, c, &ldc); }
 template <> inline void gemm<ccdcmplx>(trans_t transa, trans_t transb, dim_t m, dim_t n, dim_t k, ccdcmplx alpha, ccdcmplx *a, inc_t lda, ccdcmplx *b, inc_t ldb, ccdcmplx beta, ccdcmplx *c, inc_t ldc)
-{ bli_zgemm(transa, transb, m, n, k, (dcomplex *)&alpha, (dcomplex *)a, 1, lda, (dcomplex *)b, 1, ldb, (dcomplex *)&beta, (dcomplex *)c, 1, ldc); }
+{ char ta = trans2char(transa), tb = trans2char(transb); zgemm_(&ta, &tb, &m, &n, &k, &alpha, a, &lda, b, &ldb, &beta, c, &ldc); }
 
 
 // ger
@@ -41,13 +43,13 @@ inline void ger(dim_t m, dim_t n,
                 T *y, inc_t incy,
                 T *a, inc_t lda);
 template <> inline void ger<float>(dim_t m, dim_t n, float alpha, float *x, inc_t incx, float *y, inc_t incy, float *a, inc_t lda)
-{ bli_sger(BLIS_NO_CONJUGATE, BLIS_NO_CONJUGATE, m, n, &alpha, x, incx, y, incy, a, 1, lda); }
+{ sger_(&m, &n, &alpha, x, &incx, y, &incy, a, &lda); }
 template <> inline void ger<double>(dim_t m, dim_t n, double alpha, double *x, inc_t incx, double *y, inc_t incy, double *a, inc_t lda)
-{ bli_dger(BLIS_NO_CONJUGATE, BLIS_NO_CONJUGATE, m, n, &alpha, x, incx, y, incy, a, 1, lda); }
+{ dger_(&m, &n, &alpha, x, &incx, y, &incy, a, &lda); }
 template <> inline void ger<ccscmplx>(dim_t m, dim_t n, ccscmplx alpha, ccscmplx *x, inc_t incx, ccscmplx *y, inc_t incy, ccscmplx *a, inc_t lda)
-{ bli_cger(BLIS_NO_CONJUGATE, BLIS_NO_CONJUGATE, m, n, (scomplex *)&alpha, (scomplex *)x, incx, (scomplex *)y, incy, (scomplex *)a, 1, lda); }
+{ cgeru_(&m, &n, &alpha, x, &incx, y, &incy, a, &lda); }
 template <> inline void ger<ccdcmplx>(dim_t m, dim_t n, ccdcmplx alpha, ccdcmplx *x, inc_t incx, ccdcmplx *y, inc_t incy, ccdcmplx *a, inc_t lda)
-{ bli_zger(BLIS_NO_CONJUGATE, BLIS_NO_CONJUGATE, m, n, (dcomplex *)&alpha, (dcomplex *)x, incx, (dcomplex *)y, incy, (dcomplex *)a, 1, lda); }
+{ zgeru_(&m, &n, &alpha, x, &incx, y, &incy, a, &lda); }
 
 
 // gemv
@@ -60,13 +62,13 @@ inline void gemv(trans_t trans,
                  T beta,
                  T *y, inc_t incy);
 template <> inline void gemv<float>(trans_t trans, dim_t m, dim_t n, float alpha, float *a, inc_t lda, float *x, inc_t incx, float beta, float *y, inc_t incy)
-{ bli_sgemv(trans, BLIS_NO_CONJUGATE, m, n, &alpha, a, 1, lda, x, incx, &beta, y, incy); }
+{ char t = trans2char(trans); sgemv_(&t, &m, &n, &alpha, a, &lda, x, &incx, &beta, y, &incy); }
 template <> inline void gemv<double>(trans_t trans, dim_t m, dim_t n, double alpha, double *a, inc_t lda, double *x, inc_t incx, double beta, double *y, inc_t incy)
-{ bli_dgemv(trans, BLIS_NO_CONJUGATE, m, n, &alpha, a, 1, lda, x, incx, &beta, y, incy); }
+{ char t = trans2char(trans); dgemv_(&t, &m, &n, &alpha, a, &lda, x, &incx, &beta, y, &incy); }
 template <> inline void gemv<ccscmplx>(trans_t trans, dim_t m, dim_t n, ccscmplx alpha, ccscmplx *a, inc_t lda, ccscmplx *x, inc_t incx, ccscmplx beta, ccscmplx *y, inc_t incy)
-{ bli_cgemv(trans, BLIS_NO_CONJUGATE, m, n, (scomplex *)&alpha, (scomplex *)a, 1, lda, (scomplex *)x, incx, (scomplex *)&beta, (scomplex *)y, incy); }
+{ char t = trans2char(trans); cgemv_(&t, &m, &n, &alpha, a, &lda, x, &incx, &beta, y, &incy); }
 template <> inline void gemv<ccdcmplx>(trans_t trans, dim_t m, dim_t n, ccdcmplx alpha, ccdcmplx *a, inc_t lda, ccdcmplx *x, inc_t incx, ccdcmplx beta, ccdcmplx *y, inc_t incy)
-{ bli_zgemv(trans, BLIS_NO_CONJUGATE, m, n, (dcomplex *)&alpha, (dcomplex *)a, 1, lda, (dcomplex *)x, incx, (dcomplex *)&beta, (dcomplex *)y, incy); }
+{ char t = trans2char(trans); zgemv_(&t, &m, &n, &alpha, a, &lda, x, &incx, &beta, y, &incy); }
 
 
 // swap
@@ -75,13 +77,13 @@ inline void swap(dim_t n,
                  T *x, inc_t incx,
                  T *y, inc_t incy);
 template <> inline void swap<float>(dim_t n, float *x, inc_t incx, float *y, inc_t incy)
-{ bli_sswapv(n, x, incx, y, incy); }
+{ sswap_(&n, x, &incx, y, &incy); }
 template <> inline void swap<double>(dim_t n, double *x, inc_t incx, double *y, inc_t incy)
-{ bli_dswapv(n, x, incx, y, incy); }
+{ dswap_(&n, x, &incx, y, &incy); }
 template <> inline void swap<ccscmplx>(dim_t n, ccscmplx *x, inc_t incx, ccscmplx *y, inc_t incy)
-{ bli_cswapv(n, (scomplex *)x, incx, (scomplex *)y, incy); }
+{ cswap_(&n, x, &incx, y, &incy); }
 template <> inline void swap<ccdcmplx>(dim_t n, ccdcmplx *x, inc_t incx, ccdcmplx *y, inc_t incy)
-{ bli_zswapv(n, (dcomplex *)x, incx, (dcomplex *)y, incy); }
+{ zswap_(&n, x, &incx, y, &incy); }
 
 // axpy
 template <typename T>
@@ -90,13 +92,13 @@ inline void axpy(dim_t n,
                  T *x, inc_t incx,
                  T *y, inc_t incy);
 template <> inline void axpy<float>(dim_t n, float alpha, float *x, inc_t incx, float *y, inc_t incy)
-{ bli_saxpyv(BLIS_NO_CONJUGATE, n, &alpha, x, incx, y, incy); }
+{ saxpy_(&n, &alpha, x, &incx, y, &incy); }
 template <> inline void axpy<double>(dim_t n, double alpha, double *x, inc_t incx, double *y, inc_t incy)
-{ bli_daxpyv(BLIS_NO_CONJUGATE, n, &alpha, x, incx, y, incy); }
+{ daxpy_(&n, &alpha, x, &incx, y, &incy); }
 template <> inline void axpy<ccscmplx>(dim_t n, ccscmplx alpha, ccscmplx *x, inc_t incx, ccscmplx *y, inc_t incy)
-{ bli_caxpyv(BLIS_NO_CONJUGATE, n, (scomplex *)&alpha, (scomplex *)x, incx, (scomplex *)y, incy); }
+{ caxpy_(&n, &alpha, x, &incx, y, &incy); }
 template <> inline void axpy<ccdcmplx>(dim_t n, ccdcmplx alpha, ccdcmplx *x, inc_t incx, ccdcmplx *y, inc_t incy)
-{ bli_zaxpyv(BLIS_NO_CONJUGATE, n, (dcomplex *)&alpha, (dcomplex *)x, incx, (dcomplex *)y, incy); }
+{ zaxpy_(&n, &alpha, x, &incx, y, &incy); }
 
 // dot
 template <typename T>
@@ -104,13 +106,13 @@ inline T dot(dim_t n,
              T *sx, inc_t incx,
              T *sy, inc_t incy);
 template <> inline float dot<float>(dim_t n, float *sx, inc_t incx, float *sy, inc_t incy)
-{ float rho; bli_sdotv(BLIS_NO_CONJUGATE, BLIS_NO_CONJUGATE, n, sx, incx, sy, incy, &rho); return rho; }
+{ return sdot_(&n, sx, &incx, sy, &incy); }
 template <> inline double dot<double>(dim_t n, double *sx, inc_t incx, double *sy, inc_t incy)
-{ double rho; bli_ddotv(BLIS_NO_CONJUGATE, BLIS_NO_CONJUGATE, n, sx, incx, sy, incy, &rho); return rho; }
+{ return ddot_(&n, sx, &incx, sy, &incy); }
 template <> inline ccscmplx dot<ccscmplx>(dim_t n, ccscmplx *sx, inc_t incx, ccscmplx *sy, inc_t incy)
-{ ccscmplx rho; bli_cdotv(BLIS_NO_CONJUGATE, BLIS_NO_CONJUGATE, n, (scomplex *)sx, incx, (scomplex *)sy, incy, (scomplex *)&rho); return rho; }
+{ scomplex rho = cdotc_(&n, sx, &incx, sy, &incy); return *((ccscmplx *)&rho); }
 template <> inline ccdcmplx dot<ccdcmplx>(dim_t n, ccdcmplx *sx, inc_t incx, ccdcmplx *sy, inc_t incy)
-{ ccdcmplx rho; bli_zdotv(BLIS_NO_CONJUGATE, BLIS_NO_CONJUGATE, n, (dcomplex *)sx, incx, (dcomplex *)sy, incy, (dcomplex *)&rho); return rho; }
+{ dcomplex rho = zdotc_(&n, sx, &incx, sy, &incy); return *((ccdcmplx *)&rho); }
 
 
 // [extension] skr2k

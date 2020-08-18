@@ -11,3 +11,6 @@ CXXFLAGS=-std=c++11 -O3
 
 # Path to BLIS installation.
 BLIS_ROOT=/usr/local
+# Accelerate framework is a descent BLAS implementation on mac.
+BLAS_LIB=-framework Accelerate
+
