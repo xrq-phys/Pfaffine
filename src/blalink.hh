@@ -115,19 +115,19 @@ template <> inline ccdcmplx dot<ccdcmplx>(dim_t n, ccdcmplx *sx, inc_t incx, ccd
 
 // [extension] skr2k
 template <typename T>
-inline void skr2k(uplo_t uploc,
-                  trans_t transab,
-                  dim_t m, dim_t k,
-                  T alpha,
-                  T *a, inc_t lda,
-                  T *b, inc_t ldb,
-                  T beta,
-                  T *c, inc_t ldc);
-template <> inline void skr2k<float>(uplo_t uploc, trans_t transab, dim_t m, dim_t k, float alpha, float *a, inc_t lda, float *b, inc_t ldb, float beta, float *c, inc_t ldc)
+inline void ccbli_skr2k(uplo_t uploc,
+                        trans_t transab,
+                        dim_t m, dim_t k,
+                        T alpha,
+                        T *a, inc_t lda,
+                        T *b, inc_t ldb,
+                        T beta,
+                        T *c, inc_t ldc);
+template <> inline void ccbli_skr2k<float>(uplo_t uploc, trans_t transab, dim_t m, dim_t k, float alpha, float *a, inc_t lda, float *b, inc_t ldb, float beta, float *c, inc_t ldc)
 { bli_sskr2k(uploc, transab, transab, m, k, &alpha, a, 1, lda, b, 1, ldb, &beta, c, 1, ldc); }
-template <> inline void skr2k<double>(uplo_t uploc, trans_t transab, dim_t m, dim_t k, double alpha, double *a, inc_t lda, double *b, inc_t ldb, double beta, double *c, inc_t ldc)
+template <> inline void ccbli_skr2k<double>(uplo_t uploc, trans_t transab, dim_t m, dim_t k, double alpha, double *a, inc_t lda, double *b, inc_t ldb, double beta, double *c, inc_t ldc)
 { bli_dskr2k(uploc, transab, transab, m, k, &alpha, a, 1, lda, b, 1, ldb, &beta, c, 1, ldc); }
-template <> inline void skr2k<ccscmplx>(uplo_t uploc, trans_t transab, dim_t m, dim_t k, ccscmplx alpha, ccscmplx *a, inc_t lda, ccscmplx *b, inc_t ldb, ccscmplx beta, ccscmplx *c, inc_t ldc)
+template <> inline void ccbli_skr2k<ccscmplx>(uplo_t uploc, trans_t transab, dim_t m, dim_t k, ccscmplx alpha, ccscmplx *a, inc_t lda, ccscmplx *b, inc_t ldb, ccscmplx beta, ccscmplx *c, inc_t ldc)
 { bli_cskr2k(uploc, transab, transab, m, k, (scomplex *)&alpha, (scomplex *)a, 1, lda, (scomplex *)b, 1, ldb, (scomplex *)&beta, (scomplex *)c, 1, ldc); }
-template <> inline void skr2k<ccdcmplx>(uplo_t uploc, trans_t transab, dim_t m, dim_t k, ccdcmplx alpha, ccdcmplx *a, inc_t lda, ccdcmplx *b, inc_t ldb, ccdcmplx beta, ccdcmplx *c, inc_t ldc)
+template <> inline void ccbli_skr2k<ccdcmplx>(uplo_t uploc, trans_t transab, dim_t m, dim_t k, ccdcmplx alpha, ccdcmplx *a, inc_t lda, ccdcmplx *b, inc_t ldb, ccdcmplx beta, ccdcmplx *c, inc_t ldc)
 { bli_zskr2k(uploc, transab, transab, m, k, (dcomplex *)&alpha, (dcomplex *)a, 1, lda, (dcomplex *)b, 1, ldb, (dcomplex *)&beta, (dcomplex *)c, 1, ldc); }

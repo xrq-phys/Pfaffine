@@ -14,6 +14,8 @@
 
 // BLAS and SkBLAS vendor.
 #include "blalink.hh"
+// SKR2k with BLIS assembly or plain C++.
+#include "skr2k.tcc"
 
 #include "colmaj.tcc"
 #include "gcd.tcc"
