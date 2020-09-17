@@ -13,6 +13,19 @@ typedef std::complex<double> ccdcmplx;
 // BLIS definitions.
 #include "blis.h"
 
+// error info
+typedef enum {
+    Pfaffine_SIGN_ERR = 1,
+    Pfaffine_OUT_OF_BOUND,
+    Pfaffine_BAD_SCRATCHPAD,
+    Pfaffine_BAD_REPRESENTATION,
+    Pfaffine_INTEGER_OVERFLOW,
+    Pfaffine_DOUBLE_NAN_DETECTED,
+    Pfaffine_NOT_IMPLEMNTED,
+    Pfaffine_NUM_ERROR_TYPE
+} skpfa_error_t;
+inline signed err_info(signed type, signed pos)
+{ return type * Pfaffine_NUM_ERROR_TYPE + pos; }
 
 // gemm
 template <typename T>

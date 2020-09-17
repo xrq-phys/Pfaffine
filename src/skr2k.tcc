@@ -65,5 +65,5 @@ inline void skr2k(uplo_t uploc,
     if (transab == BLIS_NO_TRANSPOSE && uploc == BLIS_UPPER && m < ukr_dim_limit)
         ccukr_skr2k(uploc, transab, m, k, alpha, _A, ldA, _B, ldB, beta, _C, ldC);
     else
-        ccbli_skr2k(uploc, transab, m, k, alpha, _A, ldA, _B, ldB, beta, _C, ldC);
+        ccbli_skr2k(uploc, transab, m, k, -alpha, _A, ldA, _B, ldB, beta, _C, ldC);
 }

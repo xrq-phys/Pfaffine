@@ -9,7 +9,7 @@
 #include <complex>
 
 template<typename T>
-void findmax(unsigned n, int *i, T *m, T *x, unsigned ist=0, unsigned *iPov=nullptr)
+void findmax(unsigned n, inc_t *i, T *m, T *x, unsigned ist=0, signed *iPov=nullptr)
 {
     using namespace std;
     // (Implicit) register vars.

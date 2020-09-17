@@ -2,6 +2,8 @@ include ../make.inc
 CONFIG= ../make.inc
 
 OBJECTS= skpfa.o \
+		 sktdf.o \
+		 sktdi.o \
 		 ../interface/pfaffine.o \
 		 ../interface/pfapack.o
 HEADERS= blalink.hh skpfa.hh

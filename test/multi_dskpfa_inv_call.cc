@@ -11,7 +11,7 @@
 #include "../src/skpfa.hh"
 
 const unsigned N_Max = 1200;
-const unsigned N_Lst[14] = { 
+const unsigned N_Lst[14] = {
      32,  64,  128,  192, 256,
     320, 384,  448,  512, 640,
     768, 896, 1000, 1200
@@ -20,7 +20,7 @@ static const unsigned NPANEL = 16;
 
 #define matA(i, j) matA[ (i) + (j)*N ]
 #define mat1(i, j) mat1[ (i) + (j)*N ]
-#define mat2(i, j) mat2[ (i) + (j)*N ]
+#define matC(i, j) matC[ (i) + (j)*N ]
 
 int main(int argc, char *argv[])
 {
@@ -38,10 +38,8 @@ int main(int argc, char *argv[])
     // prepares input and output container.
     double matA[N_Max * N_Max];
     double mat1[N_Max * NPANEL];
-    double mat2[N_Max * NPANEL];
     double matC[N_Max * N_Max];
-    double matD[N_Max * N_Max];
-    double mat3[N_Max * (NPANEL+1)];
+    signed iPov[N_Max + 1];
 
     for (unsigned idx = 0; idx < 14; ++idx) {
         // NOTE: this sets size as well as ldA above.
@@ -66,11 +64,12 @@ int main(int argc, char *argv[])
 
         auto start = std::chrono::high_resolution_clock::now();
         // call Pfaffian calculation.
-        double Pfa = skpfa<double>('U', N,
-                                   &matA(0, 0), N, /*inv=*/1,
-                                   &mat1(0, 0), &mat2(0, 0),
-                                   // (nullptr, nullptr, nullptr, NPANEL);
-                                   matC, matD, mat3, NPANEL);
+        double Pfa;
+        signed info = skpfa<double>(BLIS_UPPER, N,
+                                    &matA(0, 0), N,
+                                    &matC(0, 0), N,
+                                    iPov, true, &Pfa,
+                                    &mat1(0, 0), N * NPANEL);
         // collect elapsed time information.
         auto elapsed = std::chrono::high_resolution_clock::now() - start;
         long long microseconds = std::chrono::duration_cast<std::chrono::microseconds>(elapsed).count();
