@@ -15,7 +15,7 @@
 #include <complex>
 #include "skpfa.hh"
 
-const static unsigned npanel = 8;
+const static unsigned npanel = 16;
 
 template <typename T>
 void set_sp_size(unsigned n, int *lWork, T *lWorkOut, int *info)

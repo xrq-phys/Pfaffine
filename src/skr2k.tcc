@@ -12,7 +12,7 @@
 #include <iostream>
 
 // Smaller than this size then minimal kernel will be called.
-const dim_t ukr_dim_limit = 32;
+const dim_t ukr_dim_limit = 48;
 
 template <typename T>
 inline void ccukr_skr2k(uplo_t uploc,

@@ -16,7 +16,7 @@ const unsigned N_Lst[14] = {
     320, 384,  448,  512, 640,
     768, 896, 1000, 1200
 };
-static const unsigned NPANEL = 16;
+static const unsigned NPANEL = 24;
 
 #define matA(i, j) matA[ (i) + (j)*N ]
 #define mat1(i, j) mat1[ (i) + (j)*N ]
