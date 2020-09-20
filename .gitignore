@@ -5,6 +5,7 @@ make.inc
 *.x
 *.o
 *.a
+*.so
 *.dSYM
 dest/
 

@@ -1,0 +1,14 @@
+AR=ar
+
+# ARM Compiler toolset.
+CC=fccpx -Nclang
+CFLAGS=-O2
+CXX=mpiFCCpx -Nclang
+#CXXFLAGS=-std=c++11 -Ofast -D_Manual_SqBlk -D_Fujitsu_Profiler -ffj-fjprof
+CXXFLAGS=-std=c++11 -Ofast -fPIC
+
+# BLAS vendor.
+BLAS_LIB=-SSL2 # -lfjlapacksve
+
+BLIS_ROOT=$(HOME)/blis
+LIB=-lpthread

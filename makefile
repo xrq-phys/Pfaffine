@@ -5,6 +5,9 @@ help:
 lib: make.inc
 	make -C src
 
+dll: make.inc
+	make -C src dll
+
 install: make.inc
 	make -C src install
 	# TODO: Install rule for tests?
