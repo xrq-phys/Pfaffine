@@ -7,7 +7,7 @@
 #include "pfaffine.hh"
 
 // Translate uplo character into BLIS enumerates.
-uplo_t check_uplo(char c)
+inline uplo_t check_uplo(char c)
 {
     uplo_t uplo;
     switch (c)
