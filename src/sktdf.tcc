@@ -91,7 +91,7 @@ signed sktdf(uplo_t uplo,
                         }
                         if (icur != 0)
                             // Swap the whole recorded history.
-                            swap<T>(icur, &Sp(s, 0), n, &Sp(t, 0), n);
+                            swap<T>(icur, &G(s, 0), n, &G(t, 0), n);
                         // Swap A.
                         swap<T>(s, &A(0, s), 1, &A(0, t), 1);
                         A(s, t) *= -1.0;
