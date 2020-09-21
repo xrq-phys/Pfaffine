@@ -82,6 +82,24 @@ template <> inline void gemv<ccdcmplx>(trans_t trans, dim_t m, dim_t n, ccdcmplx
 { bli_zgemv(trans, BLIS_NO_CONJUGATE, m, n, (dcomplex *)&alpha, (dcomplex *)a, 1, lda, (dcomplex *)x, incx, (dcomplex *)&beta, (dcomplex *)y, incy); }
 
 
+// trmm
+template <typename T>
+inline void trmm(side_t sidea, 
+                 uplo_t uploa, 
+                 trans_t transa, 
+                 dim_t m, dim_t n,
+                 T alpha, 
+                 T *a, inc_t lda, 
+                 T *b, inc_t ldb);
+template <> inline void trmm<float>(side_t sidea, uplo_t uploa, trans_t transa, dim_t m, dim_t n, float alpha, float *a, inc_t lda, float *b, inc_t ldb) 
+{ bli_strmm(sidea, uploa, transa, BLIS_NONUNIT_DIAG, m, n, &alpha, a, 1, lda, b, 1, ldb); }
+template <> inline void trmm<double>(side_t sidea, uplo_t uploa, trans_t transa, dim_t m, dim_t n, double alpha, double *a, inc_t lda, double *b, inc_t ldb) 
+{ bli_dtrmm(sidea, uploa, transa, BLIS_NONUNIT_DIAG, m, n, &alpha, a, 1, lda, b, 1, ldb); }
+template <> inline void trmm<ccscmplx>(side_t sidea, uplo_t uploa, trans_t transa, dim_t m, dim_t n, ccscmplx alpha, ccscmplx *a, inc_t lda, ccscmplx *b, inc_t ldb) 
+{ bli_ctrmm(sidea, uploa, transa, BLIS_NONUNIT_DIAG, m, n, (scomplex *)&alpha, (scomplex *)a, 1, lda, (scomplex *)b, 1, ldb); }
+template <> inline void trmm<ccdcmplx>(side_t sidea, uplo_t uploa, trans_t transa, dim_t m, dim_t n, ccdcmplx alpha, ccdcmplx *a, inc_t lda, ccdcmplx *b, inc_t ldb) 
+{ bli_ztrmm(sidea, uploa, transa, BLIS_NONUNIT_DIAG, m, n, (dcomplex *)&alpha, (dcomplex *)a, 1, lda, (dcomplex *)b, 1, ldb); }
+
 // swap
 template <typename T>
 inline void swap(dim_t n,

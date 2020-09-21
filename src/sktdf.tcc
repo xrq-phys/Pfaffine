@@ -41,8 +41,8 @@ signed sktdf(uplo_t uplo,
     colmaj<T> Sp(_Work, n);
 
     // Column pointers.
-    T *vA;
-    T *vG;
+    T *vA = nullptr;
+    T *vG = nullptr;
 
     switch (uplo) {
     case BLIS_UPPER:
