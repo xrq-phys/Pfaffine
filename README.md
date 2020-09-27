@@ -5,7 +5,10 @@
 
 Pfaffine is an numerical package for fast calculation of Pfaffian.
 This branch contains a `skr2k` backend made from scratch.
-There is another branch [`blis`](https://github.com/xrq-phys/Pfaffine/tree/blis) whose background is relinked against an extended version of [BLIS](https://github.com/flame/blis).
+
+**NOTE: This branch is already obsolete and main stream of this package has been moved to 
+[`Pfaffine#blis`](https://github.com/xrq-phys/Pfaffine/tree/blis) whose background is relinked against an
+extended version of [BLIS](https://github.com/flame/blis).** See also the v1.0 draft #1.
 
 ### Requirements
 
