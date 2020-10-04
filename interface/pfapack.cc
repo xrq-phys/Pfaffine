@@ -20,7 +20,7 @@
 const static unsigned npanel = 8;
 
 template <typename T>
-void set_sp_size(unsigned n, unsigned *lWork, T *lWorkOut, signed *info)
+void set_sp_size(unsigned n, signed *lWork, T *lWorkOut, signed *info)
 {
     // Override also lWork.
     *lWork = npanel * n + n * n;
@@ -90,7 +90,7 @@ void la_skpfa(char uplo, char mthd, unsigned n, T *A, signed ldA, T *Pfa,
          unsigned *n, \
          typename *A, signed *ldA,     \
          typename *Pfa, signed *iWork, \
-         typename *work, unsigned *lWork, signed *info) \
+         typename *work, signed *lWork, signed *info) \
     { \
         la_skpfa<typename>(*uplo, *mthd, *n, A, *ldA, Pfa, iWork, work, lWork, info); \
     }
