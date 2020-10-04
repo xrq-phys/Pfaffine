@@ -43,7 +43,7 @@ signed check_sp_size(unsigned n, int nWork, int info)
 
 template <typename T>
 void la_skpfa(char uplo, char mthd, unsigned n, T *A, signed ldA, T *Pfa,
-              signed *iWork, T *work, unsigned *lWork, signed *info)
+              signed *iWork, T *work, signed *lWork, signed *info)
 {
     using namespace std;
 
