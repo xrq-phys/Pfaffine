@@ -49,7 +49,7 @@ signed sktdf(uplo_t uplo,
         for (dim_t ist = 0; ist < n-2; ist+=npanel) {
             dim_t lpanel = (ist+npanel >= n-2) ? n-2 - ist : npanel;
             // Location for saving transformations.
-            colmaj<T> exG(&G(0, ist), ldG);
+            colmaj<T> exG(&G(0, ist), G.ld);
             for (dim_t i = 0; i < lpanel; ++i) {
                 dim_t icur = ist + i;
                 vG = &exG(0, i);
@@ -87,7 +87,7 @@ signed sktdf(uplo_t uplo,
 
                         if (i != 0) {
                             // For unmerged updates, swap rows (col maj.).
-                            swap<T>(i, &Sp(s, 0), n, &Sp(t, 0), n);
+                            swap<T>(i, &Sp(s, 0), Sp.ld, &Sp(t, 0), Sp.ld);
                         }
                         if (icur != 0)
                             // Swap the whole recorded history.
@@ -97,14 +97,14 @@ signed sktdf(uplo_t uplo,
                         A(s, t) *= -1.0;
                         if (t > s+1) {
                             // TODO: This swap-and-flip needs independent kernel for max spd:
-                            swap<T>(t-s-1, &A(s+1, t), 1, &A(s, s+1), ldA);
+                            swap<T>(t-s-1, &A(s+1, t), 1, &A(s, s+1), A.ld);
                             for (dim_t j = s+1; j < t; ++j) {
                                 A(j, t) *= -1;
                                 A(s, j) *= -1;
                             }
                         }
                         if (t+1 < n)
-                            swap<T>(n-t-1, &A(s, t+1), ldA, &A(t, t+1), ldA);
+                            swap<T>(n-t-1, &A(s, t+1), A.ld, &A(t, t+1), A.ld);
                         // Update vectors.
                         vG[t] = vG[s];
                         vG[s] = Gmax;
@@ -137,8 +137,8 @@ signed sktdf(uplo_t uplo,
 
                 // vA from Original A to updated components, skipping zeros.
                 if (i != 0) {
-                    gemv<T>(BLIS_NO_TRANSPOSE, n-icur, i,-1.0, &Sp(icur, 0), n, &exG(icur+1, 0), ldG, 1.0, vA+icur, 1);
-                    gemv<T>(BLIS_NO_TRANSPOSE, n-icur, i, 1.0, &exG(icur, 0), ldG, &Sp(icur+1, 0), n, 1.0, vA+icur, 1);
+                    gemv<T>(BLIS_NO_TRANSPOSE, n-icur, i,-1.0, &Sp(icur, 0), Sp.ld, &exG(icur+1, 0), exG.ld, 1.0, vA+icur, 1);
+                    gemv<T>(BLIS_NO_TRANSPOSE, n-icur, i, 1.0, &exG(icur, 0), exG.ld, &Sp(icur+1, 0), Sp.ld, 1.0, vA+icur, 1);
                 }
 
                 // Write to change buffer (already done).
@@ -148,16 +148,16 @@ signed sktdf(uplo_t uplo,
 
             // Apply transformation.
             // skr2k<T>(BLIS_UPPER, BLIS_NO_TRANSPOSE, n, lpanel, 1.0,
-            //          &exG(0, 0), ldG, &Sp(0, 0), n, 1.0, &A(0, 0), ldA);
+            //          &exG(0, 0), exG.ld, &Sp(0, 0), Sp.ld, 1.0, &A(0, 0), A.ld);
             // Skip already cancelled by previous steps.
             // skr2k<T>(BLIS_UPPER, BLIS_NO_TRANSPOSE, n-ist, lpanel, 1.0,
-            //          &exG(ist, 0), ldG, &Sp(ist, 0), n, 1.0, &A(ist, ist), ldA);
+            //          &exG(ist, 0), exG.ld, &Sp(ist, 0), Sp.ld, 1.0, &A(ist, ist), A.ld);
             // Rows & columns associated to this step are sure to be tridiagonal.
             // Skip these columns as well (by applying Fast-update to subdiagonals above).
             dim_t inext = ist + lpanel;
             if (n - inext > 1)
                 skr2k<T>(BLIS_UPPER, BLIS_NO_TRANSPOSE, n-inext, lpanel, 1.0,
-                         &exG(inext, 0), ldG, &Sp(inext, 0), n, 1.0, &A(inext, inext), ldA);
+                         &exG(inext, 0), exG.ld, &Sp(inext, 0), Sp.ld, 1.0, &A(inext, inext), A.ld);
 
 #ifdef _Pfaff_Debug
             printf("After %d changes A=\n", ist+lpanel);

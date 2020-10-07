@@ -44,7 +44,7 @@ signed sktdi(uplo_t uplo,
             // gemm<T>(BLIS_NO_TRANSPOSE, BLIS_NO_TRANSPOSE, n, lpanel, n, 1.0,
             //         &A(0, 0), ldA, &G(0, ist), ldG, 0.0, &Sp(0, 0), n);
             gemm<T>(BLIS_NO_TRANSPOSE, BLIS_NO_TRANSPOSE, n, lpanel, n-ist-2, 1.0,
-                    &A(0, ist+2), ldA, &G(ist+2, ist), ldG, 0.0, &Sp(0, 0), n);
+                    &A(0, ist+2), A.ld, &G(ist+2, ist), G.ld, 0.0, &Sp(0, 0), Sp.ld);
             for (int i = lpanel-1; i >= 0; --i) {
                 for (int j = 0; j < i; ++j)
                     axpy(n, -G(ist+i+1, ist+j), &Sp(0, i), 1, &Sp(0, j), 1);
@@ -87,7 +87,7 @@ signed sktdi(uplo_t uplo,
 
             // Swap the data.
             swap<T>(n, &A(0, s), 1, &A(0, t), 1);
-            swap<T>(n, &A(s, 0), ldA, &A(t, 0), ldA);
+            swap<T>(n, &A(s, 0), A.ld, &A(t, 0), A.ld);
             // Swap the index.
             iPov[t] = iPov[s];
             iPov[s] = s;
