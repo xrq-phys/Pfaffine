@@ -41,10 +41,14 @@ signed sktdi(uplo_t uplo,
             dim_t lpanel = (ist+npanel > n-2) ? n-2-ist : npanel;
 
             // Compute inverse update.
-            // gemm<T>(BLIS_NO_TRANSPOSE, BLIS_NO_TRANSPOSE, n, lpanel, n, 1.0,
-            //         &A(0, 0), ldA, &G(0, ist), ldG, 0.0, &Sp(0, 0), n);
-            gemm<T>(BLIS_NO_TRANSPOSE, BLIS_NO_TRANSPOSE, n, lpanel, n-ist-2, 1.0,
-                    &A(0, ist+2), A.ld, &G(ist+2, ist), G.ld, 0.0, &Sp(0, 0), Sp.ld);
+            if (n-ist-2 > n/2)
+                // When n-ist-2 is large, compute full with skew-symmetric utilized.
+                skmm<T>(BLIS_LEFT, uplo, BLIS_NO_CONJUGATE, BLIS_NO_TRANSPOSE, n, lpanel,
+                        1.0, &A(0, 0), ldA, &G(0, ist), ldG, 0.0, &Sp(0, 0), n);
+            else
+                // Utilize that G(:, j) has first j+1 elements equals 0.
+                gemm<T>(BLIS_NO_TRANSPOSE, BLIS_NO_TRANSPOSE, n, lpanel, n-ist-2,
+                        1.0, &A(0, ist+2), A.ld, &G(ist+2, ist), G.ld, 0.0, &Sp(0, 0), Sp.ld);
             for (int i = lpanel-1; i >= 0; --i) {
                 for (int j = 0; j < i; ++j)
                     axpy(n, -G(ist+i+1, ist+j), &Sp(0, i), 1, &Sp(0, j), 1);
@@ -58,6 +62,7 @@ signed sktdi(uplo_t uplo,
             }
 
             // Write to inv(T).
+            // Note that due to GEMM is still used above, this update is full.
             for (dim_t j = 0; j < lpanel; ++j)
                 for (dim_t i = 0; i < n; ++i)
                     A(i, ist+1+j) -= Sp(i, j);

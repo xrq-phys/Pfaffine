@@ -161,7 +161,28 @@ template <> inline ccdcmplx dot<ccdcmplx>(dim_t n, ccdcmplx *sx, inc_t incx, ccd
 { ccdcmplx rho; bli_zdotv(BLIS_NO_CONJUGATE, BLIS_NO_CONJUGATE, n, (dcomplex *)sx, incx, (dcomplex *)sy, incy, (dcomplex *)&rho); return rho; }
 
 
-// [extension] skr2k
+// [BLIS] skmm
+template <typename T>
+inline void skmm(side_t sidea,
+                 uplo_t uploa,
+                 conj_t conja,
+                 trans_t transb,
+                 dim_t m, dim_t n,
+                 T alpha,
+                 T *a, inc_t lda,
+                 T *b, inc_t ldb,
+                 T beta,
+                 T *c, inc_t ldc);
+template <> inline void skmm<float>(side_t sidea, uplo_t uploa, conj_t conja, trans_t transb, dim_t m, dim_t n, float alpha, float *a, inc_t lda, float *b, inc_t ldb, float beta, float *c, inc_t ldc)
+{ bli_sskmm(sidea, uploa, conja, transb, m, n, &alpha, a, 1, lda, b, 1, ldb, &beta, c, 1, ldc); }
+template <> inline void skmm<double>(side_t sidea, uplo_t uploa, conj_t conja, trans_t transb, dim_t m, dim_t n, double alpha, double *a, inc_t lda, double *b, inc_t ldb, double beta, double *c, inc_t ldc)
+{ bli_dskmm(sidea, uploa, conja, transb, m, n, &alpha, a, 1, lda, b, 1, ldb, &beta, c, 1, ldc); }
+template <> inline void skmm<ccscmplx>(side_t sidea, uplo_t uploa, conj_t conja, trans_t transb, dim_t m, dim_t n, ccscmplx alpha, ccscmplx *a, inc_t lda, ccscmplx *b, inc_t ldb, ccscmplx beta, ccscmplx *c, inc_t ldc)
+{ bli_cskmm(sidea, uploa, conja, transb, m, n, (scomplex *)&alpha, (scomplex *)a, 1, lda, (scomplex *)b, 1, ldb, (scomplex *)&beta, (scomplex *)c, 1, ldc); }
+template <> inline void skmm<ccdcmplx>(side_t sidea, uplo_t uploa, conj_t conja, trans_t transb, dim_t m, dim_t n, ccdcmplx alpha, ccdcmplx *a, inc_t lda, ccdcmplx *b, inc_t ldb, ccdcmplx beta, ccdcmplx *c, inc_t ldc)
+{ bli_zskmm(sidea, uploa, conja, transb, m, n, (dcomplex *)&alpha, (dcomplex *)a, 1, lda, (dcomplex *)b, 1, ldb, (dcomplex *)&beta, (dcomplex *)c, 1, ldc); }
+
+// [BLIS] skr2k
 template <typename T>
 inline void skr2k(uplo_t uploc,
                   trans_t transab,
