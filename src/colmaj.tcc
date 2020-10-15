@@ -13,13 +13,13 @@ template <typename T>
 struct colmaj
 {
     T *dat;
-    unsigned ld;
+    dim_t ld;
 
     colmaj() = delete;
-    colmaj(T *dat_, unsigned ld_)
+    colmaj(T *dat_, dim_t ld_)
     : dat(dat_), ld(ld_) { }
 
-    T &operator()(unsigned i, unsigned j)
+    T &operator()(dim_t i, dim_t j)
     {
         return dat[ i + j * ld ];
     }
