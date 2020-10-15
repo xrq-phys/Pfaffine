@@ -1,7 +1,7 @@
 include ../make.inc
 
 CXXFLAGS += -I. -I$(BLIS_ROOT)/include -I$(BLIS_ROOT)/include/blis
-BLIS_LIB= $(BLIS_ROOT)/lib/libblis.a
+BLIS_LIB= -L$(BLIS_ROOT)/lib -lblis
 PFAFFINE_LIB= ../src/libpfaffine.a
 
 TEXT_EXE= \
@@ -13,9 +13,9 @@ TEXT_EXE= \
 all: $(TEXT_EXE)
 
 clean:
-	rm *.x
-	rm *.o
-	rm -r *.dSYM
+	rm -f *.x
+	rm -f *.o
+	rm -rf *.dSYM
 
 .SUFFIXES: .x .cc
 
