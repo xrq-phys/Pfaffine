@@ -12,6 +12,8 @@
 #include "blalink.hh"
 #include "colmaj.tcc"
 #include "findmax.tcc"
+// SkBLAS with BLIS assembly or plain C++.
+#include "skr2k.tcc"
 #include "skslc.tcc"
 #include <iostream>
 
