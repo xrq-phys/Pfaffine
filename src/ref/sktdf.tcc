@@ -38,7 +38,7 @@ signed sktdf(uplo_t uplo,
     case BLIS_UPPER:
         // Simple variant (without blocking or pivoting) for debugging.
         // vA[:] = A[:, 0];
-        skslc<T>(n, 0, vA, A, ldA);
+        skslc<T>(uplo, n, 0, vA, A, ldA);
         for (dim_t istep = 0; istep < n-2; ++istep) {
             vG = &G(0, istep);
 
@@ -83,7 +83,7 @@ signed sktdf(uplo_t uplo,
             }
 
             // vA = A[:, istep+1]
-            skslc<T>(n, istep+1, vA, A, ldA);
+            skslc<T>(uplo, n, istep+1, vA, A, ldA);
 
             // Divide by alpha_k
             T alpha_k = vG[istep+1];

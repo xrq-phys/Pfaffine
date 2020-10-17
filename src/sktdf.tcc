@@ -15,6 +15,7 @@
 // SkBLAS with BLIS assembly or plain C++.
 #include "skr2k.tcc"
 #include "skslc.tcc"
+#include "skswp.tcc"
 #include <iostream>
 
 template <typename T>
@@ -55,7 +56,7 @@ signed sktdf(uplo_t uplo,
                 vG = &exG(0, i);
                 if (i == 0)
                     // vA = A[:, ist].
-                    // skslc<T>(n, ist, vG, A, ldA);
+                    // skslc<T>(uplo, n, ist, vG, A, ldA);
                     // Copy lower-trangular non-zero components.
                     for (dim_t j = icur+1; j < n; ++j)
                         vG[j] = -A(ist, j);
@@ -93,18 +94,7 @@ signed sktdf(uplo_t uplo,
                             // Swap the whole recorded history.
                             swap<T>(icur, &G(s, 0), G.ld, &G(t, 0), G.ld);
                         // Swap A.
-                        swap<T>(s, &A(0, s), 1, &A(0, t), 1);
-                        A(s, t) *= -1.0;
-                        if (t > s+1) {
-                            // TODO: This swap-and-flip needs independent kernel for max spd:
-                            swap<T>(t-s-1, &A(s+1, t), 1, &A(s, s+1), A.ld);
-                            for (dim_t j = s+1; j < t; ++j) {
-                                A(j, t) *= -1;
-                                A(s, j) *= -1;
-                            }
-                        }
-                        if (t+1 < n)
-                            swap<T>(n-t-1, &A(s, t+1), A.ld, &A(t, t+1), A.ld);
+                        skswp(uplo, n, &A(0, 0), A.ld, s, t);
                         // Update vectors.
                         vG[t] = vG[s];
                         vG[s] = Gmax;
@@ -112,7 +102,7 @@ signed sktdf(uplo_t uplo,
                 }
 
                 // vA = A[:, icur+1]
-                // skslc<T>(n, icur+1, vA, A, ldA);
+                // skslc<T>(uplo, n, icur+1, vA, A, ldA);
                 // Only upper-triagular is icur, icur+1
                 for (dim_t j = 0; j < icur; ++j)
                     vA[j] = 0.0;
