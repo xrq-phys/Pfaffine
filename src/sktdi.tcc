@@ -12,6 +12,7 @@
 #include "colmaj.tcc"
 #include "sktdi_diag.tcc"
 #include "skswp.tcc"
+#include "optpanel.hh"
 #include <iostream>
 
 template <typename T>
@@ -22,8 +23,9 @@ signed sktdi(uplo_t uplo,
              signed *iPov,
              T *_Work, dim_t lWork)
 {
-    // TODO: Determine automatically npanel.
-    dim_t npanel = lWork / n;
+    dim_t npanel = optpanel(n, 4);
+    if (npanel > lWork / n)
+        npanel = lWork / n;
     if (npanel > n-2)
         npanel = n-2;
 
