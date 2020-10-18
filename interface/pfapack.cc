@@ -15,13 +15,13 @@
 #include <complex>
 #include "skpfa.hh"
 #include "blalink.hh"
+#include "optpanel.hh"
 #include "pfaffine.tcc"
-
-const static unsigned npanel = 8;
 
 template <typename T>
 void set_sp_size(unsigned n, signed *lWork, T *lWorkOut, signed *info)
 {
+    unsigned npanel = optpanel(n, 4);
     // Override also lWork.
     *lWork = npanel * n + n * n;
     // Should lie in exact precision reange.
@@ -34,7 +34,7 @@ signed check_sp_size(unsigned n, int nWork, int info)
 {
     using namespace std;
 
-    if (nWork < n * npanel + n * n) {
+    if (nWork < n * 1 + n * n) {
         cerr << "SKPFA: Scratchpad memory is too small." << endl;
         return err_info(Pfaffine_BAD_SCRATCHPAD, 9);
     }
@@ -65,14 +65,14 @@ void la_skpfa(char uplo, char mthd, unsigned n, T *A, signed ldA, T *Pfa,
     }
 
     // Set memory spaces.
-    T *Sp1 = work;
-    T *SpG = work + n * npanel;
+    T *SpG = work;
+    T *Sp1 = work + n * n;
 
     // TODO: Changed code to use only n elements.
     signed *iPov = new signed[n+1];
 
     // Execute SKPFA.
-    *info = skpfa<T>(check_uplo(uplo), n, A, ldA, SpG, n, iPov, !*info, Pfa, Sp1, n * npanel);
+    *info = skpfa<T>(check_uplo(uplo), n, A, ldA, SpG, n, iPov, !*info, Pfa, Sp1, *lWork);
 }
 
 // Instantiate.
