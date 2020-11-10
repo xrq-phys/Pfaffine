@@ -12,6 +12,10 @@ typedef std::complex<float>  ccscmplx;
 typedef std::complex<double> ccdcmplx;
 // BLIS definitions.
 #include "blis.h"
+// BLAS definitions
+#ifdef BLAS_EXTERNAL
+#include "blalink_fort.h"
+#endif
 
 // error info
 typedef enum {
@@ -36,14 +40,49 @@ inline void gemm(trans_t transa, trans_t transb,
                  T *b, inc_t ldb,
                  T beta,
                  T *c, inc_t ldc);
-template <> inline void gemm<float>(trans_t transa, trans_t transb, dim_t m, dim_t n, dim_t k, float alpha, float *a, inc_t lda, float *b, inc_t ldb, float beta, float *c, inc_t ldc)
-{ bli_sgemm(transa, transb, m, n, k, &alpha, a, 1, lda, b, 1, ldb, &beta, c, 1, ldc); }
-template <> inline void gemm<double>(trans_t transa, trans_t transb, dim_t m, dim_t n, dim_t k, double alpha, double *a, inc_t lda, double *b, inc_t ldb, double beta, double *c, inc_t ldc)
-{ bli_dgemm(transa, transb, m, n, k, &alpha, a, 1, lda, b, 1, ldb, &beta, c, 1, ldc); }
-template <> inline void gemm<ccscmplx>(trans_t transa, trans_t transb, dim_t m, dim_t n, dim_t k, ccscmplx alpha, ccscmplx *a, inc_t lda, ccscmplx *b, inc_t ldb, ccscmplx beta, ccscmplx *c, inc_t ldc)
-{ bli_cgemm(transa, transb, m, n, k, (scomplex *)&alpha, (scomplex *)a, 1, lda, (scomplex *)b, 1, ldb, (scomplex *)&beta, (scomplex *)c, 1, ldc); }
-template <> inline void gemm<ccdcmplx>(trans_t transa, trans_t transb, dim_t m, dim_t n, dim_t k, ccdcmplx alpha, ccdcmplx *a, inc_t lda, ccdcmplx *b, inc_t ldb, ccdcmplx beta, ccdcmplx *c, inc_t ldc)
-{ bli_zgemm(transa, transb, m, n, k, (dcomplex *)&alpha, (dcomplex *)a, 1, lda, (dcomplex *)b, 1, ldb, (dcomplex *)&beta, (dcomplex *)c, 1, ldc); }
+#ifndef BLAS_EXTERNAL
+#define BLALINK_MAC(cctype, ctype, cchar) \
+    template <> inline void gemm<cctype>(trans_t transa, trans_t transb, \
+                                         dim_t m, dim_t n, dim_t k, \
+                                         cctype alpha, \
+                                         cctype *a, inc_t lda, \
+                                         cctype *b, inc_t ldb, \
+                                         cctype beta, \
+                                         cctype *c, inc_t ldc) \
+    { \
+        bli_##cchar##gemm(transa, transb, \
+                          m, n, k, \
+                          (ctype *)&alpha, \
+                          (ctype *)a, 1, lda, \
+                          (ctype *)b, 1, ldb, \
+                          (ctype *)&beta, \
+                          (ctype *)c, 1, ldc); \
+    }
+#else
+#define BLALINK_MAC(cctype, ctype, cchar) \
+    template <> inline void gemm<cctype>(trans_t transa, trans_t transb, \
+                                         dim_t m, dim_t n, dim_t k, \
+                                         cctype alpha, \
+                                         cctype *a, inc_t lda, \
+                                         cctype *b, inc_t ldb, \
+                                         cctype beta, \
+                                         cctype *c, inc_t ldc) \
+    { \
+        char ta = trans2char(transa), \
+             tb = trans2char(transb); \
+        cchar##gemm_(&ta, &tb, &m, &n, &k, \
+                     (ctype *)&alpha, \
+                     (ctype *)a, &lda, \
+                     (ctype *)b, &ldb, \
+                     (ctype *)&beta, \
+                     (ctype *)c, &ldc); \
+    }
+#endif
+BLALINK_MAC( float,    float,    s )
+BLALINK_MAC( double,   double,   d )
+BLALINK_MAC( ccscmplx, scomplex, c )
+BLALINK_MAC( ccdcmplx, dcomplex, z )
+#undef BLALINK_MAC
 
 
 // ger
@@ -53,14 +92,42 @@ inline void ger(dim_t m, dim_t n,
                 T *x, inc_t incx,
                 T *y, inc_t incy,
                 T *a, inc_t lda);
-template <> inline void ger<float>(dim_t m, dim_t n, float alpha, float *x, inc_t incx, float *y, inc_t incy, float *a, inc_t lda)
-{ bli_sger(BLIS_NO_CONJUGATE, BLIS_NO_CONJUGATE, m, n, &alpha, x, incx, y, incy, a, 1, lda); }
-template <> inline void ger<double>(dim_t m, dim_t n, double alpha, double *x, inc_t incx, double *y, inc_t incy, double *a, inc_t lda)
-{ bli_dger(BLIS_NO_CONJUGATE, BLIS_NO_CONJUGATE, m, n, &alpha, x, incx, y, incy, a, 1, lda); }
-template <> inline void ger<ccscmplx>(dim_t m, dim_t n, ccscmplx alpha, ccscmplx *x, inc_t incx, ccscmplx *y, inc_t incy, ccscmplx *a, inc_t lda)
-{ bli_cger(BLIS_NO_CONJUGATE, BLIS_NO_CONJUGATE, m, n, (scomplex *)&alpha, (scomplex *)x, incx, (scomplex *)y, incy, (scomplex *)a, 1, lda); }
-template <> inline void ger<ccdcmplx>(dim_t m, dim_t n, ccdcmplx alpha, ccdcmplx *x, inc_t incx, ccdcmplx *y, inc_t incy, ccdcmplx *a, inc_t lda)
-{ bli_zger(BLIS_NO_CONJUGATE, BLIS_NO_CONJUGATE, m, n, (dcomplex *)&alpha, (dcomplex *)x, incx, (dcomplex *)y, incy, (dcomplex *)a, 1, lda); }
+#ifndef BLAS_EXTERNAL
+#define BLALINK_MAC(cctype, ctype, cchar, cfunc) \
+    template <> inline void ger<cctype>(dim_t m, dim_t n, \
+                                        cctype alpha, \
+                                        cctype *x, inc_t incx, \
+                                        cctype *y, inc_t incy, \
+                                        cctype *a, inc_t lda) \
+    { \
+        bli_##cchar##ger(BLIS_NO_CONJUGATE, \
+                         BLIS_NO_CONJUGATE, \
+                         m, n, \
+                         (ctype *)&alpha, \
+                         (ctype *)x, incx, \
+                         (ctype *)y, incy, \
+                         (ctype *)a, 1, lda); \
+    }
+#else
+#define BLALINK_MAC(cctype, ctype, cchar, cfunc) \
+    template <> inline void ger<cctype>(dim_t m, dim_t n, \
+                                        cctype alpha, \
+                                        cctype *x, inc_t incx, \
+                                        cctype *y, inc_t incy, \
+                                        cctype *a, inc_t lda) \
+    { \
+        cchar##cfunc##_(&m, &n, \
+                        (ctype *)&alpha, \
+                        (ctype *)x, &incx, \
+                        (ctype *)y, &incy, \
+                        (ctype *)a, &lda); \
+    }
+#endif
+BLALINK_MAC( float,    float,    s, ger  )
+BLALINK_MAC( double,   double,   d, ger  )
+BLALINK_MAC( ccscmplx, scomplex, c, geru )
+BLALINK_MAC( ccdcmplx, dcomplex, z, geru )
+#undef BLALINK_MAC
 
 
 // gemv
@@ -72,14 +139,49 @@ inline void gemv(trans_t trans,
                  T *x, inc_t incx,
                  T beta,
                  T *y, inc_t incy);
-template <> inline void gemv<float>(trans_t trans, dim_t m, dim_t n, float alpha, float *a, inc_t lda, float *x, inc_t incx, float beta, float *y, inc_t incy)
-{ bli_sgemv(trans, BLIS_NO_CONJUGATE, m, n, &alpha, a, 1, lda, x, incx, &beta, y, incy); }
-template <> inline void gemv<double>(trans_t trans, dim_t m, dim_t n, double alpha, double *a, inc_t lda, double *x, inc_t incx, double beta, double *y, inc_t incy)
-{ bli_dgemv(trans, BLIS_NO_CONJUGATE, m, n, &alpha, a, 1, lda, x, incx, &beta, y, incy); }
-template <> inline void gemv<ccscmplx>(trans_t trans, dim_t m, dim_t n, ccscmplx alpha, ccscmplx *a, inc_t lda, ccscmplx *x, inc_t incx, ccscmplx beta, ccscmplx *y, inc_t incy)
-{ bli_cgemv(trans, BLIS_NO_CONJUGATE, m, n, (scomplex *)&alpha, (scomplex *)a, 1, lda, (scomplex *)x, incx, (scomplex *)&beta, (scomplex *)y, incy); }
-template <> inline void gemv<ccdcmplx>(trans_t trans, dim_t m, dim_t n, ccdcmplx alpha, ccdcmplx *a, inc_t lda, ccdcmplx *x, inc_t incx, ccdcmplx beta, ccdcmplx *y, inc_t incy)
-{ bli_zgemv(trans, BLIS_NO_CONJUGATE, m, n, (dcomplex *)&alpha, (dcomplex *)a, 1, lda, (dcomplex *)x, incx, (dcomplex *)&beta, (dcomplex *)y, incy); }
+#ifndef BLAS_EXTERNAL
+#define BLALINK_MAC(cctype, ctype, cchar) \
+    template <> inline void gemv<cctype>(trans_t trans, \
+                                         dim_t m, dim_t n, \
+                                         cctype alpha, \
+                                         cctype *a, inc_t lda, \
+                                         cctype *x, inc_t incx, \
+                                         cctype beta, \
+                                         cctype *y, inc_t incy) \
+    { \
+        bli_##cchar##gemv(trans, \
+                          BLIS_NO_CONJUGATE, \
+                          m, n, \
+                          (ctype *)&alpha, \
+                          (ctype *)a, 1, lda, \
+                          (ctype *)x, incx, \
+                          (ctype *)&beta, \
+                          (ctype *)y, incy); \
+    }
+#else
+#define BLALINK_MAC(cctype, ctype, cchar) \
+    template <> inline void gemv<cctype>(trans_t trans, \
+                                         dim_t m, dim_t n, \
+                                         cctype alpha, \
+                                         cctype *a, inc_t lda, \
+                                         cctype *x, inc_t incx, \
+                                         cctype beta, \
+                                         cctype *y, inc_t incy) \
+    { \
+        char t = trans2char(trans); \
+        cchar##gemv_(&t, &m, &n, \
+                     (ctype *)&alpha, \
+                     (ctype *)a, &lda, \
+                     (ctype *)x, &incx, \
+                     (ctype *)&beta, \
+                     (ctype *)y, &incy); \
+    }
+#endif
+BLALINK_MAC( float,    float,    s )
+BLALINK_MAC( double,   double,   d )
+BLALINK_MAC( ccscmplx, scomplex, c )
+BLALINK_MAC( ccdcmplx, dcomplex, z )
+#undef BLALINK_MAC
 
 
 // trmm
@@ -91,14 +193,45 @@ inline void trmm(side_t sidea,
                  T alpha, 
                  T *a, inc_t lda, 
                  T *b, inc_t ldb);
-template <> inline void trmm<float>(side_t sidea, uplo_t uploa, trans_t transa, dim_t m, dim_t n, float alpha, float *a, inc_t lda, float *b, inc_t ldb) 
-{ bli_strmm(sidea, uploa, transa, BLIS_NONUNIT_DIAG, m, n, &alpha, a, 1, lda, b, 1, ldb); }
-template <> inline void trmm<double>(side_t sidea, uplo_t uploa, trans_t transa, dim_t m, dim_t n, double alpha, double *a, inc_t lda, double *b, inc_t ldb) 
-{ bli_dtrmm(sidea, uploa, transa, BLIS_NONUNIT_DIAG, m, n, &alpha, a, 1, lda, b, 1, ldb); }
-template <> inline void trmm<ccscmplx>(side_t sidea, uplo_t uploa, trans_t transa, dim_t m, dim_t n, ccscmplx alpha, ccscmplx *a, inc_t lda, ccscmplx *b, inc_t ldb) 
-{ bli_ctrmm(sidea, uploa, transa, BLIS_NONUNIT_DIAG, m, n, (scomplex *)&alpha, (scomplex *)a, 1, lda, (scomplex *)b, 1, ldb); }
-template <> inline void trmm<ccdcmplx>(side_t sidea, uplo_t uploa, trans_t transa, dim_t m, dim_t n, ccdcmplx alpha, ccdcmplx *a, inc_t lda, ccdcmplx *b, inc_t ldb) 
-{ bli_ztrmm(sidea, uploa, transa, BLIS_NONUNIT_DIAG, m, n, (dcomplex *)&alpha, (dcomplex *)a, 1, lda, (dcomplex *)b, 1, ldb); }
+#ifndef BLAS_EXTERNAL
+#define BLALINK_MAC(cctype, ctype, cchar) \
+    template <> inline void trmm<cctype>(side_t sidea, uplo_t uploa, trans_t transa, \
+                                         dim_t m, dim_t n, \
+                                         cctype alpha, \
+                                         cctype *a, inc_t lda, \
+                                         cctype *b, inc_t ldb) \
+    { \
+        bli_##cchar##trmm(sidea, uploa, transa, \
+                          BLIS_NONUNIT_DIAG, m, n, \
+                          (ctype *)&alpha, \
+                          (ctype *)a, 1, lda, \
+                          (ctype *)b, 1, ldb); \
+    }
+#else
+#define BLALINK_MAC(cctype, ctype, cchar) \
+    template <> inline void trmm<cctype>(side_t sidea, uplo_t uploa, trans_t transa, \
+                                         dim_t m, dim_t n, \
+                                         cctype alpha, \
+                                         cctype *a, inc_t lda, \
+                                         cctype *b, inc_t ldb) \
+    { \
+        char ul = uplo2char(uploa), \
+             si = side2char(sidea), \
+             tr = trans2char(transa), \
+             dg = 'N'; \
+        cchar##trmm_(&si, &ul, &tr, &dg, \
+                     &m, &n, \
+                     (ctype *)&alpha, \
+                     (ctype *)&a, &lda, \
+                     (ctype *)&b, &ldb); \
+    }
+#endif
+BLALINK_MAC( float,    float,    s )
+BLALINK_MAC( double,   double,   d )
+BLALINK_MAC( ccscmplx, scomplex, c )
+BLALINK_MAC( ccdcmplx, dcomplex, z )
+#undef BLALINK_MAC
+
 
 // trmv
 template <typename T>
@@ -108,28 +241,74 @@ inline void trmv(uplo_t uploa,
                  T alpha,
                  T *a, inc_t lda,
                  T *x, inc_t incx);
-template <> inline void trmv<float>(uplo_t uploa, trans_t transa, dim_t m, float alpha, float *a, inc_t lda, float *x, inc_t incx)
-{ bli_strmv(uploa, transa, BLIS_NONUNIT_DIAG, m, &alpha, a, 1, lda, x, incx); }
-template <> inline void trmv<double>(uplo_t uploa, trans_t transa, dim_t m, double alpha, double *a, inc_t lda, double *x, inc_t incx)
-{ bli_dtrmv(uploa, transa, BLIS_NONUNIT_DIAG, m, &alpha, a, 1, lda, x, incx); }
-template <> inline void trmv<ccscmplx>(uplo_t uploa, trans_t transa, dim_t m, ccscmplx alpha, ccscmplx *a, inc_t lda, ccscmplx *x, inc_t incx)
-{ bli_ctrmv(uploa, transa, BLIS_NONUNIT_DIAG, m, (scomplex *)&alpha, (scomplex *)a, 1, lda, (scomplex *)x, incx); }
-template <> inline void trmv<ccdcmplx>(uplo_t uploa, trans_t transa, dim_t m, ccdcmplx alpha, ccdcmplx *a, inc_t lda, ccdcmplx *x, inc_t incx)
-{ bli_ztrmv(uploa, transa, BLIS_NONUNIT_DIAG, m, (dcomplex *)&alpha, (dcomplex *)a, 1, lda, (dcomplex *)x, incx); }
+#define BLALINK_MAC(cctype, ctype, cchar) \
+    template <> inline void trmv<cctype>(uplo_t uploa, trans_t transa, dim_t m, \
+                                         cctype alpha, \
+                                         cctype *a, inc_t lda, \
+                                         cctype *x, inc_t incx) \
+    { \
+        bli_##cchar##trmv(uploa, transa, \
+                          BLIS_NONUNIT_DIAG, m, \
+                          (ctype *)&alpha, \
+                          (ctype *)a, 1, lda, \
+                          (ctype *)x, incx); \
+    }
+/*
+ * TRMV has alpha in its templated interface, which is absent in BLAS.
+ *
+#define BLALINK_MAC(cctype, ctype, cchar) \
+    template <> inline void trmv<cctype>(uplo_t uploa, trans_t transa, dim_t m, \
+                                         cctype alpha, \
+                                         cctype *a, inc_t lda, \
+                                         cctype *x, inc_t incx) \
+    { \
+        char ul = uplo2char(uploa), \
+             tr = trans2char(transa), \
+             dg = 'N'; \
+        cchar##trmv_(&ul, &tr, &dg, &m, \
+                     (ctype *)a, &lda, \
+                     (ctype *)x, *incx); \
+    }
+ */
+BLALINK_MAC( float,    float,    s )
+BLALINK_MAC( double,   double,   d )
+BLALINK_MAC( ccscmplx, scomplex, c )
+BLALINK_MAC( ccdcmplx, dcomplex, z )
+#undef BLALINK_MAC
+
 
 // swap
 template <typename T>
 inline void swap(dim_t n,
                  T *x, inc_t incx,
                  T *y, inc_t incy);
-template <> inline void swap<float>(dim_t n, float *x, inc_t incx, float *y, inc_t incy)
-{ bli_sswapv(n, x, incx, y, incy); }
-template <> inline void swap<double>(dim_t n, double *x, inc_t incx, double *y, inc_t incy)
-{ bli_dswapv(n, x, incx, y, incy); }
-template <> inline void swap<ccscmplx>(dim_t n, ccscmplx *x, inc_t incx, ccscmplx *y, inc_t incy)
-{ bli_cswapv(n, (scomplex *)x, incx, (scomplex *)y, incy); }
-template <> inline void swap<ccdcmplx>(dim_t n, ccdcmplx *x, inc_t incx, ccdcmplx *y, inc_t incy)
-{ bli_zswapv(n, (dcomplex *)x, incx, (dcomplex *)y, incy); }
+#ifndef BLAS_EXTERNAL
+#define BLALINK_MAC(cctype, ctype, cchar) \
+    template <> inline void swap<cctype>(dim_t n, \
+                                         cctype *x, inc_t incx, \
+                                         cctype *y, inc_t incy) \
+    { \
+        bli_##cchar##swapv(n, \
+                           (ctype *)x, incx, \
+                           (ctype *)y, incy); \
+    }
+#else
+#define BLALINK_MAC(cctype, ctype, cchar) \
+    template <> inline void swap<cctype>(dim_t n, \
+                                         cctype *x, inc_t incx, \
+                                         cctype *y, inc_t incy) \
+    { \
+        cchar##swap_(&n, \
+                     (ctype *)x, &incx, \
+                     (ctype *)y, &incy); \
+    }
+#endif
+BLALINK_MAC( float,    float,    s )
+BLALINK_MAC( double,   double,   d )
+BLALINK_MAC( ccscmplx, scomplex, c )
+BLALINK_MAC( ccdcmplx, dcomplex, z )
+#undef BLALINK_MAC
+
 
 // axpy
 template <typename T>
@@ -137,28 +316,74 @@ inline void axpy(dim_t n,
                  T alpha,
                  T *x, inc_t incx,
                  T *y, inc_t incy);
-template <> inline void axpy<float>(dim_t n, float alpha, float *x, inc_t incx, float *y, inc_t incy)
-{ bli_saxpyv(BLIS_NO_CONJUGATE, n, &alpha, x, incx, y, incy); }
-template <> inline void axpy<double>(dim_t n, double alpha, double *x, inc_t incx, double *y, inc_t incy)
-{ bli_daxpyv(BLIS_NO_CONJUGATE, n, &alpha, x, incx, y, incy); }
-template <> inline void axpy<ccscmplx>(dim_t n, ccscmplx alpha, ccscmplx *x, inc_t incx, ccscmplx *y, inc_t incy)
-{ bli_caxpyv(BLIS_NO_CONJUGATE, n, (scomplex *)&alpha, (scomplex *)x, incx, (scomplex *)y, incy); }
-template <> inline void axpy<ccdcmplx>(dim_t n, ccdcmplx alpha, ccdcmplx *x, inc_t incx, ccdcmplx *y, inc_t incy)
-{ bli_zaxpyv(BLIS_NO_CONJUGATE, n, (dcomplex *)&alpha, (dcomplex *)x, incx, (dcomplex *)y, incy); }
+#ifndef BLAS_EXTERNAL
+#define BLALINK_MAC(cctype, ctype, cchar) \
+    template <> inline void axpy<cctype>(dim_t n, \
+                                         cctype alpha, \
+                                         cctype *x, inc_t incx, \
+                                         cctype *y, inc_t incy) \
+    { \
+        bli_##cchar##axpyv(BLIS_NO_CONJUGATE, n, \
+                           (ctype *)&alpha, \
+                           (ctype *)x, incx, \
+                           (ctype *)y, incy); \
+    }
+#else
+#define BLALINK_MAC(cctype, ctype, cchar) \
+    template <> inline void axpy<cctype>(dim_t n, \
+                                         cctype alpha, \
+                                         cctype *x, inc_t incx, \
+                                         cctype *y, inc_t incy) \
+    { \
+        cchar##axpy_(&n, \
+                     (ctype *)&alpha, \
+                     (ctype *)x, &incx, \
+                     (ctype *)y, &incy); \
+    }
+#endif
+BLALINK_MAC( float,    float,    s )
+BLALINK_MAC( double,   double,   d )
+BLALINK_MAC( ccscmplx, scomplex, c )
+BLALINK_MAC( ccdcmplx, dcomplex, z )
+#undef BLALINK_MAC
 
 // dot
 template <typename T>
 inline T dot(dim_t n,
              T *sx, inc_t incx,
              T *sy, inc_t incy);
-template <> inline float dot<float>(dim_t n, float *sx, inc_t incx, float *sy, inc_t incy)
-{ float rho; bli_sdotv(BLIS_NO_CONJUGATE, BLIS_NO_CONJUGATE, n, sx, incx, sy, incy, &rho); return rho; }
-template <> inline double dot<double>(dim_t n, double *sx, inc_t incx, double *sy, inc_t incy)
-{ double rho; bli_ddotv(BLIS_NO_CONJUGATE, BLIS_NO_CONJUGATE, n, sx, incx, sy, incy, &rho); return rho; }
-template <> inline ccscmplx dot<ccscmplx>(dim_t n, ccscmplx *sx, inc_t incx, ccscmplx *sy, inc_t incy)
-{ ccscmplx rho; bli_cdotv(BLIS_NO_CONJUGATE, BLIS_NO_CONJUGATE, n, (scomplex *)sx, incx, (scomplex *)sy, incy, (scomplex *)&rho); return rho; }
-template <> inline ccdcmplx dot<ccdcmplx>(dim_t n, ccdcmplx *sx, inc_t incx, ccdcmplx *sy, inc_t incy)
-{ ccdcmplx rho; bli_zdotv(BLIS_NO_CONJUGATE, BLIS_NO_CONJUGATE, n, (dcomplex *)sx, incx, (dcomplex *)sy, incy, (dcomplex *)&rho); return rho; }
+#ifndef BLAS_EXTERNAL
+#define BLALINK_MAC(cctype, ctype, cchar, cfunc) \
+    template <> inline cctype dot<cctype>(dim_t n, \
+                                          cctype *sx, inc_t incx, \
+                                          cctype *sy, inc_t incy) \
+    { \
+        cctype rho; \
+        bli_##cchar##dotv(BLIS_NO_CONJUGATE, \
+                          BLIS_NO_CONJUGATE, \
+                          n, \
+                          (ctype *)sx, incx, \
+                          (ctype *)sy, incy, \
+                          (ctype *)&rho); \
+        return rho; \
+    }
+#else
+#define BLALINK_MAC(cctype, ctype, cchar, cfunc) \
+    template <> inline cctype dot<cctype>(dim_t n, \
+                                          cctype *sx, inc_t incx, \
+                                          cctype *sy, inc_t incy) \
+    { \
+        ctype rho = cchar##cfunc##_(&n, \
+                                    (ctype *)sx, &incx, \
+                                    (ctype *)sy, &incy); \
+        return *((cctype *)&rho); \
+    }
+#endif
+BLALINK_MAC( float,    float,    s, dot  )
+BLALINK_MAC( double,   double,   d, dot  )
+BLALINK_MAC( ccscmplx, scomplex, c, dotc )
+BLALINK_MAC( ccdcmplx, dcomplex, z, dotc )
+#undef BLALINK_MAC
 
 
 // [BLIS] skmm
@@ -173,14 +398,29 @@ inline void skmm(side_t sidea,
                  T *b, inc_t ldb,
                  T beta,
                  T *c, inc_t ldc);
-template <> inline void skmm<float>(side_t sidea, uplo_t uploa, conj_t conja, trans_t transb, dim_t m, dim_t n, float alpha, float *a, inc_t lda, float *b, inc_t ldb, float beta, float *c, inc_t ldc)
-{ bli_sskmm(sidea, uploa, conja, transb, m, n, &alpha, a, 1, lda, b, 1, ldb, &beta, c, 1, ldc); }
-template <> inline void skmm<double>(side_t sidea, uplo_t uploa, conj_t conja, trans_t transb, dim_t m, dim_t n, double alpha, double *a, inc_t lda, double *b, inc_t ldb, double beta, double *c, inc_t ldc)
-{ bli_dskmm(sidea, uploa, conja, transb, m, n, &alpha, a, 1, lda, b, 1, ldb, &beta, c, 1, ldc); }
-template <> inline void skmm<ccscmplx>(side_t sidea, uplo_t uploa, conj_t conja, trans_t transb, dim_t m, dim_t n, ccscmplx alpha, ccscmplx *a, inc_t lda, ccscmplx *b, inc_t ldb, ccscmplx beta, ccscmplx *c, inc_t ldc)
-{ bli_cskmm(sidea, uploa, conja, transb, m, n, (scomplex *)&alpha, (scomplex *)a, 1, lda, (scomplex *)b, 1, ldb, (scomplex *)&beta, (scomplex *)c, 1, ldc); }
-template <> inline void skmm<ccdcmplx>(side_t sidea, uplo_t uploa, conj_t conja, trans_t transb, dim_t m, dim_t n, ccdcmplx alpha, ccdcmplx *a, inc_t lda, ccdcmplx *b, inc_t ldb, ccdcmplx beta, ccdcmplx *c, inc_t ldc)
-{ bli_zskmm(sidea, uploa, conja, transb, m, n, (dcomplex *)&alpha, (dcomplex *)a, 1, lda, (dcomplex *)b, 1, ldb, (dcomplex *)&beta, (dcomplex *)c, 1, ldc); }
+#define BLALINK_MAC(cctype, ctype, cchar) \
+    template <> inline void skmm<cctype>(side_t sidea, uplo_t uploa, conj_t conja, trans_t transb, \
+                                         dim_t m, dim_t n, \
+                                         cctype alpha, \
+                                         cctype *a, inc_t lda, \
+                                         cctype *b, inc_t ldb, \
+                                         cctype beta, \
+                                         cctype *c, inc_t ldc) \
+    { \
+        bli_##cchar##skmm(sidea, uploa, conja, transb, \
+                          m, n, \
+                          (ctype *)&alpha, \
+                          (ctype *)a, 1, lda, \
+                          (ctype *)b, 1, ldb, \
+                          (ctype *)&beta, \
+                          (ctype *)c, 1, ldc); \
+    }
+BLALINK_MAC( float,    float,    s )
+BLALINK_MAC( double,   double,   d )
+BLALINK_MAC( ccscmplx, scomplex, c )
+BLALINK_MAC( ccdcmplx, dcomplex, z )
+#undef BLALINK_MAC
+
 
 // [BLIS] skr2k
 template <typename T>
@@ -192,11 +432,26 @@ inline void ccbli_skr2k(uplo_t uploc,
                         T *b, inc_t ldb,
                         T beta,
                         T *c, inc_t ldc);
-template <> inline void ccbli_skr2k<float>(uplo_t uploc, trans_t transab, dim_t m, dim_t k, float alpha, float *a, inc_t lda, float *b, inc_t ldb, float beta, float *c, inc_t ldc)
-{ bli_sskr2k(uploc, transab, transab, m, k, &alpha, a, 1, lda, b, 1, ldb, &beta, c, 1, ldc); }
-template <> inline void ccbli_skr2k<double>(uplo_t uploc, trans_t transab, dim_t m, dim_t k, double alpha, double *a, inc_t lda, double *b, inc_t ldb, double beta, double *c, inc_t ldc)
-{ bli_dskr2k(uploc, transab, transab, m, k, &alpha, a, 1, lda, b, 1, ldb, &beta, c, 1, ldc); }
-template <> inline void ccbli_skr2k<ccscmplx>(uplo_t uploc, trans_t transab, dim_t m, dim_t k, ccscmplx alpha, ccscmplx *a, inc_t lda, ccscmplx *b, inc_t ldb, ccscmplx beta, ccscmplx *c, inc_t ldc)
-{ bli_cskr2k(uploc, transab, transab, m, k, (scomplex *)&alpha, (scomplex *)a, 1, lda, (scomplex *)b, 1, ldb, (scomplex *)&beta, (scomplex *)c, 1, ldc); }
-template <> inline void ccbli_skr2k<ccdcmplx>(uplo_t uploc, trans_t transab, dim_t m, dim_t k, ccdcmplx alpha, ccdcmplx *a, inc_t lda, ccdcmplx *b, inc_t ldb, ccdcmplx beta, ccdcmplx *c, inc_t ldc)
-{ bli_zskr2k(uploc, transab, transab, m, k, (dcomplex *)&alpha, (dcomplex *)a, 1, lda, (dcomplex *)b, 1, ldb, (dcomplex *)&beta, (dcomplex *)c, 1, ldc); }
+#define BLALINK_MAC(cctype, ctype, cchar) \
+    template <> inline void ccbli_skr2k<cctype>(uplo_t uploc, trans_t transab, \
+                                                dim_t m, dim_t k, \
+                                                cctype alpha, \
+                                                cctype *a, inc_t lda, \
+                                                cctype *b, inc_t ldb, \
+                                                cctype beta, \
+                                                cctype *c, inc_t ldc) \
+    { \
+        bli_##cchar##skr2k(uploc, transab, transab, \
+                           m, k, \
+                           (ctype *)&alpha, \
+                           (ctype *)a, 1, lda, \
+                           (ctype *)b, 1, ldb, \
+                           (ctype *)&beta, \
+                           (ctype *)c, 1, ldc); \
+    }
+BLALINK_MAC( float,    float,    s )
+BLALINK_MAC( double,   double,   d )
+BLALINK_MAC( ccscmplx, scomplex, c )
+BLALINK_MAC( ccdcmplx, dcomplex, z )
+#undef BLALINK_MAC
+

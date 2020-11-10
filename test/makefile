@@ -20,4 +20,4 @@ clean:
 .SUFFIXES: .x .cc
 
 %.x : %.cc $(PFAFFINE_LIB)
-	$(CXX) $(CXXFLAGS) $< $(PFAFFINE_LIB) $(BLIS_LIB) -o $@
+	$(CXX) $(CXXFLAGS) $< $(PFAFFINE_LIB) $(BLIS_LIB) $(LDFLAGS) -o $@

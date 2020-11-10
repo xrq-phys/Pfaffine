@@ -11,3 +11,8 @@ CXXFLAGS=-std=c++11 -O3
 
 # Path to BLIS installation.
 BLIS_ROOT=/usr
+
+# Alternative: use BLIS+BLAS
+CXXFLAGS+=-DBLAS_EXTERNAL
+LDFLAGS=-lmkl_rt
+
