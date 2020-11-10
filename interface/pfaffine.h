@@ -18,19 +18,42 @@ typedef float  complex ccscmplx;
 typedef double complex ccdcmplx;
 #endif
 
+#ifdef EXPAND_NAME
+#undef EXPAND_NAME
+#endif
+#define EXPAND_NAME( typechar, funcname ) typechar##funcname##_
+
 // Simplified interface.
-EXTERNC void sskpfa(float    *Pfa, char uplo, unsigned n, float    *A, unsigned ldA, unsigned inv);
-EXTERNC void dskpfa(double   *Pfa, char uplo, unsigned n, double   *A, unsigned ldA, unsigned inv);
-EXTERNC void cskpfa(ccscmplx *Pfa, char uplo, unsigned n, ccscmplx *A, unsigned ldA, unsigned inv);
-EXTERNC void zskpfa(ccdcmplx *Pfa, char uplo, unsigned n, ccdcmplx *A, unsigned ldA, unsigned inv);
+#ifdef PASTE_DEF
+#undef PASTE_DEF
+#endif
+#define PASTE_DEF( typename, typechar ) \
+    EXTERNC void EXPAND_NAME( typechar, skpfa ) \
+        (char uplo, unsigned n, float *A, signed ldA, unsigned inv, typename *dPfa, signed *info);
+
+PASTE_DEF( float,    s )
+PASTE_DEF( double,   d )
+PASTE_DEF( ccscmplx, c )
+PASTE_DEF( ccdcmplx, z )
+#undef EXPAND_NAME
+#undef PASTE_DEF
 
 // Full interface, callable from both C and Fortran.
-EXTERNC void cal_sskpfa_(float    *Pfa, char *uplo, unsigned *n, float    *A, unsigned *ldA, unsigned *inv,
-        float    *Sp1, float    *Sp2, float    *Sp3, float    *Sp4, float    *Sp5, unsigned *npanel);
-EXTERNC void cal_dskpfa_(double   *Pfa, char *uplo, unsigned *n, double   *A, unsigned *ldA, unsigned *inv,
-        double   *Sp1, double   *Sp2, double   *Sp3, double   *Sp4, double   *Sp5, unsigned *npanel);
-EXTERNC void cal_cskpfa_(ccscmplx *Pfa, char *uplo, unsigned *n, ccscmplx *A, unsigned *ldA, unsigned *inv,
-        ccscmplx *Sp1, ccscmplx *Sp2, ccscmplx *Sp3, ccscmplx *Sp4, ccscmplx *Sp5, unsigned *npanel);
-EXTERNC void cal_zskpfa_(ccdcmplx *Pfa, char *uplo, unsigned *n, ccdcmplx *A, unsigned *ldA, unsigned *inv,
-        ccdcmplx *Sp1, ccdcmplx *Sp2, ccdcmplx *Sp3, ccdcmplx *Sp4, ccdcmplx *Sp5, unsigned *npanel);
+#define EXPAND_NAME( typechar, funcname ) cal_##typechar##funcname##_
+#define PASTE_DEF( typename, typechar ) \
+    EXTERNC void EXPAND_NAME( typechar, skpfa ) \
+        (char *uplo,  \
+         unsigned *n, \
+         typename *_A, signed *ldA, \
+         typename *_G, signed *ldG, \
+         signed *iPov,   \
+         signed *inv,    \
+         typename *dPfa, signed *info, \
+         typename *_Work, unsigned *lWork);
 
+PASTE_DEF( float,    s )
+PASTE_DEF( double,   d )
+PASTE_DEF( ccscmplx, c )
+PASTE_DEF( ccdcmplx, z )
+#undef EXPAND_NAME
+#undef PASTE_DEF

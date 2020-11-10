@@ -11,7 +11,6 @@ static const unsigned NPANEL = 32;
 
 #define matA(i, j) matA[ (i) + (j)*N ]
 #define mat1(i, j) mat1[ (i) + (j)*N ]
-#define mat2(i, j) mat2[ (i) + (j)*N ]
 #define matC(i, j) matC[ (i) + (j)*N ]
 
 int main(const int argc, const char *argv[])
@@ -32,10 +31,8 @@ int main(const int argc, const char *argv[])
     // prepares input and output container.
     double matA[N * N];
     double mat1[N * NPANEL];
-    double mat2[N * NPANEL];
     double matC[N * N];
-    double matD[N * N];
-    double mat3[N * (NPANEL+1)];
+    signed iPov[N + 1];
     for (unsigned j = 0; j < N; ++j)
         for (unsigned i = 0; i < N; ++i)
             matA(i, j) = dist(rng);
@@ -59,11 +56,12 @@ int main(const int argc, const char *argv[])
 
     // call Pfaffian calculation.
     auto start = std::chrono::high_resolution_clock::now();
-    double Pfa = skpfa<double>('U', N,
-                               &matA(0, 0), N, /*inv=*/1,
-                               &mat1(0, 0), &mat2(0, 0),
-                               //(nullptr, nullptr, nullptr, NPANEL);
-                               matC, matD, mat3, NPANEL);
+    double Pfa;
+    signed info = skpfa<double>(BLIS_UPPER, N,
+                                &matA(0, 0), N,
+                                &matC(0, 0), N,
+                                iPov, true, &Pfa,
+                                &mat1(0, 0), N * NPANEL);
     auto elapsed = std::chrono::high_resolution_clock::now() - start;
     long long microseconds = std::chrono::duration_cast<std::chrono::microseconds>(elapsed).count();
 

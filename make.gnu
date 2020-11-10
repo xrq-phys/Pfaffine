@@ -4,15 +4,15 @@ AR=ar
 # Compilers.
 # GCC with G++ is the general choice on linux.
 # Intel compilers recommended on Intel processors.
-CC=clang
+CC=gcc
 CFLAGS=-O2
-CXX=clang++
+CXX=g++
 CXXFLAGS=-std=c++11 -O3
 
 # Path to BLIS installation.
-BLIS_ROOT=/usr/local
+BLIS_ROOT=/usr
 
 # Alternative: use BLIS+BLAS
 CXXFLAGS+=-DBLAS_EXTERNAL
-LDFLAGS=-framework Accelerate
+LDFLAGS=-lmkl_rt
 

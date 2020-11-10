@@ -9,15 +9,25 @@
 #include "colmaj.tcc"
 
 template<typename T>
-inline void skslc(unsigned n, unsigned i,
-                  T *x,
-                  T *_A, unsigned ldA)
+inline signed skslc(uplo_t uploA,
+                    unsigned n,
+                    unsigned i,
+                    T *x,
+                    T *_A, unsigned ldA)
 {
     colmaj<T> A(_A, ldA);
     x[i] = 0.0;
-    for (unsigned j = 0; j < i; ++j)
-        x[j] =  A(j, i);
-    for (unsigned j = i+1; j < n; ++j)
-        x[j] = -A(i, j);
+    switch (uploA) {
+    case BLIS_UPPER:
+        for (unsigned j = 0; j < i; ++j)
+            x[j] =  A(j, i);
+        for (unsigned j = i+1; j < n; ++j)
+            x[j] = -A(i, j);
+        return 0;
+
+    default:
+        std::cerr << "SKSLC: Lower triangular storage not implemented. Sorry." << std::endl;
+        return err_info(Pfaffine_NOT_IMPLEMNTED, 0);
+    }
 }
 

@@ -7,30 +7,60 @@
 #include "pfaffine.hh"
 #include "pfaffine.tcc"
 
-template float    skpfa<float>   (char, unsigned, float    *, unsigned, unsigned);
-template double   skpfa<double>  (char, unsigned, double   *, unsigned, unsigned);
-template ccscmplx skpfa<ccscmplx>(char, unsigned, ccscmplx *, unsigned, unsigned);
-template ccdcmplx skpfa<ccdcmplx>(char, unsigned, ccdcmplx *, unsigned, unsigned);
+#ifdef EXPAND_NAME
+#undef EXPAND_NAME
+#endif
 
-void sskpfa(float    *Pfa, char uplo, unsigned n, float    *A, unsigned ldA, unsigned inv)
-{ *Pfa = skpfa<float>   (uplo, n, A, ldA, inv); }
-void dskpfa(double   *Pfa, char uplo, unsigned n, double   *A, unsigned ldA, unsigned inv)
-{ *Pfa = skpfa<double>  (uplo, n, A, ldA, inv); }
-void cskpfa(ccscmplx *Pfa, char uplo, unsigned n, ccscmplx *A, unsigned ldA, unsigned inv)
-{ *Pfa = skpfa<ccscmplx>(uplo, n, A, ldA, inv); }
-void zskpfa(ccdcmplx *Pfa, char uplo, unsigned n, ccdcmplx *A, unsigned ldA, unsigned inv)
-{ *Pfa = skpfa<ccdcmplx>(uplo, n, A, ldA, inv); }
+// Template instantiation.
+#ifdef PASTE_DEF
+#undef PASTE_DEF
+#endif
+#define PASTE_DEF( typename ) \
+    template signed skpfa< typename > \
+        (char, unsigned, typename *, signed, unsigned, typename *);
 
-void cal_sskpfa_(float    *Pfa, char *uplo, unsigned *n, float    *A, unsigned *ldA, unsigned *inv,
-        float    *Sp1, float    *Sp2, float    *Sp3, float    *Sp4, float    *Sp5, unsigned *npanel)
-{ *Pfa = skpfa<float>   (*uplo, *n, A, *ldA, *inv, Sp1, Sp2, Sp3, Sp4, Sp5, *npanel); }
-void cal_dskpfa_(double   *Pfa, char *uplo, unsigned *n, double   *A, unsigned *ldA, unsigned *inv,
-        double   *Sp1, double   *Sp2, double   *Sp3, double   *Sp4, double   *Sp5, unsigned *npanel)
-{ *Pfa = skpfa<double>  (*uplo, *n, A, *ldA, *inv, Sp1, Sp2, Sp3, Sp4, Sp5, *npanel); }
-void cal_cskpfa_(ccscmplx *Pfa, char *uplo, unsigned *n, ccscmplx *A, unsigned *ldA, unsigned *inv,
-        ccscmplx *Sp1, ccscmplx *Sp2, ccscmplx *Sp3, ccscmplx *Sp4, ccscmplx *Sp5, unsigned *npanel)
-{ *Pfa = skpfa<ccscmplx>(*uplo, *n, A, *ldA, *inv, Sp1, Sp2, Sp3, Sp4, Sp5, *npanel); }
-void cal_zskpfa_(ccdcmplx *Pfa, char *uplo, unsigned *n, ccdcmplx *A, unsigned *ldA, unsigned *inv,
-        ccdcmplx *Sp1, ccdcmplx *Sp2, ccdcmplx *Sp3, ccdcmplx *Sp4, ccdcmplx *Sp5, unsigned *npanel)
-{ *Pfa = skpfa<ccdcmplx>(*uplo, *n, A, *ldA, *inv, Sp1, Sp2, Sp3, Sp4, Sp5, *npanel); }
+PASTE_DEF( float    )
+PASTE_DEF( double   )
+PASTE_DEF( ccscmplx )
+PASTE_DEF( ccdcmplx )
+#undef EXPAND_NAME
+#undef PASTE_DEF
 
+// C simplified interface.
+#define EXPAND_NAME( typechar, funcname ) typechar##funcname##_
+#define PASTE_DEF( typename, typechar ) \
+    void EXPAND_NAME( typechar, skpfa ) \
+        (char uplo, unsigned n, typename *A, signed ldA, unsigned inv, typename *dPfa, signed *info) \
+    { \
+        *info = skpfa<typename>(uplo, n, A, ldA, inv, dPfa); \
+    }
+
+PASTE_DEF( float,    s )
+PASTE_DEF( double,   d )
+PASTE_DEF( ccscmplx, c )
+PASTE_DEF( ccdcmplx, z )
+#undef EXPAND_NAME
+#undef PASTE_DEF
+
+// C / Fortran full interface.
+#define EXPAND_NAME( typechar, funcname ) cal_##typechar##funcname##_
+#define PASTE_DEF( typename, typechar ) \
+    void EXPAND_NAME( typechar, skpfa ) \
+        (char *uplo,  \
+         unsigned *n, \
+         typename *_A, signed *ldA, \
+         typename *_G, signed *ldG, \
+         signed *iPov,   \
+         signed *inv,    \
+         typename *dPfa, signed *info, \
+         typename *_Work, unsigned *lWork) \
+    { \
+        *info = skpfa<typename>(check_uplo(*uplo), *n, _A, *ldA, _G, *ldG, iPov, *inv, dPfa, _Work, *lWork); \
+    }
+
+PASTE_DEF( float,    s )
+PASTE_DEF( double,   d )
+PASTE_DEF( ccscmplx, c )
+PASTE_DEF( ccdcmplx, z )
+#undef EXPAND_NAME
+#undef PASTE_DEF

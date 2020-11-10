@@ -14,71 +14,88 @@
 #include <cstdlib>
 #include <complex>
 #include "skpfa.hh"
-
-const static unsigned npanel = 8;
+#include "blalink.hh"
+#include "optpanel.hh"
+#include "pfaffine.tcc"
 
 template <typename T>
-void set_sp_size(unsigned n, int *lWork, T *lWorkOut, int *info)
+void set_sp_size(unsigned n, signed *lWork, T *lWorkOut, signed *info)
 {
-    if (*info)
-        // Pfaffian only.
-        *lWork = npanel * n * 2;
-    else
-        // With inverse.
-        *lWork = npanel * n + n * n;
-    *lWorkOut = *lWork; // Should lie in exact precision reange.
+    unsigned npanel = optpanel(n, 4);
+    // Override also lWork.
+    *lWork = npanel * n + n * n;
+    // Should lie in exact precision reange.
+    *lWorkOut = *lWork;
+    // Exit OK.
     *info = 0;
 }
 
-void check_sp_size(unsigned n, int nWork, int info)
+signed check_sp_size(unsigned n, int nWork, int info)
 {
     using namespace std;
 
-    if (( info && nWork < 2 * n * npanel) ||
-        (!info && nWork < n * npanel + n * n)) {
-        cerr << "Pfaffine error: scratchpad memory is too small." << endl;
-        _Exit(EXIT_FAILURE);
+    if (nWork < n * 1 + n * n) {
+        cerr << "SKPFA: Scratchpad memory is too small." << endl;
+        return err_info(Pfaffine_BAD_SCRATCHPAD, 9);
     }
+    return 0;
 }
 
 template <typename T>
-void la_skpfa(char *uplo, char *mthd, unsigned *n, T *A, unsigned *ldA, T *Pfa,
-              int *iWork, T *work, int *lWork, int *info)
+void la_skpfa(char uplo, char mthd, unsigned n, T *A, signed ldA, T *Pfa,
+              signed *iWork, T *work, signed *lWork, signed *info)
 {
     using namespace std;
+
     // Spm query.
     if (*lWork < 0)
-        return set_sp_size<T>(*n, lWork, work, info);
+        return set_sp_size<T>(n, lWork, work, info);
     else
-        check_sp_size(*n, *lWork, *info);
+        check_sp_size(n, *lWork, *info);
+    switch (mthd)
+    {
+    case 'p':
+    case 'P':
+        break;
+
+    default:
+        cerr << "SKPFA: Householder transformation is not implemented. Only Parlett-Reid is supported now." << endl;
+        *info = err_info(Pfaffine_NOT_IMPLEMNTED, 2);
+        return;
+    }
 
     // Set memory spaces.
-    T *Sp1 = work;
-    T *Sp2 = work + (*n) * npanel;
-    T *Sp3 = work + (*n) * npanel;
+    T *SpG = work;
+    T *Sp1 = work + n * n;
 
-    // Execute
-    *Pfa = skpfa<T>(*uplo, *n, A, *ldA, !(*info), Sp1, Sp2, Sp3, 0, 0, npanel);
-    // TODO: Support error as code.
-    *info = 0;
+    // TODO: Changed code to use only n elements.
+    signed *iPov = new signed[n+1];
+
+    // Execute SKPFA.
+    *info = skpfa<T>(check_uplo(uplo), n, A, ldA, SpG, n, iPov, !*info, Pfa, Sp1, *lWork);
 }
 
 // Instantiate.
-extern "C" void m_sskpfa_(char *uplo, char *mthd, unsigned *n, float *A, unsigned *ldA, float *Pfa,
-                          int *iWork, float *work, int *lWork, int *info)
-{ la_skpfa<float>(uplo, mthd, n, A, ldA, Pfa, iWork, work, lWork, info); }
-extern "C" void m_dskpfa_(char *uplo, char *mthd, unsigned *n, double *A, unsigned *ldA, double *Pfa,
-                          int *iWork, double *work, int *lWork, int *info)
-{ la_skpfa<double>(uplo, mthd, n, A, ldA, Pfa, iWork, work, lWork, info); }
+#ifdef EXPAND_NAME
+#undef EXPAND_NAME
+#endif
+#define EXPAND_NAME( typechar, funcname ) m_##typechar##funcname##_
+#ifdef PASTE_DEF
+#undef PASTE_DEF
+#endif
+#define PASTE_DEF( typename, typechar ) \
+    extern "C" void EXPAND_NAME( typechar, skpfa ) \
+        (char *uplo,  \
+         char *mthd,  \
+         unsigned *n, \
+         typename *A, signed *ldA,     \
+         typename *Pfa, signed *iWork, \
+         typename *work, signed *lWork, signed *info) \
+    { \
+        la_skpfa<typename>(*uplo, *mthd, *n, A, *ldA, Pfa, iWork, work, lWork, info); \
+    }
 
-extern "C" void m_cskpfa_(char *uplo, char *mthd, unsigned *n, void *A, unsigned *ldA, void *Pfa,
-                          int *iWork, void *work, int *lWork, int *info)
-{ la_skpfa<std::complex<float> >(uplo, mthd, n, (std::complex<float> *)A, ldA, (std::complex<float> *)Pfa,
-                                 iWork, (std::complex<float> *)work, lWork, info);
-}
-extern "C" void m_zskpfa_(char *uplo, char *mthd, unsigned *n, void *A, unsigned *ldA, void *Pfa,
-                          int *iWork, void *work, int *lWork, int *info)
-{ la_skpfa<std::complex<double> >(uplo, mthd, n, (std::complex<double> *)A, ldA, (std::complex<double> *)Pfa,
-                                  iWork, (std::complex<double> *)work, lWork, info);
-}
-
+PASTE_DEF( float,    s )
+PASTE_DEF( double,   d )
+PASTE_DEF( ccscmplx, c )
+PASTE_DEF( ccdcmplx, z )

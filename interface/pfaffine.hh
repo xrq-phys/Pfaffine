@@ -6,5 +6,5 @@
 #include "skpfa.hh"
 
 template <typename T>
-T skpfa(char uplo, unsigned n, T *A, unsigned ldA, unsigned inv);
+T skpfa(char uplo, unsigned n, T *A, signed ldA, unsigned inv);
 
