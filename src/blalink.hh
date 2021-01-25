@@ -386,62 +386,28 @@ BLALINK_MAC( ccdcmplx, dcomplex, z, dotc )
 #undef BLALINK_MAC
 
 
-// [BLIS] skmm
+// [BLIS] gemmt
 template <typename T>
-inline void skmm(side_t sidea,
-                 uplo_t uploa,
-                 conj_t conja,
-                 trans_t transb,
-                 dim_t m, dim_t n,
-                 T alpha,
-                 T *a, inc_t lda,
-                 T *b, inc_t ldb,
-                 T beta,
-                 T *c, inc_t ldc);
+inline void gemmt(uplo_t uploc,
+                  trans_t transa, trans_t transb,
+                  dim_t m, dim_t k,
+                  T alpha,
+                  T *a, inc_t lda,
+                  T *b, inc_t ldb,
+                  T beta,
+                  T *c, inc_t ldc);
 #define BLALINK_MAC(cctype, ctype, cchar) \
-    template <> inline void skmm<cctype>(side_t sidea, uplo_t uploa, conj_t conja, trans_t transb, \
-                                         dim_t m, dim_t n, \
-                                         cctype alpha, \
-                                         cctype *a, inc_t lda, \
-                                         cctype *b, inc_t ldb, \
-                                         cctype beta, \
-                                         cctype *c, inc_t ldc) \
+    template <> inline void gemmt<cctype>(uplo_t uploc, \
+                                          trans_t transa, trans_t transb, \
+                                          dim_t m, dim_t k, \
+                                          cctype alpha, \
+                                          cctype *a, inc_t lda, \
+                                          cctype *b, inc_t ldb, \
+                                          cctype beta, \
+                                          cctype *c, inc_t ldc) \
     { \
-        bli_##cchar##skmm(sidea, uploa, conja, transb, \
-                          m, n, \
-                          (ctype *)&alpha, \
-                          (ctype *)a, 1, lda, \
-                          (ctype *)b, 1, ldb, \
-                          (ctype *)&beta, \
-                          (ctype *)c, 1, ldc); \
-    }
-BLALINK_MAC( float,    float,    s )
-BLALINK_MAC( double,   double,   d )
-BLALINK_MAC( ccscmplx, scomplex, c )
-BLALINK_MAC( ccdcmplx, dcomplex, z )
-#undef BLALINK_MAC
-
-
-// [BLIS] skr2k
-template <typename T>
-inline void ccbli_skr2k(uplo_t uploc,
-                        trans_t transab,
-                        dim_t m, dim_t k,
-                        T alpha,
-                        T *a, inc_t lda,
-                        T *b, inc_t ldb,
-                        T beta,
-                        T *c, inc_t ldc);
-#define BLALINK_MAC(cctype, ctype, cchar) \
-    template <> inline void ccbli_skr2k<cctype>(uplo_t uploc, trans_t transab, \
-                                                dim_t m, dim_t k, \
-                                                cctype alpha, \
-                                                cctype *a, inc_t lda, \
-                                                cctype *b, inc_t ldb, \
-                                                cctype beta, \
-                                                cctype *c, inc_t ldc) \
-    { \
-        bli_##cchar##skr2k(uploc, transab, transab, \
+        bli_##cchar##gemmt(uploc, \
+                           transa, transb, \
                            m, k, \
                            (ctype *)&alpha, \
                            (ctype *)a, 1, lda, \
