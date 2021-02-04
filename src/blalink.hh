@@ -241,6 +241,7 @@ inline void trmv(uplo_t uploa,
                  T alpha,
                  T *a, inc_t lda,
                  T *x, inc_t incx);
+#ifndef BLAS_EXTERNAL
 #define BLALINK_MAC(cctype, ctype, cchar) \
     template <> inline void trmv<cctype>(uplo_t uploa, trans_t transa, dim_t m, \
                                          cctype alpha, \
@@ -253,9 +254,7 @@ inline void trmv(uplo_t uploa,
                           (ctype *)a, 1, lda, \
                           (ctype *)x, incx); \
     }
-/*
- * TRMV has alpha in its templated interface, which is absent in BLAS.
- *
+#else
 #define BLALINK_MAC(cctype, ctype, cchar) \
     template <> inline void trmv<cctype>(uplo_t uploa, trans_t transa, dim_t m, \
                                          cctype alpha, \
@@ -265,11 +264,15 @@ inline void trmv(uplo_t uploa,
         char ul = uplo2char(uploa), \
              tr = trans2char(transa), \
              dg = 'N'; \
+        /*
+         * TRMV has alpha in its templated interface, which is absent in BLAS.
+         */ \
+        assert(alpha == cctype(1.0)); \
         cchar##trmv_(&ul, &tr, &dg, &m, \
                      (ctype *)a, &lda, \
-                     (ctype *)x, *incx); \
+                     (ctype *)x, &incx); \
     }
- */
+#endif
 BLALINK_MAC( float,    float,    s )
 BLALINK_MAC( double,   double,   d )
 BLALINK_MAC( ccscmplx, scomplex, c )
@@ -386,7 +389,8 @@ BLALINK_MAC( ccdcmplx, dcomplex, z, dotc )
 #undef BLALINK_MAC
 
 
-// [BLIS] gemmt
+// gemmt is not part of BLAS standard.
+// It's currently know as exposed by BLIS and MKL.
 template <typename T>
 inline void gemmt(uplo_t uploc,
                   trans_t transa, trans_t transb,
@@ -396,6 +400,7 @@ inline void gemmt(uplo_t uploc,
                   T *b, inc_t ldb,
                   T beta,
                   T *c, inc_t ldc);
+#if !( defined(BLAS_EXTERNAL) && defined(MKL) )
 #define BLALINK_MAC(cctype, ctype, cchar) \
     template <> inline void gemmt<cctype>(uplo_t uploc, \
                                           trans_t transa, trans_t transb, \
@@ -415,6 +420,30 @@ inline void gemmt(uplo_t uploc,
                            (ctype *)&beta, \
                            (ctype *)c, 1, ldc); \
     }
+#else
+#define BLALINK_MAC(cctype, ctype, cchar) \
+    template <> inline void gemmt<cctype>(uplo_t uploc, \
+                                          trans_t transa, trans_t transb, \
+                                          dim_t m, dim_t k, \
+                                          cctype alpha, \
+                                          cctype *a, inc_t lda, \
+                                          cctype *b, inc_t ldb, \
+                                          cctype beta, \
+                                          cctype *c, inc_t ldc) \
+    { \
+        char ul = uplo2char(uploc); \
+        char ta = trans2char(transa); \
+        char tb = trans2char(transb); \
+        cchar##gemmt_(&ul, \
+                      &ta, &tb, \
+                      &m, &k, \
+                      (ctype *)&alpha, \
+                      (ctype *)a, &lda, \
+                      (ctype *)b, &ldb, \
+                      (ctype *)&beta, \
+                      (ctype *)c, &ldc); \
+    }
+#endif
 BLALINK_MAC( float,    float,    s )
 BLALINK_MAC( double,   double,   d )
 BLALINK_MAC( ccscmplx, scomplex, c )
