@@ -1,7 +1,7 @@
 include ../make.inc
 
 CXXFLAGS += -I. -I$(BLIS_ROOT)/include -I$(BLIS_ROOT)/include/blis
-BLIS_LIB= -L$(BLIS_ROOT)/lib # -lblis
+BLIS_LIB= -L$(BLIS_ROOT)/lib -lblis
 PFAFFINE_LIB= ../src/libpfaffine.a
 
 TEXT_EXE= \

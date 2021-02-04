@@ -54,6 +54,16 @@ extern "C" {
 // NOTE: PLEASE DON'T CHANGE THE ORDER IN WHICH HEADERS ARE INCLUDED UNLESS
 // YOU ARE SURE THAT IT DOESN'T BREAK INTER-HEADER MACRO DEPENDENCIES.
 
+#include <stdio.h> // skipped
+#include <stdlib.h> // skipped
+#include <math.h> // skipped
+#include <string.h> // skipped
+#include <stdarg.h> // skipped
+#include <float.h> // skipped
+#include <errno.h> // skipped
+#include <ctype.h> // skipped
+#include <assert.h> // skipped
+
 // -- STATIC INLINE FUNCTIONS --------------------------------------------------
 
 // C and C++ have different semantics for defining "inline" functions. In C,
