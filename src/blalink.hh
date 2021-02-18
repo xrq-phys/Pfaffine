@@ -194,7 +194,7 @@ inline void trmm(side_t sidea,
                  T alpha, 
                  T *a, inc_t lda, 
                  T *b, inc_t ldb);
-#ifndef BLAS_EXTERNAL
+#if 1
 #define BLALINK_MAC(cctype, ctype, cchar) \
     template <> inline void trmm<cctype>(side_t sidea, uplo_t uploa, trans_t transa, \
                                          dim_t m, dim_t n, \
@@ -356,7 +356,7 @@ template <typename T>
 inline T dot(dim_t n,
              T *sx, inc_t incx,
              T *sy, inc_t incy);
-#ifndef BLAS_EXTERNAL
+#if 1
 #define BLALINK_MAC(cctype, ctype, cchar, cfunc) \
     template <> inline cctype dot<cctype>(dim_t n, \
                                           cctype *sx, inc_t incx, \
