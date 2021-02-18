@@ -1,6 +1,10 @@
 include ../make.inc
 CONFIG= ../make.inc
 
+ifeq ($(BLIS_ROOT),)
+	BLIS_ROOT = ./dep
+endif
+
 OBJECTS= skpfa.o \
 		 sktdf.o \
 		 sktdi.o \
