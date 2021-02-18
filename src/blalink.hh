@@ -8,6 +8,7 @@
  */
 #pragma once
 #include <complex>
+#include <cassert>
 typedef std::complex<float>  ccscmplx;
 typedef std::complex<double> ccdcmplx;
 // BLIS definitions.
