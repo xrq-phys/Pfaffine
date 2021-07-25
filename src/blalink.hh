@@ -194,7 +194,6 @@ inline void trmm(side_t sidea,
                  T alpha, 
                  T *a, inc_t lda, 
                  T *b, inc_t ldb);
-#if !( defined(BLAS_EXTERNAL) && defined(MKL) )
 #define BLALINK_MAC(cctype, ctype, cchar) \
     template <> inline void trmm<cctype>(side_t sidea, uplo_t uploa, trans_t transa, \
                                          dim_t m, dim_t n, \
@@ -208,8 +207,7 @@ inline void trmm(side_t sidea,
                           (ctype *)a, 1, lda, \
                           (ctype *)b, 1, ldb); \
     }
-#else
-#define BLALINK_MAC(cctype, ctype, cchar) \
+#define BLALINK_MAC_BLAS(cctype, ctype, cchar) \
     template <> inline void trmm<cctype>(side_t sidea, uplo_t uploa, trans_t transa, \
                                          dim_t m, dim_t n, \
                                          cctype alpha, \
@@ -226,12 +224,17 @@ inline void trmm(side_t sidea,
                      (ctype *)&a, &lda, \
                      (ctype *)&b, &ldb); \
     }
-#endif
+#ifndef BLAS_EXTERNAL
 BLALINK_MAC( float,    float,    s )
 BLALINK_MAC( double,   double,   d )
+#else
+BLALINK_MAC_BLAS( float,    float,    s )
+BLALINK_MAC_BLAS( double,   double,   d )
+#endif
 BLALINK_MAC( ccscmplx, scomplex, c )
 BLALINK_MAC( ccdcmplx, dcomplex, z )
 #undef BLALINK_MAC
+#undef BLALINK_MAC_BLAS
 
 
 // trmv
@@ -356,7 +359,6 @@ template <typename T>
 inline T dot(dim_t n,
              T *sx, inc_t incx,
              T *sy, inc_t incy);
-#if !( defined(BLAS_EXTERNAL) && defined(MKL) )
 #define BLALINK_MAC(cctype, ctype, cchar, cfunc) \
     template <> inline cctype dot<cctype>(dim_t n, \
                                           cctype *sx, inc_t incx, \
@@ -371,8 +373,7 @@ inline T dot(dim_t n,
                           (ctype *)&rho); \
         return rho; \
     }
-#else
-#define BLALINK_MAC(cctype, ctype, cchar, cfunc) \
+#define BLALINK_MAC_BLAS(cctype, ctype, cchar, cfunc) \
     template <> inline cctype dot<cctype>(dim_t n, \
                                           cctype *sx, inc_t incx, \
                                           cctype *sy, inc_t incy) \
@@ -382,12 +383,17 @@ inline T dot(dim_t n,
                                     (ctype *)sy, &incy); \
         return *((cctype *)&rho); \
     }
-#endif
+#ifndef BLAS_EXTERNAL
 BLALINK_MAC( float,    float,    s, dot  )
 BLALINK_MAC( double,   double,   d, dot  )
+#else
+BLALINK_MAC_BLAS( float,    float,    s, dot  )
+BLALINK_MAC_BLAS( double,   double,   d, dot  )
+#endif
 BLALINK_MAC( ccscmplx, scomplex, c, dotc )
 BLALINK_MAC( ccdcmplx, dcomplex, z, dotc )
 #undef BLALINK_MAC
+#undef BLALINK_MAC_BLAS
 
 
 // gemmt is not part of BLAS standard.
