@@ -29,7 +29,7 @@ typedef double complex ccdcmplx;
 #endif
 #define PASTE_DEF( typename, typechar ) \
     EXTERNC void EXPAND_NAME( typechar, skpfa ) \
-        (char uplo, unsigned n, float *A, signed ldA, unsigned inv, typename *dPfa, signed *info);
+        (char uplo, unsigned n, typename *A, signed ldA, unsigned inv, typename *dPfa, signed *info);
 
 PASTE_DEF( float,    s )
 PASTE_DEF( double,   d )
