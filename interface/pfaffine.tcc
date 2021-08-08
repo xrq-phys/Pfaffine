@@ -34,10 +34,10 @@ signed skpfa(char uplo, unsigned n, T *A, signed ldA, unsigned inv, T *dPfa)
 
     T *Sp1 = new T[n*npanel];
     T *SpG = new T[n*n];
-    signed *iPov = new signed[n+1];
-    signed cInfo = skpfa<T>(check_uplo(uplo), n, A, ldA, SpG, n, iPov, inv, dPfa, Sp1, n*npanel);
+    signed *iPiv = new signed[n+1];
+    signed cInfo = skpfa<T>(check_uplo(uplo), n, A, ldA, SpG, n, iPiv, inv, dPfa, Sp1, n*npanel);
 
-    delete[] iPov;
+    delete[] iPiv;
     delete[] Sp1;
     delete[] SpG;
     return cInfo;

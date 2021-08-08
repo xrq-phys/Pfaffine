@@ -9,14 +9,14 @@
 #include <complex>
 
 template<typename T>
-void findmax(unsigned n, inc_t *i, T *m, T *x, unsigned ist=0, signed *iPov=nullptr)
+void findmax(unsigned n, inc_t *i, T *m, T *x, unsigned ist=0, signed *iPiv=nullptr)
 {
     using namespace std;
     // (Implicit) register vars.
     int ireg = -1;
     T mreg = 0.0;
     for (unsigned j = ist; j < n; ++j)
-        if ((!iPov || iPov[j] == j) && abs(x[j]) > abs(mreg)) {
+        if ((!iPiv || iPiv[j] == j) && abs(x[j]) > abs(mreg)) {
             ireg = j;
             mreg = x[j];
         }

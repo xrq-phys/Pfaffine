@@ -39,7 +39,7 @@ int main(int argc, char *argv[])
     double matA[N_Max * N_Max];
     double mat1[N_Max * NPANEL];
     double matC[N_Max * N_Max];
-    signed iPov[N_Max + 1];
+    signed iPiv[N_Max + 1];
 
     for (unsigned idx = 0; idx < 14; ++idx) {
         // NOTE: this sets size as well as ldA above.
@@ -68,7 +68,7 @@ int main(int argc, char *argv[])
         signed info = skpfa<double>(BLIS_UPPER, N,
                                     &matA(0, 0), N,
                                     &matC(0, 0), N,
-                                    iPov, true, &Pfa,
+                                    iPiv, true, &Pfa,
                                     &mat1(0, 0), N * NPANEL);
         // collect elapsed time information.
         auto elapsed = std::chrono::high_resolution_clock::now() - start;

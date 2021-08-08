@@ -20,7 +20,7 @@ signed sktdi(uplo_t uplo,
              dim_t n,
              T *_A, inc_t ldA,
              T *_G, inc_t ldG,
-             signed *iPov,
+             signed *iPiv,
              T *_Work, dim_t lWork)
 {
     dim_t npanel = optpanel(n, 4);
@@ -85,13 +85,13 @@ signed sktdi(uplo_t uplo,
 
     // Check permutation and swap back.
     for (dim_t s = 0; s < n; ++s)
-        if (iPov[s] != s) {
+        if (iPiv[s] != s) {
             dim_t t = s;
             for ( ; t < n; ++t)
-                if (iPov[t] == s)
+                if (iPiv[t] == s)
                     break;
-            if (iPov[t] != s) {
-                std::cerr << "SKTDI: iPov does not represent a valid permutation." << std::endl;
+            if (iPiv[t] != s) {
+                std::cerr << "SKTDI: iPiv does not represent a valid permutation." << std::endl;
                 return err_info(Pfaffine_BAD_REPRESENTATION, 7);
             }
 
@@ -100,8 +100,8 @@ signed sktdi(uplo_t uplo,
             swap<T>(n, &A(0, s), 1, &A(0, t), 1);
             swap<T>(n, &A(s, 0), A.ld, &A(t, 0), A.ld);
             // Swap the index.
-            iPov[t] = iPov[s];
-            iPov[s] = s;
+            iPiv[t] = iPiv[s];
+            iPiv[s] = s;
         }
 
     return 0;

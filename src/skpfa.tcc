@@ -18,21 +18,21 @@ signed skpfa(uplo_t uplo,
              dim_t n,
              T *_A, inc_t ldA,
              T *_G, inc_t ldG,
-             signed *iPov,
+             signed *iPiv,
              bool inv,
              T *dPfa,
              T *_Work, dim_t lWork)
 {
     colmaj<T> A(_A, ldA);
-    sktdf<T>(uplo, n, &A(0, 0), ldA, _G, ldG, iPov, _Work, lWork);
+    sktdf<T>(uplo, n, &A(0, 0), ldA, _G, ldG, iPiv, _Work, lWork);
 
-    signed cflp = iPov[n];
+    signed cflp = iPiv[n];
     // Pfaffian
     T PfA = 1.0;
     for (unsigned i = 0; i < n-1; i+=2)
         PfA *= A(i, i+1);
     if (inv)
-        sktdi<T>(uplo, n, &A(0, 0), ldA, _G, ldG, iPov, _Work, lWork);
+        sktdi<T>(uplo, n, &A(0, 0), ldA, _G, ldG, iPiv, _Work, lWork);
 
     // Return signed PfA.
     *dPfa = (cflp % 2) ? -PfA : PfA;

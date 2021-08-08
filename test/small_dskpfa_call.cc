@@ -15,7 +15,7 @@ int main(const int argc, const char *argv[])
     double matA[8 * 8];
     double mat1[8 * 4];
     double matC[8 * 8];
-    signed iPov[8 + 1];
+    signed iPiv[8 + 1];
     for (unsigned j = 0; j < 8; ++j)
         for (unsigned i = 0; i < 8; ++i)
             matA(i, j) = i * 2 + j;
@@ -31,7 +31,7 @@ int main(const int argc, const char *argv[])
     signed info = skpfa<double>(BLIS_UPPER, 8,
                                 &matA(0, 0), 8,
                                 &matC(0, 0), 8,
-                                iPov, true, &Pfa,
+                                iPiv, true, &Pfa,
                                 &mat1(0, 0), 8 * 3);
 
     printf("Pfa = %16.8e\n", Pfa);

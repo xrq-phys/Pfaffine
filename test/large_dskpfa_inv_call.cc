@@ -32,7 +32,7 @@ int main(const int argc, const char *argv[])
     double matA[N * N];
     double mat1[N * NPANEL];
     double matC[N * N];
-    signed iPov[N + 1];
+    signed iPiv[N + 1];
     for (unsigned j = 0; j < N; ++j)
         for (unsigned i = 0; i < N; ++i)
             matA(i, j) = dist(rng);
@@ -60,7 +60,7 @@ int main(const int argc, const char *argv[])
     signed info = skpfa<double>(BLIS_UPPER, N,
                                 &matA(0, 0), N,
                                 &matC(0, 0), N,
-                                iPov, true, &Pfa,
+                                iPiv, true, &Pfa,
                                 &mat1(0, 0), N * NPANEL);
     auto elapsed = std::chrono::high_resolution_clock::now() - start;
     long long microseconds = std::chrono::duration_cast<std::chrono::microseconds>(elapsed).count();

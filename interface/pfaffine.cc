@@ -50,12 +50,12 @@ PASTE_DEF( ccdcmplx, z )
          unsigned *n, \
          typename *_A, signed *ldA, \
          typename *_G, signed *ldG, \
-         signed *iPov,   \
+         signed *iPiv,   \
          signed *inv,    \
          typename *dPfa, signed *info, \
          typename *_Work, unsigned *lWork) \
     { \
-        *info = skpfa<typename>(check_uplo(*uplo), *n, _A, *ldA, _G, *ldG, iPov, *inv, dPfa, _Work, *lWork); \
+        *info = skpfa<typename>(check_uplo(*uplo), *n, _A, *ldA, _G, *ldG, iPiv, *inv, dPfa, _Work, *lWork); \
     }
 
 PASTE_DEF( float,    s )

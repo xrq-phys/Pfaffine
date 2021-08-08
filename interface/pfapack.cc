@@ -69,10 +69,10 @@ void la_skpfa(char uplo, char mthd, unsigned n, T *A, signed ldA, T *Pfa,
     T *Sp1 = work + n * n;
 
     // TODO: Changed code to use only n elements.
-    signed *iPov = new signed[n+1];
+    signed *iPiv = new signed[n+1];
 
     // Execute SKPFA.
-    *info = skpfa<T>(check_uplo(uplo), n, A, ldA, SpG, n, iPov, !*info, Pfa, Sp1, *lWork);
+    *info = skpfa<T>(check_uplo(uplo), n, A, ldA, SpG, n, iPiv, !*info, Pfa, Sp1, *lWork);
 }
 
 // Instantiate.

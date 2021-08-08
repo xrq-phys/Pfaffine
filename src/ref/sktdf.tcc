@@ -17,14 +17,14 @@ signed sktdf(uplo_t uplo,
              dim_t n,
              T *_A, inc_t ldA,
              T *_G, inc_t ldG,
-             signed *iPov,
+             signed *iPiv,
              T *_Work, dim_t lWork)
 {
     dim_t cflp = 0;
 
-    // Initialize iPov space.
+    // Initialize iPiv space.
     for (dim_t i = 0; i < n; ++i)
-        iPov[i] = i;
+        iPiv[i] = i;
 
     // Define matrices.
     colmaj<T> A(_A, ldA);
@@ -56,9 +56,9 @@ signed sktdf(uplo_t uplo,
                 if (s < t) {
                     cflp++;
                     // Record permutation.
-                    dim_t itmp = iPov[s];
-                    iPov[s] = iPov[t];
-                    iPov[t] = itmp;
+                    dim_t itmp = iPiv[s];
+                    iPiv[s] = iPiv[t];
+                    iPiv[t] = itmp;
 
                     // Previous G.
                     swap<T>(istep, &G(s, 0), n, &G(t, 0), n);
@@ -111,8 +111,8 @@ signed sktdf(uplo_t uplo,
         std::cerr << "SKTDF: Lower triangular storage not implemented. Sorry." << std::endl;
         return err_info(Pfaffine_NOT_IMPLEMNTED, 0);
     }
-    // Save total number of flips into end of iPov.
-    iPov[n] = cflp;
+    // Save total number of flips into end of iPiv.
+    iPiv[n] = cflp;
 
     return 0;
 }

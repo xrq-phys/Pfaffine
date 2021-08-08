@@ -15,7 +15,7 @@ int main(const int argc, const char *argv[])
     complex<double> matA[8 * 8];
     complex<double> mat1[8 * 4];
     complex<double> matC[8 * 8];
-    signed iPov[8 + 1];
+    signed iPiv[8 + 1];
     for (signed j = 0; j < 8; ++j)
         for (signed i = 0; i < 8; ++i)
             matA(i, j) = complex<double>(i*2.0 + j, i*0.25 - j*0.5);
@@ -31,7 +31,7 @@ int main(const int argc, const char *argv[])
     signed info = skpfa<complex<double> >(BLIS_UPPER, 8,
                                           &matA(0, 0), 8,
                                           &matC(0, 0), 8,
-                                          iPov, true, &Pfa,
+                                          iPiv, true, &Pfa,
                                           &mat1(0, 0), 8 * 3);
 
     printf("Pfa = (%16.8e, %16.8e)\n", real(Pfa), imag(Pfa));

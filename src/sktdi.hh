@@ -17,7 +17,7 @@
  * \param ldA   Leading dimension of A.
  * \param _G    (IN) Base address of matrix G.
  * \param ldG   Leading dimension of G.
- * \param iPov  (IN) Pivoting reordering information, of length n+1.
+ * \param iPiv  (IN) Pivoting reordering information, of length n+1.
  * \param _Work Scratchpad memory space, at least of length lWork.
  * \param lWork Length of scratchpad memory space.
  */
@@ -26,5 +26,5 @@ signed sktdi(uplo_t uplo,
              dim_t n,
              T *_A, inc_t ldA,
              T *_G, inc_t ldG,
-             signed *iPov,
+             signed *iPiv,
              T *_Work, dim_t lWork);

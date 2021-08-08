@@ -46,7 +46,7 @@ PASTE_DEF( ccdcmplx, z )
          unsigned *n, \
          typename *_A, signed *ldA, \
          typename *_G, signed *ldG, \
-         signed *iPov,   \
+         signed *iPiv,   \
          signed *inv,    \
          typename *dPfa, signed *info, \
          typename *_Work, unsigned *lWork);
