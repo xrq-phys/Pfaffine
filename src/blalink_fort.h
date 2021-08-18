@@ -125,6 +125,8 @@ float sdot_(dim_t *n, float *sx, dim_t *incx, float *sy, dim_t *incy);
 double ddot_(dim_t *n, double *sx, dim_t *incx, double *sy, dim_t *incy);
 scomplex cdotc_(dim_t *n, void *sx, dim_t *incx, void *sy, dim_t *incy);
 dcomplex zdotc_(dim_t *n, void *sx, dim_t *incx, void *sy, dim_t *incy);
+scomplex cdotu_(dim_t *n, void *sx, dim_t *incx, void *sy, dim_t *incy);
+dcomplex zdotu_(dim_t *n, void *sx, dim_t *incx, void *sy, dim_t *incy);
 
 // gemmt is not part of BLAS standard,
 // but exposed by BLIS>v0.8 and recent versions of MKL.
