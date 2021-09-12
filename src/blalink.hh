@@ -388,6 +388,21 @@ inline T dot(dim_t n,
 #endif
 BLALINK_MAC( float,    float,    s, dot  )
 BLALINK_MAC( double,   double,   d, dot  )
+#if defined(BLAS_EXTERNAL) && defined(F77_COMPLEX_RET_INTEL)
+// Intel style complex return.
+#undef BLALINK_MAC
+#define BLALINK_MAC(cctype, ctype, cchar, cfunc) \
+    template <> inline cctype dot<cctype>(dim_t n, \
+                                          cctype *sx, inc_t incx, \
+                                          cctype *sy, inc_t incy) \
+    { \
+        cctype rho; \
+        cchar##cfunc##_((ctype *)&rho, &n, \
+                        (ctype *)sx, &incx, \
+                        (ctype *)sy, &incy); \
+        return rho; \
+    }
+#endif
 BLALINK_MAC( ccscmplx, scomplex, c, dotu )
 BLALINK_MAC( ccdcmplx, dcomplex, z, dotu )
 #undef BLALINK_MAC
