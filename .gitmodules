@@ -1,0 +1,4 @@
+[submodule "ext/pfapack2"]
+	path = ext/pfapack2
+	url = https://github.com/xrq-phys/Pfapack
+	branch = 2step+left

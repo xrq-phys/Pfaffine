@@ -1,17 +1,19 @@
 help:
 	@echo "\"make lib\" to compile library."
-	@echo "\"make install\" to compile library and install to subdirectory \"dest\"."
+	@echo "\"make test\" test."
 
-lib: make.inc
-	make -C src
+ext/pfapack2/fortran/make.inc: make.inc
+	cd ext/pfapack2/fortran && ln -s ../../../make.inc . && cd ../../..
 
-install: make.inc
-	make -C src install
-	# TODO: Install rule for tests?
+ALL_INC = make.inc ext/pfapack2/fortran/make.inc
 
-clean: make.inc
-	make -C src clean
+lib: $(ALL_INC)
+	make -C ext/pfapack2/fortran
+	make -C ltl2inv
+
+clean: $(ALL_INC)
+	make -C ltl2inv clean
 	make -C test clean
 
-tests: make.inc
+tests: $(ALL_INC)
 	make -C test

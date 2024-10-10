@@ -1,0 +1,20 @@
+# AR executable.
+AR=ar
+
+# Compilers.
+# GCC with G++ is the general choice on linux.
+# Intel compilers recommended on Intel processors.
+CC=clang
+CFLAGS=-fPIC -O2 -I/opt/homebrew/include
+CXX=clang++
+CXXFLAGS=-std=c++11 \
+    -fPIC -O3 -I/opt/homebrew/include
+F90 = gfortran
+FFLAGS = -fPIC -O3 -fimplicit-none
+
+# BLAS with GEMMT
+LDFLAGS=-L/opt/homebrew/lib -lblis -llapack
+
+# PFAPACK
+HAVE_GEMMT = 1
+LFLAGS = $(LDFLAGS)

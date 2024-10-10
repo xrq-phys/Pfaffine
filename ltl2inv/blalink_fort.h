@@ -47,12 +47,24 @@ BLIS_INLINE char side2char(side_t t)
         abort();
     }
 }
+BLIS_INLINE char diag2char(diag_t t)
+{
+    switch (t) {
+    case BLIS_UNIT_DIAG:
+        return 'U';
+    case BLIS_NONUNIT_DIAG:
+        return 'N';
+    }
+}
 
 
 #ifdef __cplusplus
 extern "C"
 {
 #endif
+
+// BLAS {
+#ifdef BLAS_EXTERNAL
 
 // gemm
 void sgemm_(char *transa, char *transb, dim_t *m, dim_t *n, dim_t *k, float *alpha,
@@ -125,6 +137,46 @@ float sdot_(dim_t *n, float *sx, dim_t *incx, float *sy, dim_t *incy);
 double ddot_(dim_t *n, double *sx, dim_t *incx, double *sy, dim_t *incy);
 scomplex cdotc_(dim_t *n, void *sx, dim_t *incx, void *sy, dim_t *incy);
 dcomplex zdotc_(dim_t *n, void *sx, dim_t *incx, void *sy, dim_t *incy);
+#ifndef F77_COMPLEX_RET_INTEL
+scomplex cdotu_(dim_t *n, void *sx, dim_t *incx, void *sy, dim_t *incy);
+dcomplex zdotu_(dim_t *n, void *sx, dim_t *incx, void *sy, dim_t *incy);
+#else
+void cdotu_(scomplex *rho, dim_t *n, void *sx, dim_t *incx, void *sy, dim_t *incy);
+void zdotu_(dcomplex *rho, dim_t *n, void *sx, dim_t *incx, void *sy, dim_t *incy);
+#endif
+
+// }
+#endif
+
+// LAPACK {
+
+// lacpy
+void slacpy_(char *uplo, dim_t *m, dim_t *n, float *a, inc_t *lda, float *b, inc_t *ldb);
+void dlacpy_(char *uplo, dim_t *m, dim_t *n, double *a, inc_t *lda, double *b, inc_t *ldb);
+void clacpy_(char *uplo, dim_t *m, dim_t *n, void *a, inc_t *lda, void *b, inc_t *ldb);
+void zlacpy_(char *uplo, dim_t *m, dim_t *n, void *a, inc_t *lda, void *b, inc_t *ldb);
+
+// trtri
+void strtri_(char *uplo, char *diag, dim_t *n, float *a, inc_t *lda, int *info);
+void dtrtri_(char *uplo, char *diag, dim_t *n, double *a, inc_t *lda, int *info);
+void ctrtri_(char *uplo, char *diag, dim_t *n, void *a, inc_t *lda, int *info);
+void ztrtri_(char *uplo, char *diag, dim_t *n, void *a, inc_t *lda, int *info);
+
+// }
+
+// PFAPACK77 {
+
+void ssktrf_(char *uplo, char *mode, dim_t *n, float *a, dim_t *lda, int *ipiv, float *work, dim_t *lwork, int *info);
+void dsktrf_(char *uplo, char *mode, dim_t *n, double *a, dim_t *lda, int *ipiv, double *work, dim_t *lwork, int *info);
+void csktrf_(char *uplo, char *mode, dim_t *n, void *a, dim_t *lda, int *ipiv, void *work, dim_t *lwork, int *info);
+void zsktrf_(char *uplo, char *mode, dim_t *n, void *a, dim_t *lda, int *ipiv, void *work, dim_t *lwork, int *info);
+
+void sskpfa_(char *uplo, char *mthd, dim_t *n, float *a, dim_t *lda, float *pfa, int *ipiv, float *work, dim_t *lwork, int *info);
+void dskpfa_(char *uplo, char *mthd, dim_t *n, double *a, dim_t *lda, double *pfa, int *ipiv, double *work, dim_t *lwork, int *info);
+void cskpfa_(char *uplo, char *mthd, dim_t *n, void *a, dim_t *lda, void *pfa, int *ipiv, void *work, dim_t *lwork, void *rwork, int *info);
+void zskpfa_(char *uplo, char *mthd, dim_t *n, void *a, dim_t *lda, void *pfa, int *ipiv, void *work, dim_t *lwork, void *rwork, int *info);
+
+// }
 
 #ifdef __cplusplus
 }
